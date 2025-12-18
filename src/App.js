@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './App.css';
 
 function App() {
@@ -19,30 +19,128 @@ function App() {
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [activeSpaceMembers, setActiveSpaceMembers] = useState([
     { id: 1, name: 'Sarah Chen', role: 'Owner', avatarColor: '#8b5cf6', initials: 'SC' },
-    { id: 4, name: 'Tom Wilson', role: 'Member', avatarColor: '#f59e0b', initials: 'TW' },
+    { id: 4, name: 'Tom Wilson', role: 'Admin', avatarColor: '#f59e0b', initials: 'TW' },
     { id: 5, name: 'Alex Morgan', role: 'Member', avatarColor: '#ec4899', initials: 'AM' },
   ]);
+  const [currentUserId, setCurrentUserId] = useState(1);
+  const currentUser = activeSpaceMembers.find(m => m.id === currentUserId) || activeSpaceMembers[0];
   const [activeDetailTab, setActiveDetailTab] = useState('files'); // 'files', 'boards'
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: 'Mariam Tarek', text: 'joined', type: 'system', time: '1:55 AM' },
-    { id: 2, sender: 'Mariam Tarek', text: 'Hello everyone!', type: 'user', time: '1:56 AM', avatarColor: 'gold' }
-  ]);
+  const [chatMessages, setChatMessages] = useState({
+    1: [
+      { id: 1, sender: 'Mariam Tarek', text: 'joined', type: 'system', time: '1:55 AM' },
+      { id: 2, sender: 'Mariam Tarek', text: 'Hello #nour!', type: 'user', time: '1:56 AM', avatarColor: 'gold' }
+    ],
+    2: [
+      { id: 1, sender: 'System', text: 'Welcome to Creative Studio', type: 'system', time: '10:00 AM' }
+    ],
+    3: [
+      { id: 1, sender: 'System', text: 'Tech updates go here', type: 'system', time: '09:00 AM' }
+    ],
+    4: []
+  });
   const [newMessage, setNewMessage] = useState('');
   const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [memberRoleFilter, setMemberRoleFilter] = useState('All');
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const [files, setFiles] = useState([
+    { name: 'Banner Assets.jpg', size: '3.2 MB', time: '1 day ago', icon: 'image', color: '#a855f7' },
+    { name: 'Q4 Report.docx', size: '1.2 MB', time: '6 hours ago', icon: 'doc', color: '#3b82f6' },
+    { name: 'Walkthrough.mov', size: '128.5 MB', time: '3 days ago', icon: 'video', color: '#ef4444' },
+    { name: 'Brand Guidelines.pdf', size: '5.1 MB', time: '5 hours ago', icon: 'doc', color: '#3b82f6' },
+    { name: 'UI Components.fig', size: '15.8 MB', time: '4 hours ago', icon: 'image', color: '#a855f7' },
+    { name: 'Budget Planning.xlsx', size: '845 KB', time: '1 day ago', icon: 'doc', color: '#3b82f6' },
+    { name: 'Project Mockups.png', size: '2.4 MB', time: '2 hours ago', icon: 'image', color: '#a855f7' },
+    { name: 'Demo Video.mp4', size: '45.2 MB', time: '1 day ago', icon: 'video', color: '#ef4444' },
+    { name: 'Product Model.glb', size: '24.5 MB', time: '2 days ago', icon: '3d', color: '#f59e0b' },
+  ]);
+
+  /* Upload Queue State */
+  const [uploadQueue, setUploadQueue] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (uploadQueue.length > 0 && uploadQueue.some(f => f.progress < 100)) {
+      const interval = setInterval(() => {
+        setUploadQueue(prev => prev.map(f => {
+          if (f.progress >= 100) return f;
+          return { ...f, progress: Math.min(f.progress + Math.random() * 15, 100) };
+        }));
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [uploadQueue]);
+
+  const handleFileUpload = (uploadedFiles) => {
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      const newUploads = Array.from(uploadedFiles).map((file, idx) => {
+        let icon = 'doc';
+        let color = '#3b82f6';
+        if (file.type.startsWith('image/')) { icon = 'image'; color = '#a855f7'; }
+        else if (file.type.startsWith('video/')) { icon = 'video'; color = '#ef4444'; }
+
+        return {
+          id: Date.now() + idx,
+          name: file.name,
+          progress: 0,
+          rawSize: file.size,
+          size: (file.size / 1024 / 1024).toFixed(1) + ' MB',
+          time: 'Just now',
+          icon: icon,
+          color: color
+        };
+      });
+
+      setUploadQueue(newUploads);
+      setIsUploading(true);
+    }
+  };
+
+  const handleConfirmUpload = () => {
+    const completedFiles = uploadQueue.map(f => ({
+      name: f.name,
+      size: (f.rawSize / 1024 / 1024).toFixed(1) + ' MB',
+      time: 'Just now',
+      icon: f.icon,
+      color: f.color
+    }));
+    setFiles([...files, ...completedFiles]);
+    setUploadQueue([]);
+    setIsUploading(false);
+    setIsUploadModalOpen(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files);
+    }
+  }; const handleSendMessage = () => {
+    if (!newMessage.trim() || !activeSpace) return;
+
+    const currentMessages = chatMessages[activeSpace.id] || [];
     const msg = {
-      id: chatMessages.length + 1,
-      sender: 'You',
+      id: currentMessages.length + 1,
+      sender: currentUser.name,
       text: newMessage,
       type: 'user',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      avatarColor: '#8b5cf6'
+      avatarColor: currentUser.avatarColor
     };
-    setChatMessages([...chatMessages, msg]);
+
+    setChatMessages({
+      ...chatMessages,
+      [activeSpace.id]: [...currentMessages, msg]
+    });
     setNewMessage('');
   };
 
@@ -201,8 +299,8 @@ function App() {
           </div>
 
           <div className="sidebar-bottom">
-            <button className="profile-btn" aria-label="User Profile">
-              <div className="profile-avatar">N</div>
+            <button className="profile-btn" aria-label="User Profile" title={currentUser.name}>
+              <div className="profile-avatar" style={{ background: currentUser.avatarColor }}>{currentUser.initials}</div>
             </button>
           </div>
         </aside>
@@ -260,7 +358,7 @@ function App() {
                         <p>Light, non-work chat to keep us human</p>
                       </div>
 
-                      {chatMessages.map(msg => (
+                      {(chatMessages[activeSpace.id] || []).map(msg => (
                         <div key={msg.id} className={msg.type === 'system' ? 'system-message' : 'chat-message-row'}>
                           <div className="user-avatar-sm" style={{ background: msg.avatarColor || 'gold' }}>
                             {msg.sender.charAt(0)}
@@ -355,9 +453,11 @@ function App() {
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: '6px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             Join Session
                           </button>
-                          <button className="btn btn-icon" onClick={() => { setIsCreateModalOpen(true); setCreateStep(3); setInviteMode('link'); }} title="Share Space">
-                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                          </button>
+                          {(currentUser.role === 'Owner' || currentUser.role === 'Admin') && (
+                            <button className="btn btn-icon" onClick={() => { setIsCreateModalOpen(true); setCreateStep(3); setInviteMode('link'); }} title="Share Space">
+                              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                            </button>
+                          )}
                           <button className="btn btn-icon">
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           </button>
@@ -435,17 +535,7 @@ function App() {
 
                             <div className="files-grid">
                               {/* Placeholder Files */}
-                              {[
-                                { name: 'Banner Assets.jpg', size: '3.2 MB', time: '1 day ago', icon: 'image', color: '#a855f7' },
-                                { name: 'Q4 Report.docx', size: '1.2 MB', time: '6 hours ago', icon: 'doc', color: '#3b82f6' },
-                                { name: 'Walkthrough.mov', size: '128.5 MB', time: '3 days ago', icon: 'video', color: '#ef4444' },
-                                { name: 'Brand Guidelines.pdf', size: '5.1 MB', time: '5 hours ago', icon: 'doc', color: '#3b82f6' },
-                                { name: 'UI Components.fig', size: '15.8 MB', time: '4 hours ago', icon: 'image', color: '#a855f7' },
-                                { name: 'Budget Planning.xlsx', size: '845 KB', time: '1 day ago', icon: 'doc', color: '#3b82f6' },
-                                { name: 'Project Mockups.png', size: '2.4 MB', time: '2 hours ago', icon: 'image', color: '#a855f7' },
-                                { name: 'Demo Video.mp4', size: '45.2 MB', time: '1 day ago', icon: 'video', color: '#ef4444' },
-                                { name: 'Product Model.glb', size: '24.5 MB', time: '2 days ago', icon: '3d', color: '#f59e0b' },
-                              ]
+                              {files
                                 .filter(file => activeFileFilter === 'all' || file.icon === activeFileFilter)
                                 .map((file, i) => (
                                   <div key={i} className="file-card">
@@ -520,10 +610,14 @@ function App() {
                           <h3 className="info-card-title">WORKSPACE INFO</h3>
                           <div className="info-row">
                             <span className="info-label">Owner</span>
-                            <div className="user-row">
-                              <div className="user-avatar-sm" style={{ background: '#8b5cf6' }}>SC</div>
-                              <span>Sarah Chen</span>
-                            </div>
+                            {activeSpaceMembers.find(m => m.role === 'Owner') && (
+                              <div className="user-row">
+                                <div className="user-avatar-sm" style={{ background: activeSpaceMembers.find(m => m.role === 'Owner').avatarColor }}>
+                                  {activeSpaceMembers.find(m => m.role === 'Owner').initials}
+                                </div>
+                                <span>{activeSpaceMembers.find(m => m.role === 'Owner').name}</span>
+                              </div>
+                            )}
                           </div>
                           <div className="info-row">
                             <span className="info-label">Created</span>
@@ -541,7 +635,9 @@ function App() {
                         <div className="info-card">
                           <div className="info-card-header">
                             <h3 className="info-card-title">MEMBERS ({activeSpaceMembers.length})</h3>
-                            <button className="btn-link" onClick={() => { setIsMembersModalOpen(true); }}>Invite</button>
+                            {(currentUser.role === 'Owner' || currentUser.role === 'Admin') && (
+                              <button className="btn-link" onClick={() => { setIsMembersModalOpen(true); }}>Invite</button>
+                            )}
                           </div>
                           <div className="members-list">
                             {activeSpaceMembers.slice(0, 4).map(member => (
@@ -561,7 +657,7 @@ function App() {
                           )}
                           {activeSpaceMembers.length <= 4 && (
                             <button className="btn-text-sm" style={{ marginTop: '1rem', width: '100%' }} onClick={() => setIsMembersModalOpen(true)}>
-                              Manage Members
+                              {currentUser.role === 'Owner' || currentUser.role === 'Admin' ? 'Manage Members' : 'View Members'}
                             </button>
                           )}
                         </div>
@@ -767,7 +863,9 @@ function App() {
               <div className="modal-content modal-members" onClick={e => e.stopPropagation()}>
                 <div className="modal-header header-bordered">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <h2 className="modal-title-sm">Manage Members</h2>
+                    <h2 className="modal-title-sm">
+                      {currentUser.role === 'Owner' || currentUser.role === 'Admin' ? 'Manage Members' : 'Members'}
+                    </h2>
                     <span className="member-count-badge">{activeSpaceMembers.length} Members</span>
                   </div>
                   <button className="close-btn" onClick={() => setIsMembersModalOpen(false)}>
@@ -782,49 +880,85 @@ function App() {
                     </svg>
                     <input type="text" className="search-input" placeholder="Search members" />
                   </div>
-                  <button className="btn btn-primary-sm" onClick={() => { setIsMembersModalOpen(false); setIsCreateModalOpen(true); setCreateStep(3); setInviteMode('email'); }}>
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: '6px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                    Invite New Members
-                  </button>
+
+                  <select
+                    className="files-filter"
+                    value={memberRoleFilter}
+                    onChange={(e) => setMemberRoleFilter(e.target.value)}
+                    style={{ marginLeft: '10px', height: '38px' }}
+                  >
+                    <option value="All">All Roles</option>
+                    <option value="Owner">Owner</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Member">Member</option>
+                  </select>
+
+                  {/* Conditionally render the Invite New Members button */}
+                  {(currentUser.role === 'Owner' || currentUser.role === 'Admin') && (
+                    <button className="btn btn-primary-sm" onClick={() => { setIsMembersModalOpen(false); setIsCreateModalOpen(true); setCreateStep(3); setInviteMode('email'); }} style={{ marginLeft: '10px', padding: '0.5rem' }}>
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    </button>
+                  )}
                 </div>
 
                 <div className="modal-body scrollable members-list-view">
-                  {activeSpaceMembers.map(member => (
-                    <div key={member.id} className="member-row-large">
-                      <div className="member-info-large">
-                        <div className="user-avatar" style={{ background: member.avatarColor }}>{member.initials}</div>
-                        <div className="member-details">
-                          <span className="member-name-lg">{member.name}</span>
-                          <span className="member-email-lg">{member.name.toLowerCase().replace(' ', '.')}@example.com</span>
+                  {activeSpaceMembers
+                    .filter(m => memberRoleFilter === 'All' || m.role === memberRoleFilter)
+                    .map(member => (
+                      <div key={member.id} className="member-row-large">
+                        <div className="member-info-large">
+                          <div className="user-avatar" style={{ background: member.avatarColor }}>{member.initials}</div>
+                          <div className="member-details">
+                            <span className="member-name-lg">{member.name}</span>
+                            <span className="member-email-lg">{member.name.toLowerCase().replace(' ', '.')}@example.com</span>
+                          </div>
+                        </div>
+                        <div className="member-actions">
+                          {currentUser.role === 'Owner' || currentUser.role === 'Admin' ? (
+                            <>
+                              <select
+                                className="role-select"
+                                value={member.role}
+                                disabled={member.role === 'Owner'}
+                                onChange={(e) => {
+                                  const newRole = e.target.value;
+                                  if (newRole === 'Owner') {
+                                    if (window.confirm(`Transfer ownership to ${member.name}? The current owner will become an Admin.`)) {
+                                      setActiveSpaceMembers(prev => prev.map(m => {
+                                        if (m.id === member.id) return { ...m, role: 'Owner' };
+                                        if (m.role === 'Owner') return { ...m, role: 'Admin' };
+                                        return m;
+                                      }));
+                                    }
+                                  } else {
+                                    setActiveSpaceMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: newRole } : m));
+                                  }
+                                }}
+                              >
+                                <option value="Owner">Owner</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Member">Member</option>
+                              </select>
+                              <button
+                                className={`btn-icon-danger ${member.role === 'Owner' ? 'invisible' : ''}`}
+                                title="Remove Member"
+                                onClick={() => {
+                                  if (member.role !== 'Owner') {
+                                    if (window.confirm(`Are you sure you want to remove ${member.name}?`)) {
+                                      setActiveSpaceMembers(prev => prev.filter(m => m.id !== member.id));
+                                    }
+                                  }
+                                }}
+                              >
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              </button>
+                            </>
+                          ) : (
+                            <span className="member-role" style={{ marginRight: '1rem' }}>{member.role}</span>
+                          )}
                         </div>
                       </div>
-                      <div className="member-actions">
-                        <select
-                          className="role-select"
-                          value={member.role}
-                          onChange={(e) => {
-                            const newRole = e.target.value;
-                            setActiveSpaceMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: newRole } : m));
-                          }}
-                        >
-                          <option value="Owner">Owner</option>
-                          <option value="Admin">Admin</option>
-                          <option value="Member">Member</option>
-                        </select>
-                        <button
-                          className="btn-icon-danger"
-                          title="Remove Member"
-                          onClick={() => {
-                            if (window.confirm(`Are you sure you want to remove ${member.name}?`)) {
-                              setActiveSpaceMembers(prev => prev.filter(m => m.id !== member.id));
-                            }
-                          }}
-                        >
-                          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>
@@ -838,23 +972,79 @@ function App() {
                   <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
 
-                <div className="upload-dropzone">
-                  <h2 className="upload-title">Drag files here</h2>
-                  <p className="upload-subtitle">
-                    We support 3D models, images, videos, documents, and more!
-                    <button className="btn-icon-subtle" onClick={() => setIsFileTypesOpen(true)} title="View Supported File Types">
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" /></svg>
-                    </button>
-                  </p>
+                {isUploading ? (
+                  <div className="upload-progress-view">
+                    <h2 className="upload-title" style={{ marginBottom: '1.5rem' }}>Uploading {uploadQueue.length} files</h2>
+                    <div className="upload-list" style={{ maxHeight: '300px', overflowY: 'auto', width: '100%', marginBottom: '1.5rem' }}>
+                      {uploadQueue.map(file => (
+                        <div key={file.id} className="upload-item" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', background: '#f9fafb', padding: '0.75rem', borderRadius: '8px' }}>
+                          <div className="file-icon-sm" style={{ color: file.color }}>
+                            {file.icon === 'image' && <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                            {file.icon === 'doc' && <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+                            {file.icon === 'video' && <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{file.name}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{Math.round(file.progress)}%</span>
+                            </div>
+                            <div style={{ height: '4px', background: '#e5e7eb', borderRadius: '2px', overflow: 'hidden' }}>
+                              <div style={{ width: `${file.progress}%`, height: '100%', background: '#10b981', transition: 'width 0.2s' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-                  <div className="upload-divider">
-                    <span>or</span>
+                    <div className="upload-actions" style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+                      <button
+                        className="btn btn-outline-primary"
+                        onClick={() => { setIsUploading(false); setUploadQueue([]); }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleConfirmUpload}
+                        disabled={uploadQueue.some(f => f.progress < 100)}
+                      >
+                        {uploadQueue.some(f => f.progress < 100) ? 'Uploading...' : 'Done'}
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <div
+                    className="upload-dropzone"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    <h2 className="upload-title">Drag files here</h2>
+                    <p className="upload-subtitle">
+                      We support 3D models, images, videos, documents, and more!
+                      <button className="btn-icon-subtle" onClick={() => setIsFileTypesOpen(true)} title="View Supported File Types">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" /></svg>
+                      </button>
+                    </p>
 
-                  <button className="btn-black-pill">
-                    Select From Your Device
-                  </button>
-                </div>
+                    <div className="upload-divider">
+                      <span>or</span>
+                    </div>
+
+                    <input
+                      type="file"
+                      hidden
+                      ref={fileInputRef}
+                      multiple
+                      onChange={(e) => handleFileUpload(e.target.files)}
+                    />
+                    <button
+                      className="btn-black-pill"
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    >
+                      Select From Your Device
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1076,7 +1266,42 @@ function App() {
           )}
         </main>
       </div >
-    </div >
+      {/* Switch User Simulation Button */}
+      <button
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '20px',
+          zIndex: 9999,
+          padding: '10px 20px',
+          background: '#1f2937',
+          color: 'white',
+          borderRadius: '30px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          cursor: 'pointer',
+          fontWeight: '600',
+          fontSize: '0.875rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s'
+        }}
+        onClick={() => {
+          const currentIndex = activeSpaceMembers.findIndex(m => m.id === currentUserId);
+          const nextIndex = (currentIndex + 1) % activeSpaceMembers.length;
+          setCurrentUserId(activeSpaceMembers[nextIndex].id);
+        }}
+      >
+        <div style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: currentUser.role === 'Owner' ? '#10b981' : '#f59e0b'
+        }}></div>
+        {currentUser.name} ({currentUser.role})
+      </button>
+    </div>
   );
 }
 
