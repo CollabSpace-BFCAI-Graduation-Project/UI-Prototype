@@ -1,22 +1,12 @@
 import React, { useState } from 'react';
 import '../../styles/layout.css';
 
-const Sidebar = ({ activeNav, setActiveNav, currentUser, userStatus, setUserStatus, setIsProfileModalOpen }) => {
+const Sidebar = ({ activeNav, setActiveNav, currentUser, setIsProfileModalOpen }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeSettingTab, setActiveSettingTab] = useState('general');
-    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
 
     const toggleSettings = () => {
         setIsSettingsOpen(!isSettingsOpen);
-    };
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'online': return '#10b981';
-            case 'away': return '#f59e0b';
-            case 'dnd': return '#ef4444';
-            default: return '#94a3b8';
-        }
     };
 
     return (
@@ -36,7 +26,7 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser, userStatus, setUserStat
                         onClick={() => setActiveNav('spaces')}
                         title="Spaces"
                     >
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                     </button>
                     <button
                         className={`sidebar-item ${activeNav === 'chats' ? 'active' : ''}`}
@@ -71,65 +61,12 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser, userStatus, setUserStat
                         className="profile-btn"
                         aria-label="User Profile"
                         title={currentUser.name}
-                        onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                        onClick={() => setIsProfileModalOpen(true)}
                     >
                         <div className="profile-avatar" style={{ background: currentUser.avatarColor }}>
                             {currentUser.initials}
-                            <span
-                                className="status-indicator"
-                                style={{ background: getStatusColor(userStatus) }}
-                            />
                         </div>
                     </button>
-
-                    {/* Status Dropdown */}
-                    {isStatusDropdownOpen && (
-                        <div className="status-dropdown">
-                            <div className="status-dropdown-header">
-                                <span>Set Status</span>
-                                <button className="close-dropdown" onClick={() => setIsStatusDropdownOpen(false)}>
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div className="status-options">
-                                <button
-                                    className={`status-option ${userStatus === 'online' ? 'active' : ''}`}
-                                    onClick={() => { setUserStatus('online'); setIsStatusDropdownOpen(false); }}
-                                >
-                                    <span className="status-dot" style={{ background: '#10b981' }} />
-                                    Online
-                                </button>
-                                <button
-                                    className={`status-option ${userStatus === 'away' ? 'active' : ''}`}
-                                    onClick={() => { setUserStatus('away'); setIsStatusDropdownOpen(false); }}
-                                >
-                                    <span className="status-dot" style={{ background: '#f59e0b' }} />
-                                    Away
-                                </button>
-                                <button
-                                    className={`status-option ${userStatus === 'dnd' ? 'active' : ''}`}
-                                    onClick={() => { setUserStatus('dnd'); setIsStatusDropdownOpen(false); }}
-                                >
-                                    <span className="status-dot" style={{ background: '#ef4444' }} />
-                                    Do Not Disturb
-                                </button>
-                                <button
-                                    className={`status-option ${userStatus === 'offline' ? 'active' : ''}`}
-                                    onClick={() => { setUserStatus('offline'); setIsStatusDropdownOpen(false); }}
-                                >
-                                    <span className="status-dot" style={{ background: '#94a3b8' }} />
-                                    Invisible
-                                </button>
-                            </div>
-                            <div className="status-dropdown-footer">
-                                <button className="view-profile-btn" onClick={() => { setIsProfileModalOpen(true); setIsStatusDropdownOpen(false); }}>
-                                    View Profile
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 

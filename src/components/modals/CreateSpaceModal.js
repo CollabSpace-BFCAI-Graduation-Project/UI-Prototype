@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../../styles/modals.css';
 
 const SPACE_TEMPLATES = [
@@ -22,6 +22,35 @@ const CreateSpaceModal = ({
     setInviteMode,
     handleFinalizeCreate
 }) => {
+    const [inviteLink] = useState(`https://collabspace.app/join/${Math.random().toString(36).substring(2, 10)}`);
+    const [copied, setCopied] = useState(false);
+    const [inviteEmails, setInviteEmails] = useState('');
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(inviteLink);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = inviteLink;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    const handleSendInvites = () => {
+        if (inviteEmails.trim()) {
+            alert(`Invitations sent to: ${inviteEmails}`);
+            handleFinalizeCreate();
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -118,15 +147,24 @@ const CreateSpaceModal = ({
                             <>
                                 <div className="invite-icon-wrapper">
                                     <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                     </svg>
                                 </div>
 
                                 <h2 className="modal-title-center">Invite members with this link</h2>
 
                                 <div className="invite-link-box">
-                                    <span className="invite-url">https://app.v2.gather.town/app/{Math.random().toString(36).substring(7)}</span>
-                                    <button className="btn btn-primary btn-sm">Copy</button>
+                                    <span className="invite-url">{inviteLink}</span>
+                                    <button className={`btn btn-primary btn-sm ${copied ? 'copied' : ''}`} onClick={handleCopyLink}>
+                                        {copied ? (
+                                            <>
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: '4px' }}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Copied!
+                                            </>
+                                        ) : 'Copy'}
+                                    </button>
                                 </div>
 
                                 <div className="invite-actions">
@@ -140,7 +178,7 @@ const CreateSpaceModal = ({
                                         Invite with email
                                     </button>
                                     <button className="btn btn-text" onClick={handleFinalizeCreate}>
-                                        Skip for now
+                                        Done
                                     </button>
                                 </div>
                             </>
@@ -156,10 +194,19 @@ const CreateSpaceModal = ({
                                     <textarea
                                         className="invite-textarea"
                                         placeholder="example1@email.com, example2@email.com..."
+                                        value={inviteEmails}
+                                        onChange={(e) => setInviteEmails(e.target.value)}
                                     ></textarea>
 
                                 </div>
                                 <div className="invite-actions">
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={handleSendInvites}
+                                        disabled={!inviteEmails.trim()}
+                                    >
+                                        Send Invites
+                                    </button>
                                     <button
                                         className="btn btn-outline-primary"
                                         onClick={() => setInviteMode('link')}
@@ -170,7 +217,7 @@ const CreateSpaceModal = ({
                                         Invite with link
                                     </button>
                                     <button className="btn btn-text" onClick={handleFinalizeCreate}>
-                                        Skip for now
+                                        Skip
                                     </button>
                                 </div>
                             </>
@@ -184,3 +231,4 @@ const CreateSpaceModal = ({
 };
 
 export default CreateSpaceModal;
+

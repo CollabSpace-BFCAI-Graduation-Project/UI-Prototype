@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../styles/modals.css';
 
-const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser }) => {
+const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser, onLogout }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         name: currentUser.name,
@@ -9,6 +9,15 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser }) => {
         email: currentUser.email || 'john@example.com',
     });
     const [saving, setSaving] = useState(false);
+
+    // Sync form data when currentUser changes
+    useEffect(() => {
+        setFormData({
+            name: currentUser.name,
+            bio: currentUser.bio || '',
+            email: currentUser.email || 'john@example.com',
+        });
+    }, [currentUser]);
 
     const avatarColors = [
         '#3b82f6', '#10b981', '#f59e0b', '#ec4899',
@@ -21,18 +30,29 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser }) => {
         setSaving(true);
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 500));
-        setCurrentUser(prev => ({
-            ...prev,
+        const updatedUser = {
+            ...currentUser,
             name: formData.name,
             bio: formData.bio,
             initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-        }));
+        };
+        setCurrentUser(updatedUser);
+        localStorage.setItem('collabspace_user', JSON.stringify(updatedUser));
         setSaving(false);
         setIsEditing(false);
     };
 
     const handleColorChange = (color) => {
-        setCurrentUser(prev => ({ ...prev, avatarColor: color }));
+        const updatedUser = { ...currentUser, avatarColor: color };
+        setCurrentUser(updatedUser);
+        localStorage.setItem('collabspace_user', JSON.stringify(updatedUser));
+    };
+
+    const handleSignOut = () => {
+        if (window.confirm('Are you sure you want to sign out?')) {
+            onClose();
+            if (onLogout) onLogout();
+        }
     };
 
     return (
@@ -111,6 +131,7 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser }) => {
                             <div className="profile-display">
                                 <div className="profile-name">{currentUser.name}</div>
                                 <div className="profile-role">{currentUser.role}</div>
+                                {currentUser.email && <div className="profile-email">{currentUser.email}</div>}
                                 {currentUser.bio && <div className="profile-bio">{currentUser.bio}</div>}
                                 <button className="btn btn-secondary edit-btn" onClick={() => setIsEditing(true)}>
                                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +157,7 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </div>
-                        <div className="action-row danger">
+                        <div className="action-row danger" onClick={handleSignOut}>
                             <div className="action-info">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -152,3 +173,4 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser }) => {
 };
 
 export default ProfileModal;
+

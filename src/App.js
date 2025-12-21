@@ -16,6 +16,7 @@ import FileTypesModal from './components/modals/FileTypesModal';
 import ProfileModal from './components/modals/ProfileModal';
 import SearchModal from './components/modals/SearchModal';
 import DeviceSettingsModal from './components/modals/DeviceSettingsModal';
+import LoginPage from './components/auth/LoginPage';
 
 function App() {
   const [activeTab, setActiveTab] = useState('all');
@@ -30,12 +31,20 @@ function App() {
   const [inviteMode, setInviteMode] = useState('link');
   const [activeNav, setActiveNav] = useState('spaces');
   const [activeSpace, setActiveSpace] = useState(null);
-  const [currentUser, setCurrentUser] = useState({
-    id: 1,
-    name: "John Doe",
-    role: "Owner",
-    initials: "JD",
-    avatarColor: "#3b82f6"
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('collabspace_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return { id: 1, name: "John Doe", role: "Owner", initials: "JD", avatarColor: "#3b82f6" };
+      }
+    }
+    return { id: 1, name: "John Doe", role: "Owner", initials: "JD", avatarColor: "#3b82f6" };
+  });
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('collabspace_user') !== null;
   });
 
   const [notifications, setNotifications] = useState([
@@ -108,6 +117,7 @@ function App() {
     { id: 4, name: "Chill Zone", thumbnail: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)", lastVisited: "3 days ago", type: "Social", isOnline: true, userCount: 8, memberCount: 42, isFavorite: false, category: 'MEETING' },
     { id: 5, name: "Town Hall", thumbnail: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", lastVisited: "1 week ago", type: "Event", isOnline: false, userCount: 0, memberCount: 150, isFavorite: false, category: 'MEETING' },
     { id: 6, name: "Dev Standup", thumbnail: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", lastVisited: "1 week ago", type: "Meeting", isOnline: true, userCount: 5, memberCount: 12, isFavorite: true, category: 'TECH' },
+    { id: 7, name: "Learning Hub", thumbnail: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)", lastVisited: "2 weeks ago", type: "Education", isOnline: false, userCount: 0, memberCount: 30, isFavorite: false, category: 'EDUCATION' },
   ]);
 
   const markAsRead = (id) => {
@@ -116,6 +126,20 @@ function App() {
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  // Add notification helper
+  const addNotification = (type, author, text, target) => {
+    const newNotif = {
+      id: Date.now(),
+      type,
+      author,
+      text,
+      target,
+      time: 'Just now',
+      read: false
+    };
+    setNotifications(prev => [newNotif, ...prev]);
   };
 
   const handleJoinSession = () => {
@@ -192,18 +216,31 @@ function App() {
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !activeSpace) return;
+
+    // Parse @mentions
+    const mentionRegex = /@(\w+)/g;
+    const mentions = newMessage.match(mentionRegex) || [];
+
     const msg = {
       id: Date.now(),
-      sender: "You", // In real app, use currentUser.name
+      sender: currentUser.name,
       text: newMessage,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: 'user',
-      avatarColor: currentUser.avatarColor
+      avatarColor: currentUser.avatarColor,
+      mentions: mentions.map(m => m.substring(1)) // Remove @ prefix
     };
     setChatMessages(prev => ({
       ...prev,
       [activeSpace.id]: [...(prev[activeSpace.id] || []), msg]
     }));
+
+    // Create notifications for mentions
+    mentions.forEach(mention => {
+      const username = mention.substring(1);
+      addNotification('mention', currentUser.name, 'mentioned you in', activeSpace.name);
+    });
+
     setNewMessage('');
   };
 
@@ -257,6 +294,43 @@ function App() {
     return matchesSearch && matchesTab && matchesStatus && matchesCategory;
   });
 
+  // Auth handlers
+  const handleLogin = async (email, password, name = null) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (email && password.length >= 4) {
+          const userName = name || email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          const mockUser = {
+            id: Date.now(),
+            name: userName,
+            email,
+            initials: userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+            avatarColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)],
+            role: 'Owner',
+            bio: ''
+          };
+          setCurrentUser(mockUser);
+          setIsLoggedIn(true);
+          localStorage.setItem('collabspace_user', JSON.stringify(mockUser));
+          resolve(mockUser);
+        } else {
+          reject(new Error('Invalid credentials'));
+        }
+      }, 500);
+    });
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('collabspace_user');
+    setCurrentUser({ id: 1, name: "John Doe", role: "Owner", initials: "JD", avatarColor: "#3b82f6" });
+  };
+
+  // Show login page if not authenticated
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   if (isSessionLoading) {
     return (
       <div className="session-loading">
@@ -288,8 +362,6 @@ function App() {
           activeNav={activeNav}
           setActiveNav={setActiveNav}
           currentUser={currentUser}
-          userStatus={userStatus}
-          setUserStatus={setUserStatus}
           setIsProfileModalOpen={setIsProfileModalOpen}
         />
 
@@ -424,6 +496,7 @@ function App() {
             onClose={() => setIsProfileModalOpen(false)}
             currentUser={currentUser}
             setCurrentUser={setCurrentUser}
+            onLogout={handleLogout}
           />
 
           <SearchModal
