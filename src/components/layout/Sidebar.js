@@ -1,12 +1,30 @@
 import React, { useState } from 'react';
 import '../../styles/layout.css';
+import { usersApi, getImageUrl } from '../../services/api';
 
-const Sidebar = ({ activeNav, setActiveNav, currentUser, setIsProfileModalOpen }) => {
+const Sidebar = ({ activeNav, setActiveNav, currentUser, setIsProfileModalOpen, onLogout }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeSettingTab, setActiveSettingTab] = useState('general');
+    const [deleting, setDeleting] = useState(false);
 
     const toggleSettings = () => {
         setIsSettingsOpen(!isSettingsOpen);
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+        if (!confirmed) return;
+
+        setDeleting(true);
+        try {
+            await usersApi.delete(currentUser.id);
+            localStorage.removeItem('collabspace_user');
+            if (onLogout) onLogout();
+        } catch (err) {
+            console.error('Failed to delete account:', err);
+            alert('Failed to delete account. Please try again.');
+        }
+        setDeleting(false);
     };
 
     return (
@@ -65,7 +83,7 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser, setIsProfileModalOpen }
                     >
                         {currentUser.avatarImage ? (
                             <img
-                                src={currentUser.avatarImage}
+                                src={getImageUrl(currentUser.avatarImage)}
                                 alt={currentUser.name}
                                 className="profile-avatar profile-avatar-img"
                             />
@@ -89,6 +107,7 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser, setIsProfileModalOpen }
                                 <li className={activeSettingTab === 'general' ? 'active' : ''} onClick={() => setActiveSettingTab('general')}>General</li>
                                 <li className={activeSettingTab === 'notifications' ? 'active' : ''} onClick={() => setActiveSettingTab('notifications')}>Notifications</li>
                                 <li className={activeSettingTab === 'privacy' ? 'active' : ''} onClick={() => setActiveSettingTab('privacy')}>Privacy</li>
+                                <li className={activeSettingTab === 'account' ? 'active' : ''} onClick={() => setActiveSettingTab('account')}>Account</li>
                             </ul>
                         </div>
                         <div className="settings-content">
@@ -147,6 +166,32 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser, setIsProfileModalOpen }
                                 <div className="settings-section">
                                     <h4>Privacy</h4>
                                     <p>Privacy settings placeholder.</p>
+                                </div>
+                            )}
+                            {activeSettingTab === 'account' && (
+                                <div className="settings-section">
+                                    <h4>Account</h4>
+                                    <div className="setting-group">
+                                        <label>Email</label>
+                                        <p style={{ margin: '0.25rem 0 0 0', color: '#64748b' }}>{currentUser.email}</p>
+                                    </div>
+                                    <div className="setting-group">
+                                        <label>User ID</label>
+                                        <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.75rem', fontFamily: 'monospace' }}>{currentUser.id}</p>
+                                    </div>
+
+                                    <div style={{ marginTop: '2rem', padding: '1rem', background: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                                        <h5 style={{ margin: '0 0 0.5rem 0', color: '#dc2626', fontSize: '0.875rem' }}>Danger Zone</h5>
+                                        <p style={{ margin: '0 0 1rem 0', fontSize: '0.8125rem', color: '#64748b' }}>Permanently delete your account and all data.</p>
+                                        <button
+                                            className="btn btn-danger"
+                                            onClick={handleDeleteAccount}
+                                            disabled={deleting}
+                                            style={{ width: '100%' }}
+                                        >
+                                            {deleting ? 'Deleting...' : 'Delete Account'}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getImageUrl } from '../../../services/api';
 
 // Mock users for mention autocomplete
 const MENTION_USERS = [
@@ -100,7 +101,7 @@ const ChatArea = ({ activeSpace, chatMessages, newMessage, setNewMessage, handle
                             <div key={msg.id} className={msg.type === 'system' ? 'system-message' : 'chat-message-row'}>
                                 {msg.avatarImage ? (
                                     <img
-                                        src={msg.avatarImage}
+                                        src={getImageUrl(msg.avatarImage)}
                                         alt={msg.sender}
                                         className="user-avatar-sm user-avatar-img"
                                     />

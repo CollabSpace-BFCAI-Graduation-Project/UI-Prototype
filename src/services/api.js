@@ -1,5 +1,17 @@
 // API Service - Connects to Express backend
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const IMAGE_BASE = process.env.REACT_APP_IMAGE_URL || 'http://localhost:5000';
+
+// Helper to get full image URL from relative path
+export const getImageUrl = (path) => {
+    if (!path) return null;
+    // If already a full URL, return as-is
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path;
+    }
+    // Prepend the base URL for relative paths
+    return `${IMAGE_BASE}${path}`;
+};
 
 // Helper function for API calls
 const apiCall = async (endpoint, options = {}) => {

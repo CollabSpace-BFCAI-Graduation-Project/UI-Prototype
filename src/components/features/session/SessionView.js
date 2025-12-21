@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '../../../styles/session.css';
+import { getImageUrl } from '../../../services/api';
 
 const SessionView = ({
     activeSpace,
@@ -85,7 +86,7 @@ const SessionView = ({
                                 <p>Online (3)</p>
                                 <div className="member-item">
                                     {currentUser.avatarImage ? (
-                                        <img src={currentUser.avatarImage} alt={currentUser.name} className="avatar-sm avatar-sm-img" />
+                                        <img src={getImageUrl(currentUser.avatarImage)} alt={currentUser.name} className="avatar-sm avatar-sm-img" />
                                     ) : (
                                         <div className="avatar-sm" style={{ background: currentUser.avatarColor }}>{currentUser.initials}</div>
                                     )}

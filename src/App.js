@@ -380,6 +380,7 @@ function App() {
           setActiveNav={setActiveNav}
           currentUser={currentUser}
           setIsProfileModalOpen={setIsProfileModalOpen}
+          onLogout={handleLogout}
         />
 
         <main className="app-main">
