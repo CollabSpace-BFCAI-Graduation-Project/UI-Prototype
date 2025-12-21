@@ -28,6 +28,9 @@ import TeamView from './features/members/TeamView';
 // Feature: Settings
 import SettingsModal from './features/settings/SettingsModal';
 
+// Feature: Session (3D World)
+import UnitySessionView from './features/session/UnitySessionView';
+
 export default function App() {
   // --- Global State ---
   const [currentView, setCurrentView] = useState('dashboard');
@@ -63,7 +66,7 @@ export default function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState('general');
-  const [isUnityLaunching, setIsUnityLaunching] = useState(false);
+  const [unityLoadingProgress, setUnityLoadingProgress] = useState(0);
   const [inviteStatus, setInviteStatus] = useState('idle');
   const [inviteEmail, setInviteEmail] = useState('');
 
@@ -163,12 +166,19 @@ export default function App() {
     return matchesSearch && matchesTab && matchesStatus && matchesCategory;
   });
 
-  const handleLaunchUnity = () => {
-    setIsUnityLaunching(true);
-    setTimeout(() => {
-      setIsUnityLaunching(false);
-      alert("🚀 Launching Unity WebGL Experience!\n(This is a mock interaction)");
-    }, 2500);
+  const enterUnityWorld = () => {
+    // Simulate loading
+    setUnityLoadingProgress(0);
+    setCurrentView('unity-view');
+    const interval = setInterval(() => {
+      setUnityLoadingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 100);
   };
 
   // Invite Logic
@@ -261,7 +271,7 @@ export default function App() {
           <SpaceDetailsView
             activeSpace={activeSpace}
             onBack={() => setCurrentView('dashboard')}
-            onLaunchUnity={handleLaunchUnity}
+            onLaunchUnity={enterUnityWorld}
             onTextChat={() => { setActiveChatSpace(activeSpace); setCurrentView('chat'); }}
             onInvite={() => setIsInviteModalOpen(true)}
             onFilesClick={() => setIsFilesModalOpen(true)}
@@ -287,6 +297,14 @@ export default function App() {
 
         {/* VIEW: TEAM */}
         {currentView === 'team' && <TeamView />}
+
+        {/* VIEW: UNITY SESSION */}
+        {currentView === 'unity-view' && (
+          <UnitySessionView
+            loadingProgress={unityLoadingProgress}
+            onLeave={() => setCurrentView('space-details')}
+          />
+        )}
 
       </main>
 
