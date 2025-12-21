@@ -7,24 +7,25 @@ export default function DashboardView({
     filteredSpaces,
     activeTab,
     setActiveTab,
-    activeStatus,
-    setActiveStatus,
     activeCategory,
     setActiveCategory,
+    activeStatus,
+    setActiveStatus,
     searchQuery,
     setSearchQuery,
     viewMode,
     setViewMode,
-    toggleFavorite,
     enterSpace,
-    onCreateClick
+    onCreateClick,
+    userFavorites,
+    onToggleFavorite
 }) {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">My Spaces</h1>
-                    <p className="text-gray-500 font-medium">Welcome back, Maryam! 👋</p>
+                    <p className="text-gray-500 font-medium">Welcome back! 👋</p>
                 </div>
 
                 <button
@@ -58,7 +59,8 @@ export default function DashboardView({
                             space={space}
                             viewMode={viewMode}
                             onEnter={enterSpace}
-                            onToggleFavorite={toggleFavorite}
+                            isFavorite={userFavorites?.includes(space.id)}
+                            onToggleFavorite={onToggleFavorite}
                         />
                     ))}
                 </div>

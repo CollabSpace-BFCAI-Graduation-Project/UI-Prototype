@@ -5,52 +5,40 @@ export const INITIAL_SPACES = [
         id: 1,
         name: 'The Chill Zone',
         thumbnail: 'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%)',
-        type: 'MEETING',
-        isOnline: true,
-        userCount: 6,
-        memberCount: 24,
-        isFavorite: true,
+        category: 'MEETING',
         description: "Weekly syncs and coffee chats ☕️",
         files: [
-            { id: 'f1', name: 'Q3_Goals.pdf', type: 'doc', user: 'Alex', time: '2h ago', size: '2.4 MB' },
-            { id: 'f2', name: 'Team_Photo.png', type: 'image', user: 'Sarah', time: '5h ago', size: '4.1 MB' }
+            { id: 'f1', name: 'Q3_Goals.pdf', type: 'doc', uploadedBy: 'Alex', time: '2h ago', size: '2.4 MB' },
+            { id: 'f2', name: 'Team_Photo.png', type: 'image', uploadedBy: 'Sarah', time: '5h ago', size: '4.1 MB' }
         ],
         members: [
-            { id: 1, name: 'Maryam', role: 'Owner', avatar: 'bg-pink-200' },
-            { id: 2, name: 'Alex', role: 'Admin', avatar: 'bg-purple-300' },
-            { id: 3, name: 'Sarah', role: 'Member', avatar: 'bg-green-300' },
-            { id: 4, name: 'Mike', role: 'Viewer', avatar: 'bg-blue-300' },
+            { memberId: 'm1', userId: 'u1', name: 'Maryam', username: 'maryam', role: 'Owner', avatarColor: '#ec4899' },
+            { memberId: 'm2', userId: 'u2', name: 'Alex', username: 'alex', role: 'Admin', avatarColor: '#8b5cf6' },
+            { memberId: 'm3', userId: 'u3', name: 'Sarah', username: 'sarah', role: 'Member', avatarColor: '#10b981' },
+            { memberId: 'm4', userId: 'u4', name: 'Mike', username: 'mike', role: 'Viewer', avatarColor: '#3b82f6' },
         ]
     },
     {
         id: 2,
         name: 'Design Studio',
         thumbnail: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-        type: 'CREATIVE',
-        isOnline: false,
-        userCount: 0,
-        memberCount: 8,
-        isFavorite: false,
+        category: 'CREATIVE',
         description: "Where the magic happens ✨",
         files: [
-            { id: 'f3', name: 'Logo_V2.svg', type: 'image', user: 'Mike', time: '1d ago', size: '150 KB' },
-            { id: 'f4', name: 'Brand_Guidelines.pdf', type: 'doc', user: 'Maryam', time: '2d ago', size: '12 MB' },
-            { id: 'f6', name: 'Pitch_Deck.pptx', type: 'presentation', user: 'Maryam', time: '3d ago', size: '5.5 MB' }
+            { id: 'f3', name: 'Logo_V2.svg', type: 'image', uploadedBy: 'Mike', time: '1d ago', size: '150 KB' },
+            { id: 'f4', name: 'Brand_Guidelines.pdf', type: 'doc', uploadedBy: 'Maryam', time: '2d ago', size: '12 MB' },
+            { id: 'f6', name: 'Pitch_Deck.pptx', type: 'presentation', uploadedBy: 'Maryam', time: '3d ago', size: '5.5 MB' }
         ],
         members: [
-            { id: 1, name: 'Maryam', role: 'Owner', avatar: 'bg-pink-200' },
-            { id: 4, name: 'Mike', role: 'Admin', avatar: 'bg-blue-300' },
+            { memberId: 'm5', userId: 'u1', name: 'Maryam', username: 'maryam', role: 'Owner', avatarColor: '#ec4899' },
+            { memberId: 'm6', userId: 'u4', name: 'Mike', username: 'mike', role: 'Admin', avatarColor: '#3b82f6' },
         ]
     },
     {
         id: 3,
         name: 'Dev Bunker',
         thumbnail: 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
-        type: 'TECH',
-        isOnline: true,
-        userCount: 12,
-        memberCount: 42,
-        isFavorite: false,
+        category: 'TECH',
         description: "Code, debug, repeat 🐛",
         files: [],
         members: []
@@ -59,15 +47,11 @@ export const INITIAL_SPACES = [
         id: 4,
         name: 'Library',
         thumbnail: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
-        type: 'EDUCATION',
-        isOnline: false,
-        userCount: 0,
-        memberCount: 156,
-        isFavorite: true,
+        category: 'EDUCATION',
         description: "Resources and docs 📚",
         files: [
-            { id: 'f5', name: 'Onboarding_Video.mp4', type: 'video', user: 'Admin', time: '1w ago', size: '450 MB' },
-            { id: 'f7', name: 'Curriculum_2025.docx', type: 'doc', user: 'Admin', time: '2w ago', size: '1.2 MB' }
+            { id: 'f5', name: 'Onboarding_Video.mp4', type: 'video', uploadedBy: 'Admin', time: '1w ago', size: '450 MB' },
+            { id: 'f7', name: 'Curriculum_2025.docx', type: 'doc', uploadedBy: 'Admin', time: '2w ago', size: '1.2 MB' }
         ],
         members: []
     }
@@ -82,15 +66,15 @@ export const SPACE_TEMPLATES = [
 
 export const INITIAL_CHAT_HISTORY = {
     1: [
-        { id: 1, user: 'Alex', avatarColor: 'bg-purple-300', text: 'Hey team! Anyone up for a coffee break? ☕️', time: '10:42 AM', isMe: false },
-        { id: 2, user: 'Sarah', avatarColor: 'bg-green-300', text: 'I need 5 mins then I am in!', time: '10:43 AM', isMe: false },
+        { id: 1, user: 'Alex', avatarColor: '#8b5cf6', text: 'Hey team! Anyone up for a coffee break? ☕️', time: '10:42 AM', isMe: false },
+        { id: 2, user: 'Sarah', avatarColor: '#10b981', text: 'I need 5 mins then I am in!', time: '10:43 AM', isMe: false },
     ],
     2: [
-        { id: 1, user: 'Mike', avatarColor: 'bg-blue-300', text: 'Just uploaded the new logo vector. Check files tab!', time: '09:00 AM', isMe: false },
-        { id: 2, user: 'Maryam', avatarColor: 'bg-pink-200', text: 'Got it, looks sharp! 🎨', time: '09:15 AM', isMe: true },
+        { id: 1, user: 'Mike', avatarColor: '#3b82f6', text: 'Just uploaded the new logo vector. Check files tab!', time: '09:00 AM', isMe: false },
+        { id: 2, user: 'Maryam', avatarColor: '#ec4899', text: 'Got it, looks sharp! 🎨', time: '09:15 AM', isMe: true },
     ],
     3: [
-        { id: 1, user: 'DevBot', avatarColor: 'bg-gray-300', text: 'Build failed: error in main.js line 42 🐛', time: '11:00 AM', isMe: false },
-        { id: 2, user: 'Alex', avatarColor: 'bg-purple-300', text: 'On it. Looking into the CI pipeline now.', time: '11:02 AM', isMe: false },
+        { id: 1, user: 'DevBot', avatarColor: '#6b7280', text: 'Build failed: error in main.js line 42 🐛', time: '11:00 AM', isMe: false },
+        { id: 2, user: 'Alex', avatarColor: '#8b5cf6', text: 'On it. Looking into the CI pipeline now.', time: '11:02 AM', isMe: false },
     ]
 };

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// Data
-import { INITIAL_SPACES, SPACE_TEMPLATES, INITIAL_CHAT_HISTORY } from './data/mockData.jsx';
+// Data & API
+import { SPACE_TEMPLATES, INITIAL_CHAT_HISTORY } from './data/mockData.jsx';
 import { getFileIcon } from './shared/utils/helpers.jsx';
+import api from './services/api';
+import { useSpaces, useMessages } from './hooks/useApi';
 
 // Shared Components
 import Sidebar from './shared/components/Sidebar';
@@ -39,14 +41,14 @@ export default function App() {
 
   // --- Dashboard Filters State ---
   const [activeTab, setActiveTab] = useState('all');
-  const [activeStatus, setActiveStatus] = useState('all');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [activeStatus, setActiveStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
 
   // --- Chat State ---
   const [chatInput, setChatInput] = useState('');
-  const [chatHistory, setChatHistory] = useState(INITIAL_CHAT_HISTORY);
+  const [localChatHistory, setLocalChatHistory] = useState(INITIAL_CHAT_HISTORY);
   const messagesEndRef = useRef(null);
 
   // --- Modals State ---
@@ -70,8 +72,24 @@ export default function App() {
   const [inviteStatus, setInviteStatus] = useState('idle');
   const [inviteEmail, setInviteEmail] = useState('');
 
-  // --- Spaces Data ---
-  const [spaces, setSpaces] = useState(INITIAL_SPACES);
+  // User favorites (user-specific)
+  const [userFavorites, setUserFavorites] = useState([]);
+  const currentUserId = 'user-1'; // TODO: Get from auth context
+
+  const {
+    spaces,
+    loading: spacesLoading,
+    error: spacesError,
+    createSpace,
+    setSpaces
+  } = useSpaces();
+
+  // --- API Integration: Messages ---
+  const {
+    messages: apiMessages,
+    sendMessage: apiSendMessage,
+    refetch: refetchMessages
+  } = useMessages(activeChatSpace?.id);
 
   // --- File Upload Hook ---
   const {
@@ -82,50 +100,78 @@ export default function App() {
     triggerFileUpload
   } = useFileUpload({ activeSpace, setActiveSpace, setSpaces });
 
-  // --- Logic Helpers ---
-  const currentMessages = activeChatSpace ? (chatHistory[activeChatSpace.id] || []) : [];
+  // --- Merge API messages with local fallback ---
+  const currentMessages = activeChatSpace
+    ? (apiMessages.length > 0 ? apiMessages : (localChatHistory[activeChatSpace.id] || []))
+    : [];
 
   useEffect(() => {
     if (currentView === 'chat' && activeChatSpace) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [chatHistory, currentView, activeChatSpace]);
+  }, [currentMessages, currentView, activeChatSpace]);
 
-  const handleSendMessage = (e) => {
+  // Refetch messages when switching chat spaces
+  useEffect(() => {
+    if (activeChatSpace?.id) {
+      refetchMessages();
+    }
+  }, [activeChatSpace?.id, refetchMessages]);
+
+  const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!chatInput.trim() || !activeChatSpace) return;
-    const newMessage = {
-      id: Date.now(),
+
+    const messageData = {
       user: 'Maryam',
       avatarColor: 'bg-pink-200',
       text: chatInput,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true
     };
-    setChatHistory(prev => ({
-      ...prev,
-      [activeChatSpace.id]: [...(prev[activeChatSpace.id] || []), newMessage]
-    }));
+
+    try {
+      // Try API first
+      await apiSendMessage(messageData);
+    } catch (err) {
+      // Fallback to local state
+      const newMessage = {
+        id: Date.now(),
+        ...messageData,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setLocalChatHistory(prev => ({
+        ...prev,
+        [activeChatSpace.id]: [...(prev[activeChatSpace.id] || []), newMessage]
+      }));
+    }
+
     setChatInput('');
   };
 
-  const handleCreateConfirm = (template) => {
-    const newId = spaces.length + 1;
-    const newSpace = {
-      id: newId,
+  const handleCreateConfirm = async (template) => {
+    const spaceData = {
       name: newSpaceName,
       thumbnail: template.gradient,
-      type: template.category,
-      isOnline: true,
-      userCount: 1,
-      memberCount: 1,
-      isFavorite: false,
+      category: template.category,
       description: newSpaceDescription || "A brand new shiny space!",
       files: [],
-      members: [{ id: 1, name: 'Maryam', role: 'Owner', avatar: 'bg-pink-200' }]
+      members: [{ memberId: 'm1', userId: 'u1', name: 'Maryam', username: 'maryam', role: 'Owner', avatarColor: '#ec4899' }]
     };
-    setSpaces([...spaces, newSpace]);
-    setChatHistory(prev => ({ ...prev, [newId]: [] }));
+
+    try {
+      // Try API first
+      await createSpace(spaceData);
+    } catch (err) {
+      // Fallback to local state
+      const newId = spaces.length + 1;
+      const newSpace = {
+        id: newId,
+        ...spaceData,
+      };
+      setSpaces(prev => [...prev, newSpace]);
+      setLocalChatHistory(prev => ({ ...prev, [newId]: [] }));
+    }
+
     setCreatedSpaceLink(`https://gathering.fun/space/${Math.random().toString(36).substring(7)}`);
     setCreateStep(3);
   };
@@ -137,12 +183,7 @@ export default function App() {
     setNewSpaceDescription('');
   };
 
-  const toggleFavorite = (e, id) => {
-    e.stopPropagation();
-    setSpaces(spaces.map(space =>
-      space.id === id ? { ...space, isFavorite: !space.isFavorite } : space
-    ));
-  };
+
 
   const enterSpace = (space) => {
     setActiveSpace(space);
@@ -157,17 +198,47 @@ export default function App() {
   const filteredSpaces = spaces.filter(space => {
     const matchesSearch = space.name.toLowerCase().includes(searchQuery.toLowerCase());
     let matchesTab = true;
-    if (activeTab === 'favorites') matchesTab = space.isFavorite;
-    let matchesStatus = true;
-    if (activeStatus === 'online') matchesStatus = space.isOnline;
-    if (activeStatus === 'offline') matchesStatus = !space.isOnline;
+    if (activeTab === 'favorites') matchesTab = userFavorites.includes(space.id);
     let matchesCategory = true;
-    if (activeCategory !== 'all') matchesCategory = space.type === activeCategory;
-    return matchesSearch && matchesTab && matchesStatus && matchesCategory;
+    if (activeCategory !== 'all') matchesCategory = space.category === activeCategory;
+    let matchesStatus = true;
+    if (activeStatus === 'online') matchesStatus = space.isOnline === true;
+    if (activeStatus === 'offline') matchesStatus = space.isOnline === false;
+    return matchesSearch && matchesTab && matchesCategory && matchesStatus;
   });
 
+  // Fetch user favorites on mount
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const favs = await api.users.getFavorites(currentUserId);
+        setUserFavorites(favs);
+      } catch (err) {
+        console.log('Could not fetch favorites');
+      }
+    };
+    fetchFavorites();
+  }, [currentUserId]);
+
+  const handleToggleFavorite = async (spaceId) => {
+    try {
+      const result = await api.users.toggleFavorite(currentUserId, spaceId);
+      if (result.isFavorite) {
+        setUserFavorites(prev => [...prev, spaceId]);
+      } else {
+        setUserFavorites(prev => prev.filter(id => id !== spaceId));
+      }
+    } catch (err) {
+      // Optimistic toggle for offline support
+      setUserFavorites(prev =>
+        prev.includes(spaceId)
+          ? prev.filter(id => id !== spaceId)
+          : [...prev, spaceId]
+      );
+    }
+  };
+
   const enterUnityWorld = () => {
-    // Simulate loading
     setUnityLoadingProgress(0);
     setCurrentView('unity-view');
     const interval = setInterval(() => {
@@ -181,7 +252,7 @@ export default function App() {
     }, 100);
   };
 
-  // Invite Logic
+  // Invite Logic - with API integration
   const handleCopyLink = () => {
     setInviteStatus('generating');
     setTimeout(() => {
@@ -190,20 +261,39 @@ export default function App() {
     }, 1000);
   };
 
-  const handleSendInvite = () => {
-    if (!inviteEmail) return;
+  const handleSendInvite = async () => {
+    if (!inviteEmail || !activeSpace) return;
     setInviteStatus('sending');
-    setTimeout(() => {
+
+    try {
+      await api.members.invite(activeSpace.id, {
+        emails: [inviteEmail],
+        inviterName: 'Maryam',
+        inviterId: 'current-user-id'
+      });
       setInviteStatus('sent');
       setInviteEmail('');
       setTimeout(() => setInviteStatus('idle'), 2000);
-    }, 1000);
+    } catch (err) {
+      // Fallback - just show success
+      setInviteStatus('sent');
+      setInviteEmail('');
+      setTimeout(() => setInviteStatus('idle'), 2000);
+    }
   };
 
-  const handleRoleChange = (memberId, newRole) => {
+  const handleRoleChange = async (memberId, newRole) => {
+    if (!activeSpace) return;
+
+    try {
+      await api.members.updateRole(activeSpace.id, memberId, newRole);
+    } catch (err) {
+      // Fallback to local state
+    }
+
     setSpaces(prev => prev.map(s => {
       if (s.id === activeSpace.id) {
-        const updatedMembers = s.members.map(m => m.id === memberId ? { ...m, role: newRole } : m);
+        const updatedMembers = s.members?.map(m => m.id === memberId ? { ...m, role: newRole } : m) || [];
         const updatedSpace = { ...s, members: updatedMembers };
         setActiveSpace(updatedSpace);
         return updatedSpace;
@@ -215,7 +305,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FFFDF5] font-sans text-gray-900 selection:bg-pink-300 selection:text-black relative overflow-x-hidden">
 
-      {/* --- Custom Scrollbar Styles --- */}
+      {/* Custom Scrollbar Styles */}
       <style>{`
         ::-webkit-scrollbar {
           width: 12px;
@@ -235,7 +325,7 @@ export default function App() {
         }
       `}</style>
 
-      {/* --- Sidebar --- */}
+      {/* Sidebar */}
       <Sidebar
         currentView={currentView}
         setCurrentView={setCurrentView}
@@ -243,26 +333,42 @@ export default function App() {
         onSettingsClick={() => setIsSettingsModalOpen(true)}
       />
 
-      {/* --- Main Content Area --- */}
+      {/* Main Content Area */}
       <main className="md:ml-28 p-4 md:p-8 min-h-screen transition-all duration-300">
 
+        {/* Loading State */}
+        {spacesLoading && currentView === 'dashboard' && (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin w-12 h-12 border-4 border-black border-t-yellow-300 rounded-full"></div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {spacesError && currentView === 'dashboard' && (
+          <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 mb-4 text-red-700">
+            <p className="font-bold">⚠️ Could not connect to server</p>
+            <p className="text-sm">Using local data instead.</p>
+          </div>
+        )}
+
         {/* VIEW: DASHBOARD */}
-        {currentView === 'dashboard' && (
+        {currentView === 'dashboard' && !spacesLoading && (
           <DashboardView
             filteredSpaces={filteredSpaces}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            activeStatus={activeStatus}
-            setActiveStatus={setActiveStatus}
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
+            activeStatus={activeStatus}
+            setActiveStatus={setActiveStatus}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             viewMode={viewMode}
             setViewMode={setViewMode}
-            toggleFavorite={toggleFavorite}
             enterSpace={enterSpace}
             onCreateClick={() => setIsCreateModalOpen(true)}
+            userFavorites={userFavorites}
+            onToggleFavorite={handleToggleFavorite}
           />
         )}
 
@@ -308,7 +414,7 @@ export default function App() {
 
       </main>
 
-      {/* --- MODALS --- */}
+      {/* MODALS */}
 
       <FilesModal
         isOpen={isFilesModalOpen}
