@@ -229,6 +229,10 @@ function App() {
         activeSpace={activeSpace}
         currentUser={currentUser}
         handleLeaveSession={handleLeaveSession}
+        chatMessages={chatMessages}
+        newMessage={newMessage}
+        setNewMessage={setNewMessage}
+        handleSendMessage={handleSendMessage}
       />
     );
   }
