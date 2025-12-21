@@ -17,6 +17,7 @@ import ProfileModal from './components/modals/ProfileModal';
 import SearchModal from './components/modals/SearchModal';
 import DeviceSettingsModal from './components/modals/DeviceSettingsModal';
 import LoginPage from './components/auth/LoginPage';
+import { authApi, spacesApi, notificationsApi, messagesApi } from './services/api';
 
 function App() {
   const [activeTab, setActiveTab] = useState('all');
@@ -47,13 +48,7 @@ function App() {
     return localStorage.getItem('collabspace_user') !== null;
   });
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'mention', author: 'Sarah Chen', text: 'mentioned you in', target: 'Design Weekly', time: '10 mins ago', read: false },
-    { id: 2, type: 'session', author: 'Tom Wilson', text: 'started a session in', target: 'Project Alpha', time: '1 hour ago', action: 'Join Session', read: false },
-    { id: 3, type: 'file', author: 'Mike Ross', text: 'uploaded', target: 'Specs_v2.pdf', time: '2 hours ago', read: true },
-    { id: 4, type: 'invite', author: 'System', text: 'You were added to', target: 'Town Hall', time: '1 day ago', read: true },
-    { id: 5, type: 'system', author: 'Security', text: 'New login detected from Chrome on Windows', time: '2 days ago', read: true },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const [chatMessages, setChatMessages] = useState({
     1: [
@@ -110,15 +105,22 @@ function App() {
     { name: 'Meeting_Notes.docx', type: 'DOCX', size: '15 KB', time: '3d ago', icon: 'doc', color: '#3b82f6' },
   ]);
 
-  const [spaces, setSpaces] = useState([
-    { id: 1, name: "Acme Corp HQ", thumbnail: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", lastVisited: "2 mins ago", type: "Office", isOnline: true, userCount: 12, memberCount: 24, isFavorite: true, category: 'TECH' },
-    { id: 2, name: "Design Weekly", thumbnail: "linear-gradient(135deg, #10b981 0%, #059669 100%)", lastVisited: "2 hours ago", type: "Meeting", isOnline: false, userCount: 0, memberCount: 8, isFavorite: false, category: 'CREATIVE' },
-    { id: 3, name: "Project Alpha", thumbnail: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", lastVisited: "1 day ago", type: "Project", isOnline: true, userCount: 3, memberCount: 15, isFavorite: true, category: 'TECH' },
-    { id: 4, name: "Chill Zone", thumbnail: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)", lastVisited: "3 days ago", type: "Social", isOnline: true, userCount: 8, memberCount: 42, isFavorite: false, category: 'MEETING' },
-    { id: 5, name: "Town Hall", thumbnail: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", lastVisited: "1 week ago", type: "Event", isOnline: false, userCount: 0, memberCount: 150, isFavorite: false, category: 'MEETING' },
-    { id: 6, name: "Dev Standup", thumbnail: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", lastVisited: "1 week ago", type: "Meeting", isOnline: true, userCount: 5, memberCount: 12, isFavorite: true, category: 'TECH' },
-    { id: 7, name: "Learning Hub", thumbnail: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)", lastVisited: "2 weeks ago", type: "Education", isOnline: false, userCount: 0, memberCount: 30, isFavorite: false, category: 'EDUCATION' },
-  ]);
+  const [spaces, setSpaces] = useState([]);
+
+  // Fetch data when logged in
+  useEffect(() => {
+    if (isLoggedIn && currentUser?.id) {
+      // Fetch spaces
+      spacesApi.getAll()
+        .then(data => setSpaces(data))
+        .catch(err => console.error('Failed to fetch spaces:', err));
+
+      // Fetch notifications
+      notificationsApi.getAll(currentUser.id)
+        .then(data => setNotifications(data))
+        .catch(err => console.error('Failed to fetch notifications:', err));
+    }
+  }, [isLoggedIn, currentUser?.id]);
 
   const markAsRead = (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
@@ -214,53 +216,73 @@ function App() {
     handleFileUpload(e.dataTransfer.files);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !activeSpace) return;
 
     // Parse @mentions
     const mentionRegex = /@(\w+)/g;
     const mentions = newMessage.match(mentionRegex) || [];
 
-    const msg = {
-      id: Date.now(),
+    const msgData = {
       sender: currentUser.name,
+      senderId: currentUser.id,
       text: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: 'user',
       avatarColor: currentUser.avatarColor,
-      mentions: mentions.map(m => m.substring(1)) // Remove @ prefix
+      mentions: mentions.map(m => m.substring(1))
     };
-    setChatMessages(prev => ({
-      ...prev,
-      [activeSpace.id]: [...(prev[activeSpace.id] || []), msg]
-    }));
 
-    // Create notifications for mentions
-    mentions.forEach(mention => {
-      const username = mention.substring(1);
-      addNotification('mention', currentUser.name, 'mentioned you in', activeSpace.name);
-    });
+    // Save to backend
+    try {
+      const savedMsg = await messagesApi.send(activeSpace.id, msgData);
+      setChatMessages(prev => ({
+        ...prev,
+        [activeSpace.id]: [...(prev[activeSpace.id] || []), savedMsg]
+      }));
+
+      // Create notifications for mentions
+      mentions.forEach(mention => {
+        notificationsApi.create({
+          userId: currentUser.id,
+          type: 'mention',
+          author: currentUser.name,
+          text: 'mentioned you in',
+          target: activeSpace.name
+        });
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      // Fallback to local
+      const msg = { id: Date.now(), ...msgData, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+      setChatMessages(prev => ({
+        ...prev,
+        [activeSpace.id]: [...(prev[activeSpace.id] || []), msg]
+      }));
+    }
 
     setNewMessage('');
   };
 
-  const handleCreateConfirm = (template) => {
-    // Logic to create space from template
-    const newSpace = {
-      id: Date.now(),
+  const handleCreateConfirm = async (template) => {
+    const spaceData = {
       name: newSpaceName,
       thumbnail: template.gradient,
-      lastVisited: "Just now",
-      type: template.category, // Simplification
-      isOnline: true,
-      userCount: 0,
-      memberCount: 1,
-      isFavorite: false,
+      type: template.category,
       category: template.category,
-      description: newSpaceDescription
+      description: newSpaceDescription,
+      ownerId: currentUser.id
     };
-    setSpaces(prev => [newSpace, ...prev]);
-    setCreateStep(3); // Go to Invite step
+
+    try {
+      const newSpace = await spacesApi.create(spaceData);
+      setSpaces(prev => [newSpace, ...prev]);
+    } catch (err) {
+      console.error('Failed to create space:', err);
+      // Fallback to local
+      const localSpace = { id: Date.now(), ...spaceData, lastVisited: 'Just now', isOnline: true, userCount: 0, memberCount: 1, isFavorite: false };
+      setSpaces(prev => [localSpace, ...prev]);
+    }
+    setCreateStep(3);
   };
 
   const handleFinalizeCreate = () => {
@@ -296,28 +318,22 @@ function App() {
 
   // Auth handlers
   const handleLogin = async (email, password, name = null) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (email && password.length >= 4) {
-          const userName = name || email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          const mockUser = {
-            id: Date.now(),
-            name: userName,
-            email,
-            initials: userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-            avatarColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)],
-            role: 'Owner',
-            bio: ''
-          };
-          setCurrentUser(mockUser);
-          setIsLoggedIn(true);
-          localStorage.setItem('collabspace_user', JSON.stringify(mockUser));
-          resolve(mockUser);
-        } else {
-          reject(new Error('Invalid credentials'));
-        }
-      }, 500);
-    });
+    try {
+      let user;
+      if (name) {
+        // Signup
+        user = await authApi.register(name, email, password);
+      } else {
+        // Login
+        user = await authApi.login(email, password);
+      }
+      setCurrentUser(user);
+      setIsLoggedIn(true);
+      localStorage.setItem('collabspace_user', JSON.stringify(user));
+      return user;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const handleLogout = () => {
