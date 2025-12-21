@@ -125,27 +125,6 @@ export const notificationsApi = {
         }),
 };
 
-// ============ FRIENDS API ============
-export const friendsApi = {
-    getAll: (userId) => apiCall(`/friends${userId ? `?userId=${userId}` : ''}`),
-
-    sendRequest: (data) =>
-        apiCall('/friends', {
-            method: 'POST',
-            body: JSON.stringify(data),
-        }),
-
-    acceptRequest: (id) =>
-        apiCall(`/friends/${id}/accept`, {
-            method: 'PUT',
-        }),
-
-    remove: (id) =>
-        apiCall(`/friends/${id}`, {
-            method: 'DELETE',
-        }),
-};
-
 // ============ MESSAGES API ============
 export const messagesApi = {
     getBySpace: (spaceId) => apiCall(`/messages/${spaceId}`),
@@ -174,7 +153,6 @@ export default {
     users: usersApi,
     spaces: spacesApi,
     notifications: notificationsApi,
-    friends: friendsApi,
     messages: messagesApi,
     files: filesApi,
 };

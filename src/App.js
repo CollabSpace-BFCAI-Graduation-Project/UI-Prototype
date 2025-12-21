@@ -8,7 +8,6 @@ import ChatView from './components/features/chat/ChatView';
 import SessionView from './components/features/session/SessionView';
 import NotificationsView from './components/features/notifications/NotificationsView';
 import HomeView from './components/features/home/HomeView';
-import FriendsView from './components/features/friends/FriendsView';
 import CreateSpaceModal from './components/modals/CreateSpaceModal';
 import MembersModal from './components/modals/MembersModal';
 import UploadModal from './components/modals/UploadModal';
@@ -407,10 +406,6 @@ function App() {
               setActiveSpace={setActiveSpace}
               setIsCreateModalOpen={setIsCreateModalOpen}
             />
-          )}
-
-          {activeNav === 'friends' && (
-            <FriendsView currentUser={currentUser} />
           )}
 
           {activeNav === 'notifications' && (
