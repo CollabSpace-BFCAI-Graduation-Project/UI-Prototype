@@ -7,10 +7,15 @@ import SpaceDetails from './components/features/space/SpaceDetails';
 import ChatView from './components/features/chat/ChatView';
 import SessionView from './components/features/session/SessionView';
 import NotificationsView from './components/features/notifications/NotificationsView';
+import HomeView from './components/features/home/HomeView';
+import FriendsView from './components/features/friends/FriendsView';
 import CreateSpaceModal from './components/modals/CreateSpaceModal';
 import MembersModal from './components/modals/MembersModal';
 import UploadModal from './components/modals/UploadModal';
 import FileTypesModal from './components/modals/FileTypesModal';
+import ProfileModal from './components/modals/ProfileModal';
+import SearchModal from './components/modals/SearchModal';
+import DeviceSettingsModal from './components/modals/DeviceSettingsModal';
 
 function App() {
   const [activeTab, setActiveTab] = useState('all');
@@ -69,6 +74,24 @@ function App() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
 
+  // New modal states
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
+  const [userStatus, setUserStatus] = useState('online'); // online, away, dnd, offline
+
+  // Keyboard shortcut for search (Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchModalOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Mock Data
   const [files, setFiles] = useState([
     { name: 'Project_Specs.pdf', type: 'PDF', size: '2.4 MB', time: '2h ago', icon: 'doc', color: '#ef4444' },
@@ -96,6 +119,12 @@ function App() {
   };
 
   const handleJoinSession = () => {
+    // Show device settings modal first
+    setIsDeviceSettingsOpen(true);
+  };
+
+  const handleConfirmJoinSession = () => {
+    setIsDeviceSettingsOpen(false);
     setIsSessionLoading(true);
     // Simulate loading delay
     setTimeout(() => {
@@ -259,6 +288,9 @@ function App() {
           activeNav={activeNav}
           setActiveNav={setActiveNav}
           currentUser={currentUser}
+          userStatus={userStatus}
+          setUserStatus={setUserStatus}
+          setIsProfileModalOpen={setIsProfileModalOpen}
         />
 
         <main className="app-main">
@@ -277,10 +309,18 @@ function App() {
           )}
 
           {activeNav === 'home' && (
-            <div className="empty-state" style={{ marginTop: '20vh' }}>
-              <h2>Home View Placeholder</h2>
-              <button className="btn btn-primary" onClick={() => setActiveNav('spaces')}>Go to Spaces</button>
-            </div>
+            <HomeView
+              currentUser={currentUser}
+              spaces={spaces}
+              notifications={notifications}
+              setActiveNav={setActiveNav}
+              setActiveSpace={setActiveSpace}
+              setIsCreateModalOpen={setIsCreateModalOpen}
+            />
+          )}
+
+          {activeNav === 'friends' && (
+            <FriendsView currentUser={currentUser} />
           )}
 
           {activeNav === 'notifications' && (
@@ -377,6 +417,28 @@ function App() {
           <FileTypesModal
             isOpen={isFileTypesOpen}
             onClose={() => setIsFileTypesOpen(false)}
+          />
+
+          <ProfileModal
+            isOpen={isProfileModalOpen}
+            onClose={() => setIsProfileModalOpen(false)}
+            currentUser={currentUser}
+            setCurrentUser={setCurrentUser}
+          />
+
+          <SearchModal
+            isOpen={isSearchModalOpen}
+            onClose={() => setIsSearchModalOpen(false)}
+            spaces={spaces}
+            activeSpaceMembers={activeSpaceMembers}
+            setActiveSpace={setActiveSpace}
+            setActiveNav={setActiveNav}
+          />
+
+          <DeviceSettingsModal
+            isOpen={isDeviceSettingsOpen}
+            onClose={() => setIsDeviceSettingsOpen(false)}
+            onJoin={handleConfirmJoinSession}
           />
 
         </main>
