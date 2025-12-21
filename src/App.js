@@ -16,7 +16,7 @@ import ProfileModal from './components/modals/ProfileModal';
 import SearchModal from './components/modals/SearchModal';
 import DeviceSettingsModal from './components/modals/DeviceSettingsModal';
 import LoginPage from './components/auth/LoginPage';
-import { authApi, spacesApi, notificationsApi, messagesApi } from './services/api';
+import { authApi, spacesApi, notificationsApi, messagesApi, spaceMembersApi } from './services/api';
 
 function App() {
   const [activeTab, setActiveTab] = useState('all');
@@ -60,13 +60,7 @@ function App() {
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [activeDetailTab, setActiveDetailTab] = useState('files');
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
-  const [activeSpaceMembers, setActiveSpaceMembers] = useState([
-    { id: 1, name: "John Doe", role: "Owner", initials: "JD", avatarColor: "#3b82f6" },
-    { id: 2, name: "Sarah Chen", role: "Admin", initials: "SC", avatarColor: "#10b981" },
-    { id: 3, name: "Mike Ross", role: "Member", initials: "MR", avatarColor: "#f59e0b" },
-    { id: 4, name: "Jessica Day", role: "Member", initials: "JD", avatarColor: "#ec4899" },
-    { id: 5, name: "Tom Wilson", role: "Member", initials: "TW", avatarColor: "#8b5cf6" },
-  ]);
+  const [activeSpaceMembers, setActiveSpaceMembers] = useState([]);
   const [memberRoleFilter, setMemberRoleFilter] = useState('All');
   const [activeFileFilter, setActiveFileFilter] = useState('all');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -121,6 +115,17 @@ function App() {
     }
   }, [isLoggedIn, currentUser?.id]);
 
+  // Fetch members when activeSpace changes
+  useEffect(() => {
+    if (activeSpace?.id) {
+      spaceMembersApi.getBySpace(activeSpace.id)
+        .then(data => setActiveSpaceMembers(data))
+        .catch(err => console.error('Failed to fetch space members:', err));
+    } else {
+      setActiveSpaceMembers([]);
+    }
+  }, [activeSpace?.id]);
+
   const markAsRead = (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
@@ -159,9 +164,7 @@ function App() {
   };
 
   const handleLeaveSession = () => {
-    if (window.confirm("Are you sure you want to leave the session?")) {
-      setIsSessionActive(false);
-    }
+    setIsSessionActive(false);
   };
 
   const handleFileUpload = (uploadedFiles) => {
@@ -272,10 +275,12 @@ function App() {
       description: newSpaceDescription,
       ownerId: currentUser.id
     };
+    console.log(spaceData);
 
     try {
       const newSpace = await spacesApi.create(spaceData);
       setSpaces(prev => [newSpace, ...prev]);
+      setActiveSpace(newSpace);
     } catch (err) {
       console.error('Failed to create space:', err);
       // Fallback to local
@@ -370,6 +375,18 @@ function App() {
       />
     );
   }
+
+  const handleInvite = async (emails) => {
+    if (activeSpace?.id) {
+      try {
+        const result = await spaceMembersApi.invite(activeSpace.id, emails, currentUser.name);
+        alert(`Invitations sent! Added ${result.added} new members.`);
+      } catch (err) {
+        console.error('Failed to invite:', err);
+        alert('Failed to send invitations.');
+      }
+    }
+  };
 
   return (
     <div className="App">
@@ -469,6 +486,8 @@ function App() {
             inviteMode={inviteMode}
             setInviteMode={setInviteMode}
             handleFinalizeCreate={handleFinalizeCreate}
+            activeSpace={activeSpace}
+            onInvite={handleInvite}
           />
 
           <MembersModal

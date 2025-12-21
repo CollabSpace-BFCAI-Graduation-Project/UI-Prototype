@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { spaceMembersApi } from '../../services/api';
 import '../../styles/modals.css';
 
 const MembersModal = ({
@@ -13,6 +14,14 @@ const MembersModal = ({
     setCreateStep,
     setInviteMode
 }) => {
+    const [memberSearch, setMemberSearch] = useState('');
+
+    // Find permission for current user in this space
+    const currentMember = activeSpaceMembers.find(m => m.userId === currentUser.id);
+    const userRole = currentMember ? currentMember.role : 'Member';
+    const isOwnerOrAdmin = userRole === 'Owner' || userRole === 'Admin';
+    const isOwner = userRole === 'Owner';
+
     if (!isOpen) return null;
 
     return (
@@ -21,7 +30,7 @@ const MembersModal = ({
                 <div className="modal-header header-bordered">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <h2 className="modal-title-sm">
-                            {currentUser.role === 'Owner' || currentUser.role === 'Admin' ? 'Manage Members' : 'Members'}
+                            {isOwnerOrAdmin ? 'Manage Members' : 'Members'}
                         </h2>
                         <span className="member-count-badge">{activeSpaceMembers.length} Members</span>
                     </div>
@@ -35,7 +44,13 @@ const MembersModal = ({
                         <svg className="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <input type="text" className="search-input" placeholder="Search members" />
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Search members"
+                            value={memberSearch}
+                            onChange={(e) => setMemberSearch(e.target.value)}
+                        />
                     </div>
 
                     <select
@@ -51,7 +66,7 @@ const MembersModal = ({
                     </select>
 
                     {/* Conditionally render the Invite New Members button */}
-                    {(currentUser.role === 'Owner' || currentUser.role === 'Admin') && (
+                    {isOwnerOrAdmin && (
                         <button className="btn btn-primary-sm" onClick={() => { onClose(); setIsCreateModalOpen(true); setCreateStep(3); setInviteMode('email'); }} style={{ marginLeft: '10px', padding: '0.5rem' }}>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         </button>
@@ -61,6 +76,7 @@ const MembersModal = ({
                 <div className="modal-body scrollable members-list-view">
                     {activeSpaceMembers
                         .filter(m => memberRoleFilter === 'All' || m.role === memberRoleFilter)
+                        .filter(m => m.name.toLowerCase().includes(memberSearch.toLowerCase()))
                         .map(member => (
                             <div key={member.id} className="member-row-large">
                                 <div className="member-info-large">
@@ -71,24 +87,38 @@ const MembersModal = ({
                                     </div>
                                 </div>
                                 <div className="member-actions">
-                                    {currentUser.role === 'Owner' || currentUser.role === 'Admin' ? (
+                                    {isOwnerOrAdmin ? (
                                         <>
                                             <select
                                                 className="role-select"
                                                 value={member.role}
-                                                disabled={member.role === 'Owner'}
-                                                onChange={(e) => {
+                                                disabled={!isOwner && member.role === 'Owner'} // Only owner can change owner role
+                                                onChange={async (e) => {
                                                     const newRole = e.target.value;
-                                                    if (newRole === 'Owner') {
-                                                        if (window.confirm(`Transfer ownership to ${member.name}? The current owner will become an Admin.`)) {
-                                                            setActiveSpaceMembers(prev => prev.map(m => {
-                                                                if (m.id === member.id) return { ...m, role: 'Owner' };
-                                                                if (m.role === 'Owner') return { ...m, role: 'Admin' };
-                                                                return m;
-                                                            }));
+                                                    try {
+                                                        if (newRole === 'Owner') {
+                                                            if (window.confirm(`Transfer ownership to ${member.name}? The current owner will become an Admin.`)) {
+                                                                // 1. Demote current owner to Admin
+                                                                const currentOwner = activeSpaceMembers.find(m => m.role === 'Owner');
+                                                                if (currentOwner) {
+                                                                    await spaceMembersApi.updateRole(currentOwner.spaceId, currentOwner.memberId, 'Admin');
+                                                                }
+                                                                // 2. Promote new owner
+                                                                await spaceMembersApi.updateRole(member.spaceId, member.memberId, 'Owner');
+
+                                                                setActiveSpaceMembers(prev => prev.map(m => {
+                                                                    if (m.id === member.id) return { ...m, role: 'Owner' };
+                                                                    if (m.role === 'Owner') return { ...m, role: 'Admin' };
+                                                                    return m;
+                                                                }));
+                                                            }
+                                                        } else {
+                                                            await spaceMembersApi.updateRole(member.spaceId, member.memberId, newRole);
+                                                            setActiveSpaceMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: newRole } : m));
                                                         }
-                                                    } else {
-                                                        setActiveSpaceMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: newRole } : m));
+                                                    } catch (err) {
+                                                        console.error('Failed to update role:', err);
+                                                        alert('Failed to update role');
                                                     }
                                                 }}
                                             >
@@ -97,12 +127,18 @@ const MembersModal = ({
                                                 <option value="Member">Member</option>
                                             </select>
                                             <button
-                                                className={`btn-icon-danger ${member.role === 'Owner' ? 'invisible' : ''}`}
+                                                className={`btn-icon-danger ${member.role === 'Owner' || member.id === currentMember?.id ? 'invisible' : ''}`}
                                                 title="Remove Member"
-                                                onClick={() => {
+                                                onClick={async () => {
                                                     if (member.role !== 'Owner') {
                                                         if (window.confirm(`Are you sure you want to remove ${member.name}?`)) {
-                                                            setActiveSpaceMembers(prev => prev.filter(m => m.id !== member.id));
+                                                            try {
+                                                                await spaceMembersApi.removeMember(member.spaceId, member.memberId);
+                                                                setActiveSpaceMembers(prev => prev.filter(m => m.id !== member.id));
+                                                            } catch (err) {
+                                                                console.error('Failed to remove member:', err);
+                                                                alert('Failed to remove member');
+                                                            }
                                                         }
                                                     }
                                                 }}

@@ -104,6 +104,36 @@ export const spacesApi = {
         }),
 };
 
+// ============ SPACE MEMBERS API ============
+export const spaceMembersApi = {
+    getBySpace: (spaceId) => apiCall(`/spaces/${spaceId}/members`),
+
+    getByUser: (userId) => apiCall(`/users/${userId}/spaces`),
+
+    addMember: (spaceId, userId, role) =>
+        apiCall(`/spaces/${spaceId}/members`, {
+            method: 'POST',
+            body: JSON.stringify({ userId, role }),
+        }),
+
+    updateRole: (spaceId, memberId, role) =>
+        apiCall(`/spaces/${spaceId}/members/${memberId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ role }),
+        }),
+
+    removeMember: (spaceId, memberId) =>
+        apiCall(`/spaces/${spaceId}/members/${memberId}`, {
+            method: 'DELETE',
+        }),
+
+    invite: (spaceId, emails, inviterName) =>
+        apiCall(`/spaces/${spaceId}/invite`, {
+            method: 'POST',
+            body: JSON.stringify({ emails, inviterName }),
+        }),
+};
+
 // ============ NOTIFICATIONS API ============
 export const notificationsApi = {
     getAll: (userId) => apiCall(`/notifications${userId ? `?userId=${userId}` : ''}`),
@@ -152,6 +182,7 @@ export default {
     auth: authApi,
     users: usersApi,
     spaces: spacesApi,
+    spaceMembers: spaceMembersApi,
     notifications: notificationsApi,
     messages: messagesApi,
     files: filesApi,

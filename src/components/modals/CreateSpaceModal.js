@@ -20,7 +20,9 @@ const CreateSpaceModal = ({
     handleCreateConfirm,
     inviteMode,
     setInviteMode,
-    handleFinalizeCreate
+    handleFinalizeCreate,
+    activeSpace,
+    onInvite
 }) => {
     const [inviteLink] = useState(`https://collabspace.app/join/${Math.random().toString(36).substring(2, 10)}`);
     const [copied, setCopied] = useState(false);
@@ -46,8 +48,22 @@ const CreateSpaceModal = ({
 
     const handleSendInvites = () => {
         if (inviteEmails.trim()) {
-            alert(`Invitations sent to: ${inviteEmails}`);
-            handleFinalizeCreate();
+            // Parse emails: split by comma, semicolon, space, newline
+            const emails = inviteEmails
+                .split(/[,;\s\n]+/)
+                .map(e => e.trim())
+                .filter(e => e && e.includes('@')); // Basic validation
+
+            if (emails.length > 0) {
+                if (onInvite) {
+                    onInvite(emails);
+                } else {
+                    alert(`Invitations sent to: ${emails.join(', ')}`);
+                }
+                handleFinalizeCreate();
+            } else {
+                alert('Please enter valid email addresses');
+            }
         }
     };
 

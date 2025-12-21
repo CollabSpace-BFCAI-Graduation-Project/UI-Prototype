@@ -1,18 +1,26 @@
 import React from 'react';
 
 const SpaceInfoSidebar = ({ activeSpaceMembers, currentUser, setIsMembersModalOpen }) => {
+    // Find permission for current user in this space
+    const currentMember = activeSpaceMembers.find(m => m.userId === currentUser.id);
+    const userRole = currentMember ? currentMember.role : 'Member';
+    const isOwnerOrAdmin = userRole === 'Owner' || userRole === 'Admin';
+
+    // Find space owner
+    const spaceOwner = activeSpaceMembers.find(m => m.role === 'Owner');
+    console.log(activeSpaceMembers);
     return (
         <div className="details-sidebar">
             <div className="info-card">
                 <h3 className="info-card-title">WORKSPACE INFO</h3>
                 <div className="info-row">
                     <span className="info-label">Owner</span>
-                    {activeSpaceMembers.find(m => m.role === 'Owner') && (
+                    {spaceOwner && (
                         <div className="user-row">
-                            <div className="user-avatar-sm" style={{ background: activeSpaceMembers.find(m => m.role === 'Owner').avatarColor }}>
-                                {activeSpaceMembers.find(m => m.role === 'Owner').initials}
+                            <div className="user-avatar-sm" style={{ background: spaceOwner.avatarColor || '#3b82f6' }}>
+                                {spaceOwner.initials || spaceOwner.name.charAt(0)}
                             </div>
-                            <span>{activeSpaceMembers.find(m => m.role === 'Owner').name}</span>
+                            <span>{spaceOwner.name}</span>
                         </div>
                     )}
                 </div>
@@ -32,7 +40,7 @@ const SpaceInfoSidebar = ({ activeSpaceMembers, currentUser, setIsMembersModalOp
             <div className="info-card">
                 <div className="info-card-header">
                     <h3 className="info-card-title">MEMBERS ({activeSpaceMembers.length})</h3>
-                    {(currentUser.role === 'Owner' || currentUser.role === 'Admin') && (
+                    {isOwnerOrAdmin && (
                         <button className="btn-link" onClick={() => { setIsMembersModalOpen(true); }}>Invite</button>
                     )}
                 </div>
@@ -54,7 +62,7 @@ const SpaceInfoSidebar = ({ activeSpaceMembers, currentUser, setIsMembersModalOp
                 )}
                 {activeSpaceMembers.length <= 4 && (
                     <button className="btn-text-sm" style={{ marginTop: '1rem', width: '100%' }} onClick={() => setIsMembersModalOpen(true)}>
-                        {currentUser.role === 'Owner' || currentUser.role === 'Admin' ? 'Manage Members' : 'View Members'}
+                        {isOwnerOrAdmin ? 'Manage Members' : 'View Members'}
                     </button>
                 )}
             </div>
