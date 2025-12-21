@@ -15,6 +15,7 @@ import FileTypesModal from './components/modals/FileTypesModal';
 import ProfileModal from './components/modals/ProfileModal';
 import SearchModal from './components/modals/SearchModal';
 import DeviceSettingsModal from './components/modals/DeviceSettingsModal';
+import SpaceSettingsModal from './components/modals/SpaceSettingsModal';
 import LoginPage from './components/auth/LoginPage';
 import { authApi, spacesApi, notificationsApi, messagesApi, spaceMembersApi } from './services/api';
 
@@ -75,6 +76,7 @@ function App() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
+  const [isSpaceSettingsOpen, setIsSpaceSettingsOpen] = useState(false);
   const [userStatus, setUserStatus] = useState('online'); // online, away, dnd, offline
 
   // Keyboard shortcut for search (Ctrl+K)
@@ -452,6 +454,7 @@ function App() {
                 setIsCreateModalOpen={setIsCreateModalOpen}
                 setCreateStep={setCreateStep}
                 setInviteMode={setInviteMode}
+                setIsSpaceSettingsOpen={setIsSpaceSettingsOpen}
               />
             ) : (
               <SpacesDashboard
@@ -544,6 +547,21 @@ function App() {
             isOpen={isDeviceSettingsOpen}
             onClose={() => setIsDeviceSettingsOpen(false)}
             onJoin={handleConfirmJoinSession}
+          />
+
+          <SpaceSettingsModal
+            isOpen={isSpaceSettingsOpen}
+            onClose={() => setIsSpaceSettingsOpen(false)}
+            space={activeSpace}
+            onSpaceUpdate={(updatedSpace) => {
+              setSpaces(prev => prev.map(s => s.id === updatedSpace.id ? updatedSpace : s));
+              setActiveSpace(updatedSpace);
+            }}
+            onSpaceDelete={(spaceId) => {
+              setSpaces(prev => prev.filter(s => s.id !== spaceId));
+              setActiveSpace(null);
+            }}
+            isOwner={activeSpaceMembers.find(m => m.userId === currentUser.id)?.role === 'Owner'}
           />
 
         </main>

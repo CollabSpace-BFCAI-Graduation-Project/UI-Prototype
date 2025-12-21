@@ -1516,3 +1516,122 @@
     background: #fca5a5;
     cursor: not-allowed;
 }
+
+/* Space Settings Modal */
+.modal-settings {
+    width: 500px;
+    height: auto;
+    max-height: 85vh;
+    flex-direction: column;
+}
+
+.settings-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Gradient Picker */
+.gradient-picker {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.gradient-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gradient-option:hover {
+    transform: scale(1.1);
+}
+
+.gradient-option.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.thumbnail-preview {
+    width: 100%;
+    height: 80px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.25rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Danger Zone */
+.danger-zone {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #fecaca;
+}
+
+.danger-zone-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #dc2626;
+    margin: 0 0 1rem 0;
+}
+
+.delete-confirm {
+    background: #fef2f2;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+}
+
+.delete-confirm p {
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+    color: #dc2626;
+}
+
+.delete-confirm-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.delete-confirm-actions .btn {
+    flex: 1;
+}
+
+/* Modal Footer */
+.modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    justify-content: flex-end;
+}
+
+.btn-secondary {
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}

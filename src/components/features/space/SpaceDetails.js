@@ -20,7 +20,8 @@ const SpaceDetails = ({
     handleJoinSession,
     setIsCreateModalOpen,
     setCreateStep,
-    setInviteMode
+    setInviteMode,
+    setIsSpaceSettingsOpen
 }) => {
     return (
         <div className="space-details-view">
@@ -33,6 +34,8 @@ const SpaceDetails = ({
                     setIsCreateModalOpen={setIsCreateModalOpen}
                     setCreateStep={setCreateStep}
                     setInviteMode={setInviteMode}
+                    setIsSpaceSettingsOpen={setIsSpaceSettingsOpen}
+                    activeSpaceMembers={activeSpaceMembers}
                 />
 
                 <div className="details-tabs">
