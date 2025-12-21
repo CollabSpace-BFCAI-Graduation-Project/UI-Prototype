@@ -12,7 +12,8 @@ export default function ChatView({
     chatInput,
     setChatInput,
     handleSendMessage,
-    messagesEndRef
+    messagesEndRef,
+    currentUser
 }) {
     // Chat Lobby - No active space selected
     if (!activeChatSpace) {
@@ -27,7 +28,7 @@ export default function ChatView({
                     {spaces.map(space => (
                         <button key={space.id} onClick={() => setActiveChatSpace(space)} className="flex items-center gap-4 p-4 bg-white border-2 border-black rounded-2xl hover:bg-gray-50 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all text-left group">
                             <div className="w-12 h-12 rounded-xl border-2 border-black flex-shrink-0" style={{ background: space.thumbnail }}></div>
-                            <div className="flex-1"><h3 className="font-bold text-lg group-hover:text-pink-600 transition-colors">{space.name}</h3><p className="text-xs text-gray-500 font-bold uppercase">{space.type}</p></div>
+                            <div className="flex-1"><h3 className="font-bold text-lg group-hover:text-pink-600 transition-colors">{space.name}</h3><p className="text-xs text-gray-500 font-bold uppercase">{space.category}</p></div>
                             <ArrowLeft size={20} className="rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                     ))}
@@ -51,7 +52,7 @@ export default function ChatView({
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
                     {currentMessages.map((msg) => (
-                        <ChatMessage key={msg.id} msg={msg} />
+                        <ChatMessage key={msg.id} msg={msg} currentUser={currentUser} />
                     ))}
                     <div ref={messagesEndRef} />
                 </div>

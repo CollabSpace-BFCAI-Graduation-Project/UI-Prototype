@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Settings, Bell, LogOut, User, Shield, Trash2, Save, Camera } from 'lucide-react';
 import api from '../../services/api';
-import { formatDate } from '../../shared/utils/helpers';
+import { formatDate, getImageUrl } from '../../shared/utils/helpers';
 
 export default function SettingsModal({
     isOpen,
@@ -181,7 +181,7 @@ export default function SettingsModal({
                                     style={{ backgroundColor: user?.avatarColor || '#ec4899' }}
                                 >
                                     {user?.avatarImage ? (
-                                        <img src={`http://localhost:5000${user.avatarImage}`} alt="Avatar" className="w-full h-full object-cover" />
+                                        <img src={getImageUrl(user.avatarImage)} alt="Avatar" className="w-full h-full object-cover" />
                                     ) : (
                                         initials
                                     )}

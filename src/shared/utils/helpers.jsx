@@ -1,5 +1,8 @@
 import { FileText, Image as ImageIcon, Film, Presentation, File } from 'lucide-react';
 
+// API Base URL for images
+const API_BASE_URL = 'http://localhost:5000';
+
 export const getFileIcon = (type) => {
     switch (type) {
         case 'doc': return <FileText size={20} className="text-blue-500" />;
@@ -8,6 +11,40 @@ export const getFileIcon = (type) => {
         case 'presentation': return <Presentation size={20} className="text-orange-500" />;
         default: return <File size={20} className="text-gray-500" />;
     }
+};
+
+/**
+ * Get full URL for an image path from the backend
+ * @param {string} path - The relative image path (e.g., "/images/avatar.jpg")
+ * @returns {string|null} Full URL or null if no path
+ */
+export const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `${API_BASE_URL}${path}`;
+};
+
+/**
+ * Get initials from a name (e.g., "John Doe" -> "JD")
+ * @param {string} name - The full name
+ * @returns {string} Initials (max 2 characters)
+ */
+export const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+/**
+ * Get avatar display props (image URL or initials fallback)
+ * @param {object} user - User object with avatarImage, avatarColor, and name
+ * @returns {object} { imageUrl, initials, backgroundColor }
+ */
+export const getAvatarProps = (user) => {
+    return {
+        imageUrl: getImageUrl(user?.avatarImage),
+        initials: getInitials(user?.name),
+        backgroundColor: user?.avatarColor || '#ec4899'
+    };
 };
 
 /**

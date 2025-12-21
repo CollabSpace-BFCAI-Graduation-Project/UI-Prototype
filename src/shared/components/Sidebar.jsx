@@ -1,6 +1,7 @@
 import React from 'react';
 import { Grid, MessageSquare, Users, Settings } from 'lucide-react';
 import NavButton from './NavButton';
+import { getAvatarProps } from '../utils/helpers';
 
 export default function Sidebar({
     currentView,
@@ -9,8 +10,7 @@ export default function Sidebar({
     onSettingsClick,
     user
 }) {
-    // Get initials from user name
-    const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
+    const { imageUrl, initials, backgroundColor } = getAvatarProps(user);
 
     return (
         <aside className="fixed left-4 top-4 bottom-4 w-20 bg-white border-2 border-black rounded-full flex flex-col items-center py-8 z-40 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden md:flex">
@@ -53,11 +53,15 @@ export default function Sidebar({
 
                 <button
                     onClick={onSettingsClick}
-                    className="w-12 h-12 border-2 border-black rounded-full flex items-center justify-center hover:opacity-80 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-                    style={{ backgroundColor: user?.avatarColor || '#f9a8d4' }}
+                    className="w-12 h-12 border-2 border-black rounded-full flex items-center justify-center hover:opacity-80 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none overflow-hidden"
+                    style={{ backgroundColor: imageUrl ? 'transparent' : backgroundColor }}
                     title={user?.name || 'User'}
                 >
-                    <span className="font-bold text-sm text-white">{initials}</span>
+                    {imageUrl ? (
+                        <img src={imageUrl} alt={user?.name} className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="font-bold text-sm text-white">{initials}</span>
+                    )}
                 </button>
             </div>
         </aside>

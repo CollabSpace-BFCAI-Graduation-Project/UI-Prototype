@@ -159,40 +159,45 @@ export class SpaceFile {
 /**
  * Message Model
  * Represents a chat message
+ * 
+ * Stored fields: id, spaceId, senderId, text, type, mentions, time, createdAt
+ * Joined fields (from users): sender, avatarColor, avatarImage
  */
 export class Message {
     constructor(data = {}) {
         this.id = data.id || null;
         this.spaceId = data.spaceId || null;
-        this.userId = data.userId || null;
-        this.user = data.user || 'User'; // Display name
+        this.senderId = data.senderId || null;
+        this.sender = data.sender || 'User'; // Display name (joined from users)
         this.avatarColor = data.avatarColor || getRandomColor();
+        this.avatarImage = data.avatarImage || null; // Full URL from server
         this.text = data.text || '';
+        this.type = data.type || 'user'; // 'user' or 'system'
+        this.mentions = data.mentions || [];
         this.time = data.time || '';
-        this.isMe = data.isMe ?? false;
         this.createdAt = data.createdAt || null;
     }
 
-    static fromApi(data, currentUserId = null) {
-        const msg = new Message(data);
-        // Determine isMe based on userId if available
-        if (currentUserId && data.userId) {
-            msg.isMe = data.userId === currentUserId;
-        }
-        return msg;
+    // Check if this message is from a specific user
+    isFromUser(userId) {
+        return this.senderId && this.senderId === userId;
     }
 
-    static fromApiList(dataList, currentUserId = null) {
-        return (dataList || []).map(data => Message.fromApi(data, currentUserId));
+    static fromApi(data) {
+        return new Message(data);
     }
 
+    static fromApiList(dataList) {
+        return (dataList || []).map(data => Message.fromApi(data));
+    }
+
+    // Send only essential data - server joins with user data
     toApi() {
         return {
-            userId: this.userId,
-            user: this.user,
-            avatarColor: this.avatarColor,
+            senderId: this.senderId,
             text: this.text,
-            isMe: this.isMe,
+            type: this.type,
+            mentions: this.mentions,
         };
     }
 }

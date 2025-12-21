@@ -129,21 +129,25 @@ export default function App() {
     e?.preventDefault();
     if (!chatInput.trim() || !activeChatSpace) return;
 
+    // Only send essential data - server joins with user data
     const messageData = {
-      user: 'Maryam',
-      avatarColor: 'bg-pink-200',
+      senderId: user?.id,
       text: chatInput,
-      isMe: true
+      type: 'user',
+      mentions: []
     };
 
     try {
-      // Try API first
+      // Try API first - response includes joined user data
       await apiSendMessage(messageData);
     } catch (err) {
-      // Fallback to local state
+      // Fallback to local state - include user data for display
       const newMessage = {
         id: Date.now(),
         ...messageData,
+        sender: user?.name || 'User',
+        avatarColor: user?.avatarColor || '#ec4899',
+        avatarImage: user?.avatarImage ? `http://localhost:5000${user.avatarImage}` : null,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setLocalChatHistory(prev => ({
@@ -419,6 +423,7 @@ export default function App() {
             setChatInput={setChatInput}
             handleSendMessage={handleSendMessage}
             messagesEndRef={messagesEndRef}
+            currentUser={user}
           />
         )}
 
