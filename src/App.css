@@ -2282,3 +2282,753 @@
   flex: 1;
   overflow-y: auto;
 }
+
+/* ==========================================================================
+   Responsive Design & Mobile Optimizations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+  /* Layout Changes */
+  .app-layout {
+    flex-direction: column;
+  }
+
+  /* 1. Floating Bottom Navigation */
+  .app-sidebar {
+    width: 100%;
+    height: auto;
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    left: 0;
+    flex-direction: row;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-right: none;
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+  }
+
+  .sidebar-top {
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .logo {
+    display: none;
+    /* Hide logo in bottom nav */
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    margin-top: 0;
+    width: 100%;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .sidebar-bottom {
+    display: none;
+    /* Hide profile in bottom nav for simplicity */
+  }
+
+  /* 2. Main Content Adjustments */
+  .app-main {
+    margin-bottom: 80px;
+    /* Space for bottom nav */
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* 3. Spaces Grid */
+  .spaces-grid {
+    grid-template-columns: 1fr;
+    /* Single column */
+    padding: 0 1rem;
+    gap: 1rem;
+  }
+
+  .spaces-section {
+    padding: 0 0 2rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  /* 4. Details View (Space Details) */
+  .details-content-layout {
+    flex-direction: column;
+    display: flex;
+  }
+
+  .details-main {
+    padding: 1rem 0;
+    /* Remove side padding as container handles it now */
+  }
+
+  .details-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    height: auto;
+    padding-bottom: 6rem;
+    /* Extra padding for bottom nav */
+    padding-top: 2rem;
+  }
+
+  .details-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .details-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .details-title-left {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .details-space-name {
+    font-size: 1.75rem;
+    /* Slightly smaller on mobile */
+  }
+
+  .details-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  /* Make Join Session button full width on mobile for easier access */
+  .details-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+    margin-right: 0 !important;
+  }
+
+  /* Other action buttons share remaining space */
+  .details-actions .btn-icon {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .files-grid {
+    grid-template-columns: 1fr;
+    /* Single column for files */
+  }
+
+  .files-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .files-controls {
+    justify-content: space-between;
+  }
+
+  /* 5. Chat View Mobile */
+  .chats-view {
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    /* Adjust height */
+  }
+
+  .chat-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+    /* Show partial list or collapse */
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* Show chat sidebar only if no active space selected */
+  .chat-sidebar {
+    display: flex;
+    max-height: 300px;
+    /* Limit height */
+  }
+
+  .chat-main {
+    height: auto;
+    flex: 1;
+    padding-bottom: 0;
+  }
+
+  .chat-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .chat-input-area {
+    padding: 1rem;
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg-primary);
+  }
+
+  /* 6. Modals */
+  .modal-content {
+    width: 95%;
+    max-height: 90vh;
+    padding: 1.5rem;
+  }
+
+  .modal-members {
+    width: 95%;
+    height: 80vh;
+  }
+
+  .modal-file-types {
+    width: 95%;
+    height: 80vh;
+  }
+
+  .modal-wide {
+    width: 95%;
+    flex-direction: column;
+  }
+
+  .modal-left,
+  .modal-right {
+    width: 100%;
+  }
+
+  .modal-right {
+    display: none;
+    /* Hide illustration on mobile */
+  }
+
+  /* Adjust Switch User Button position */
+  button[style*='position: fixed'] {
+    bottom: 80px !important;
+    /* Move above nav bar */
+    left: 50% !important;
+    transform: translateX(-50%);
+    width: max-content;
+  }
+}
+/* ==========================================================================
+   Session & Loading Views
+   ========================================================================== */
+
+/* Loading Screen */
+.session-loading {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--color-bg-secondary);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.loading-subtext {
+  color: var(--color-text-tertiary);
+  font-size: 0.9375rem;
+}
+
+/* Session View */
+.session-view {
+  position: fixed;
+  inset: 0;
+  background: #111827; /* Dark background for video session */
+  display: flex;
+  flex-direction: column;
+  z-index: 5000;
+  color: white;
+}
+
+.session-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,0,0,0.2);
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.session-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.session-timer {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.session-header-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-icon-session {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon-session:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Video Grid */
+.session-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.video-tile {
+  background: #1f2937;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16/9;
+}
+
+.video-tile.active-user {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.video-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.user-label {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  background: rgba(0,0,0,0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.avatar-lg {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Controls Bar */
+.session-controls {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  background: rgba(0,0,0,0.2);
+}
+
+.control-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #374151;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.25rem;
+}
+
+.control-btn:hover {
+  background: #4b5563;
+  transform: translateY(-2px);
+}
+
+.control-btn.danger {
+  background: #ef4444;
+}
+
+.control-btn.danger:hover {
+  background: #dc2626;
+}
+
+
+/* ==========================================================================
+   Unity WebGL Session Layout
+   ========================================================================== */
+
+.session-view-unity {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  z-index: 5000;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+/* 1. Unity Container (Center/Main) */
+.unity-container {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(to bottom, #1f2937, #111827);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.unity-placeholder {
+  border: 2px dashed rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 4rem;
+  text-align: center;
+}
+
+/* 2. Left Navigation Rail */
+.session-nav-left {
+  width: 60px;
+  background: #1f2937;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+  gap: 1rem;
+  z-index: 20;
+}
+
+.nav-divider {
+  width: 32px;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 0.5rem 0;
+}
+
+.user-profile-circle {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.nav-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.nav-icon-btn.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* 3. Right Sidebar (Members) */
+.session-sidebar-right {
+  width: 280px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e5e7eb;
+  z-index: 20;
+}
+
+.session-sidebar-header {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.session-sidebar-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.live-badge {
+  background: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.session-members-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.list-header {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.session-member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.role-tag {
+  font-size: 0.7rem;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #4b5563;
+  margin-left: auto;
+}
+
+.invite-card-sm {
+  margin: 1rem;
+  padding: 1rem;
+  background: #f0fdfa; /* Light teal bg similar to gather */
+  border-radius: 12px;
+  border: 1px solid #ccfbf1;
+  text-align: center;
+}
+
+.avatars-cluster {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+/* 4. Chat Popup */
+.session-chat-popup {
+  position: absolute;
+  top: 1rem;
+  left: 70px; /* Right of nav rail */
+  width: 320px;
+  height: calc(100% - 100px);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.chat-popup-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+}
+
+.chat-popup-header h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.close-btn-xs {
+  border: none;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.chat-popup-messages {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-row-sm {
+  font-size: 0.875rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sender-sm {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.text-sm {
+  color: #374151;
+}
+
+.chat-popup-input {
+  padding: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.chat-popup-input input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+/* 5. Bottom Controls (Floating) */
+.session-controls-bottom {
+  position: absolute;
+  bottom: 0px;
+  left: 60px; /* Space for nav rail */
+  right: 280px; /* Space for right sidebar */
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* Let clicks pass through empty space */
+}
+
+.user-bubble {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  pointer-events: auto;
+  position: relative; 
+}
+
+.status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: 2px solid #1f2937;
+  border-radius: 50%;
+}
+
+.control-bar-pill {
+  pointer-events: auto;
+  background: #1f2937;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 6px 12px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  margin-left: -50px; /* Center offset compensation */
+}
+
+.pill-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pill-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.pill-btn.danger {
+  color: #ef4444;
+}
+
+.pill-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.pill-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 4px;
+}
+
