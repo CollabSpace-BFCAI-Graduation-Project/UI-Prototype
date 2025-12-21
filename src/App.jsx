@@ -5,9 +5,13 @@ import { SPACE_TEMPLATES, INITIAL_CHAT_HISTORY } from './data/mockData.jsx';
 import { getFileIcon } from './shared/utils/helpers.jsx';
 import api from './services/api';
 import { useSpaces, useMessages } from './hooks/useApi';
+import { useAuthContext } from './context/AuthContext.jsx';
 
 // Shared Components
 import Sidebar from './shared/components/Sidebar';
+
+// Feature: Auth
+import AuthPage from './features/auth/AuthPage';
 
 // Feature: Spaces
 import DashboardView from './features/spaces/DashboardView';
@@ -34,6 +38,9 @@ import SettingsModal from './features/settings/SettingsModal';
 import UnitySessionView from './features/session/UnitySessionView';
 
 export default function App() {
+  // --- Auth Context ---
+  const { user, isAuthenticated, login, register, logout, loading: authLoading, error: authError } = useAuthContext();
+
   // --- Global State ---
   const [currentView, setCurrentView] = useState('dashboard');
   const [activeSpace, setActiveSpace] = useState(null);
@@ -74,7 +81,7 @@ export default function App() {
 
   // User favorites (user-specific)
   const [userFavorites, setUserFavorites] = useState([]);
-  const currentUserId = 'user-1'; // TODO: Get from auth context
+  const currentUserId = user?.id || 'user-1'; // Use authenticated user's ID
 
   const {
     spaces,
@@ -302,6 +309,18 @@ export default function App() {
     }));
   };
 
+  // Show auth page if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <AuthPage
+        onLogin={login}
+        onRegister={register}
+        loading={authLoading}
+        error={authError}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FFFDF5] font-sans text-gray-900 selection:bg-pink-300 selection:text-black relative overflow-x-hidden">
 
@@ -331,6 +350,7 @@ export default function App() {
         setCurrentView={setCurrentView}
         enterChatLobby={enterChatLobby}
         onSettingsClick={() => setIsSettingsModalOpen(true)}
+        user={user}
       />
 
       {/* Main Content Area */}
@@ -369,6 +389,7 @@ export default function App() {
             onCreateClick={() => setIsCreateModalOpen(true)}
             userFavorites={userFavorites}
             onToggleFavorite={handleToggleFavorite}
+            userName={user?.name}
           />
         )}
 
@@ -467,6 +488,27 @@ export default function App() {
         onClose={() => setIsSettingsModalOpen(false)}
         settingsTab={settingsTab}
         setSettingsTab={setSettingsTab}
+        user={user}
+        onLogout={logout}
+        onUpdateProfile={async (data) => {
+          // Update profile via API
+          try {
+            const updated = await api.users.update(user.id, data);
+            // Refresh user in localStorage
+            localStorage.setItem('collabspace_user', JSON.stringify(updated));
+            window.location.reload(); // Simple refresh to update context
+          } catch (err) {
+            console.error('Failed to update profile:', err);
+          }
+        }}
+        onDeleteAccount={async () => {
+          try {
+            await api.users.delete(user.id);
+            logout();
+          } catch (err) {
+            console.error('Failed to delete account:', err);
+          }
+        }}
       />
 
       <MembersModal

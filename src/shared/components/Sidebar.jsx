@@ -6,8 +6,12 @@ export default function Sidebar({
     currentView,
     setCurrentView,
     enterChatLobby,
-    onSettingsClick
+    onSettingsClick,
+    user
 }) {
+    // Get initials from user name
+    const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
+
     return (
         <aside className="fixed left-4 top-4 bottom-4 w-20 bg-white border-2 border-black rounded-full flex flex-col items-center py-8 z-40 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden md:flex">
             <div
@@ -47,8 +51,13 @@ export default function Sidebar({
                     <Settings size={24} />
                 </button>
 
-                <button className="w-12 h-12 bg-pink-200 border-2 border-black rounded-full flex items-center justify-center hover:bg-pink-300 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-                    <span className="font-bold text-sm">M</span>
+                <button
+                    onClick={onSettingsClick}
+                    className="w-12 h-12 border-2 border-black rounded-full flex items-center justify-center hover:opacity-80 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                    style={{ backgroundColor: user?.avatarColor || '#f9a8d4' }}
+                    title={user?.name || 'User'}
+                >
+                    <span className="font-bold text-sm text-white">{initials}</span>
                 </button>
             </div>
         </aside>

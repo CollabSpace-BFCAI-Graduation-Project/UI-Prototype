@@ -264,11 +264,11 @@ export function useAuth() {
         }
     };
 
-    const register = async (name, email, password) => {
+    const register = async (name, username, email, password) => {
         try {
             setLoading(true);
             setError(null);
-            const userData = await api.auth.register({ name, email, password });
+            const userData = await api.auth.register({ name, username, email, password });
             setUser(userData);
             localStorage.setItem('collabspace_user', JSON.stringify(userData));
             return userData;
