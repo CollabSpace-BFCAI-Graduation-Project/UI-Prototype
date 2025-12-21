@@ -276,3 +276,38 @@
     margin-bottom: 1rem;
     color: #cbd5e1;
 }
+
+/* Invite Actions */
+.invite-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.accept-btn {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+.accept-btn:hover {
+    background: #059669;
+    border-color: #059669;
+    color: white;
+}
+
+.decline-btn {
+    background: white;
+    border-color: #e2e8f0;
+    color: #64748b;
+}
+
+.decline-btn:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+.action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

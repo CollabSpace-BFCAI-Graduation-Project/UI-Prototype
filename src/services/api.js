@@ -127,10 +127,25 @@ export const spaceMembersApi = {
             method: 'DELETE',
         }),
 
-    invite: (spaceId, emails, inviterName) =>
+    invite: (spaceId, emails, inviterName, inviterId) =>
         apiCall(`/spaces/${spaceId}/invite`, {
             method: 'POST',
-            body: JSON.stringify({ emails, inviterName }),
+            body: JSON.stringify({ emails, inviterName, inviterId }),
+        }),
+};
+
+// ============ INVITES API ============
+export const invitesApi = {
+    getPending: (userId) => apiCall(`/users/${userId}/invites`),
+
+    accept: (inviteId) =>
+        apiCall(`/invites/${inviteId}/accept`, {
+            method: 'POST',
+        }),
+
+    decline: (inviteId) =>
+        apiCall(`/invites/${inviteId}/decline`, {
+            method: 'POST',
         }),
 };
 
@@ -183,6 +198,7 @@ export default {
     users: usersApi,
     spaces: spacesApi,
     spaceMembers: spaceMembersApi,
+    invites: invitesApi,
     notifications: notificationsApi,
     messages: messagesApi,
     files: filesApi,

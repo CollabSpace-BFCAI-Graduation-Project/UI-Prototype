@@ -1,8 +1,45 @@
 import React, { useState } from 'react';
+import { invitesApi } from '../../../services/api';
 import '../../../styles/notifications.css';
 
-const NotificationsView = ({ notifications, markAsRead, markAllAsRead }) => {
+const NotificationsView = ({ notifications, markAsRead, markAllAsRead, onInviteResponse }) => {
     const [filter, setFilter] = useState('all');
+    const [processingInvites, setProcessingInvites] = useState({});
+
+    const handleAcceptInvite = async (e, notif) => {
+        e.stopPropagation();
+        if (!notif.inviteId) return;
+
+        setProcessingInvites(prev => ({ ...prev, [notif.inviteId]: 'accepting' }));
+        try {
+            await invitesApi.accept(notif.inviteId);
+            markAsRead(notif.id);
+            if (onInviteResponse) onInviteResponse('accepted', notif);
+            alert(`You've joined ${notif.target}!`);
+        } catch (err) {
+            console.error('Failed to accept invite:', err);
+            alert('Failed to accept invite');
+        } finally {
+            setProcessingInvites(prev => ({ ...prev, [notif.inviteId]: null }));
+        }
+    };
+
+    const handleDeclineInvite = async (e, notif) => {
+        e.stopPropagation();
+        if (!notif.inviteId) return;
+
+        setProcessingInvites(prev => ({ ...prev, [notif.inviteId]: 'declining' }));
+        try {
+            await invitesApi.decline(notif.inviteId);
+            markAsRead(notif.id);
+            if (onInviteResponse) onInviteResponse('declined', notif);
+        } catch (err) {
+            console.error('Failed to decline invite:', err);
+            alert('Failed to decline invite');
+        } finally {
+            setProcessingInvites(prev => ({ ...prev, [notif.inviteId]: null }));
+        }
+    };
 
     const filteredNotifications = notifications.filter(notif => {
         if (filter === 'all') return true;
@@ -112,7 +149,24 @@ const NotificationsView = ({ notifications, markAsRead, markAllAsRead }) => {
                                 </div>
                                 <div className="notif-time">{notif.time}</div>
                             </div>
-                            {notif.action && (
+                            {notif.type === 'invite' && notif.inviteId && !notif.read ? (
+                                <div className="notif-action invite-actions">
+                                    <button
+                                        className="action-btn accept-btn"
+                                        onClick={(e) => handleAcceptInvite(e, notif)}
+                                        disabled={processingInvites[notif.inviteId]}
+                                    >
+                                        {processingInvites[notif.inviteId] === 'accepting' ? '...' : 'Accept'}
+                                    </button>
+                                    <button
+                                        className="action-btn decline-btn"
+                                        onClick={(e) => handleDeclineInvite(e, notif)}
+                                        disabled={processingInvites[notif.inviteId]}
+                                    >
+                                        {processingInvites[notif.inviteId] === 'declining' ? '...' : 'Decline'}
+                                    </button>
+                                </div>
+                            ) : notif.action && (
                                 <div className="notif-action">
                                     <button className="action-btn">{notif.action}</button>
                                 </div>

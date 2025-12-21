@@ -379,8 +379,8 @@ function App() {
   const handleInvite = async (emails) => {
     if (activeSpace?.id) {
       try {
-        const result = await spaceMembersApi.invite(activeSpace.id, emails, currentUser.name);
-        alert(`Invitations sent! Added ${result.added} new members.`);
+        const result = await spaceMembersApi.invite(activeSpace.id, emails, currentUser.name, currentUser.id);
+        alert(`Invitations sent to ${result.invited} user(s)! They will be notified.`);
       } catch (err) {
         console.error('Failed to invite:', err);
         alert('Failed to send invitations.');
