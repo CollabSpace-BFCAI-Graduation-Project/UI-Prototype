@@ -1,7 +1,6 @@
 import React from 'react';
 import SpaceHeader from './SpaceHeader';
 import FileGrid from './FileGrid';
-import BoardGrid from './BoardGrid';
 import SpaceInfoSidebar from './SpaceInfoSidebar';
 import '../../../styles/space-details.css';
 
@@ -43,27 +42,17 @@ const SpaceDetails = ({
                     >
                         FILES
                     </button>
-                    <button
-                        className={`detail-tab ${activeDetailTab === 'boards' ? 'active' : ''}`}
-                        onClick={() => setActiveDetailTab('boards')}
-                    >
-                        BOARDS
-                    </button>
                 </div>
 
                 <div className="details-content-layout">
                     <div className="details-main">
-                        {activeDetailTab === 'files' ? (
-                            <FileGrid
-                                files={files}
-                                activeFileFilter={activeFileFilter}
-                                setActiveFileFilter={setActiveFileFilter}
-                                setIsFileTypesOpen={setIsFileTypesOpen}
-                                setIsUploadModalOpen={setIsUploadModalOpen}
-                            />
-                        ) : (
-                            <BoardGrid />
-                        )}
+                        <FileGrid
+                            files={files}
+                            activeFileFilter={activeFileFilter}
+                            setActiveFileFilter={setActiveFileFilter}
+                            setIsFileTypesOpen={setIsFileTypesOpen}
+                            setIsUploadModalOpen={setIsUploadModalOpen}
+                        />
                     </div>
 
                     <SpaceInfoSidebar

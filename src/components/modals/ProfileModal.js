@@ -33,6 +33,7 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser, onLogout }
             const updates = {
                 name: formData.name,
                 bio: formData.bio,
+                email: formData.email,
                 initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
             };
             const updatedUser = await usersApi.update(currentUser.id, updates);
@@ -194,8 +195,7 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser, onLogout }
                                 </div>
                                 <div className="form-group">
                                     <label>Email</label>
-                                    <input type="email" value={formData.email} disabled className="disabled" />
-                                    <span className="form-hint">Email cannot be changed</span>
+                                    <input type="email" value={formData.email} onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))} placeholder="your@email.com" />
                                 </div>
                                 <div className="form-actions">
                                     <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>

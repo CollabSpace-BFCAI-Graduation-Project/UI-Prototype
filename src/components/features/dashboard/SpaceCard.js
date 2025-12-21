@@ -50,7 +50,7 @@ const SpaceCard = ({ space, index, setActiveSpace, toggleFavorite }) => {
                     <h3 className="space-members">{space.memberCount} members</h3>
                 </div>
                 <div className="space-category">
-                    {space.type}
+                    {space.category}
                 </div>
             </div>
         </div>
