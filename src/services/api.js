@@ -5,10 +5,10 @@ const IMAGE_BASE = process.env.REACT_APP_IMAGE_URL || 'http://localhost:5000';
 // Helper to get full image URL from relative path
 export const getImageUrl = (path) => {
     if (!path) return null;
-    // If already a full URL, return as-is
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
-    }
+    // // If already a full URL, return as-is
+    // if (path.startsWith('http://') || path.startsWith('https://')) {
+    //     return path;
+    // }
     // Prepend the base URL for relative paths
     return `${IMAGE_BASE}${path}`;
 };
