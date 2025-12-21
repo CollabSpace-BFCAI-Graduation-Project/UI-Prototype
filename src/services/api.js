@@ -50,6 +50,11 @@ export const usersApi = {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
+
+    delete: (id) =>
+        apiCall(`/users/${id}`, {
+            method: 'DELETE',
+        }),
 };
 
 // ============ SPACES API ============

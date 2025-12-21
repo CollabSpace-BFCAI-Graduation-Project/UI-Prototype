@@ -765,6 +765,8 @@
     align-items: center;
     padding: 1.25rem 1.5rem;
     border-bottom: 1px solid #e2e8f0;
+    gap: 0.75rem;
+    position: relative;
 }
 
 .modal-header h2,
@@ -773,6 +775,7 @@
     font-size: 1.125rem;
     font-weight: 600;
     color: #0f172a;
+    flex: 1;
 }
 
 .modal-close {
@@ -1353,4 +1356,126 @@
 .test-btn:hover {
     border-color: #cbd5e1;
     background: #f8fafc;
+}
+
+/* Account Settings Styles */
+.back-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: #64748b;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.settings-section {
+    padding: 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.settings-section h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-label {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.settings-value {
+    font-size: 0.875rem;
+    color: #0f172a;
+    font-weight: 500;
+}
+
+.settings-id {
+    font-family: monospace;
+    font-size: 0.75rem;
+    background: #f1f5f9;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.danger-zone {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    margin: 1rem;
+}
+
+.danger-zone h3 {
+    color: #dc2626;
+}
+
+.danger-warning {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.danger-warning svg {
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.danger-warning p {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.btn-danger:disabled {
+    background: #fca5a5;
+    cursor: not-allowed;
 }
