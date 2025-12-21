@@ -6,6 +6,7 @@ import SpacesDashboard from './components/features/dashboard/SpacesDashboard';
 import SpaceDetails from './components/features/space/SpaceDetails';
 import ChatView from './components/features/chat/ChatView';
 import SessionView from './components/features/session/SessionView';
+import NotificationsView from './components/features/notifications/NotificationsView';
 import CreateSpaceModal from './components/modals/CreateSpaceModal';
 import MembersModal from './components/modals/MembersModal';
 import UploadModal from './components/modals/UploadModal';
@@ -31,8 +32,14 @@ function App() {
     initials: "JD",
     avatarColor: "#3b82f6"
   });
-  // ... (keeping other lines same is hard with replace_file_content if I want non-contiguous changes)
-  // I will have to do this in two steps or use MultiReplace.
+
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'mention', author: 'Sarah Chen', text: 'mentioned you in', target: 'Design Weekly', time: '10 mins ago', read: false },
+    { id: 2, type: 'session', author: 'Tom Wilson', text: 'started a session in', target: 'Project Alpha', time: '1 hour ago', action: 'Join Session', read: false },
+    { id: 3, type: 'file', author: 'Mike Ross', text: 'uploaded', target: 'Specs_v2.pdf', time: '2 hours ago', read: true },
+    { id: 4, type: 'invite', author: 'System', text: 'You were added to', target: 'Town Hall', time: '1 day ago', read: true },
+    { id: 5, type: 'system', author: 'Security', text: 'New login detected from Chrome on Windows', time: '2 days ago', read: true },
+  ]);
 
   const [chatMessages, setChatMessages] = useState({
     1: [
@@ -79,6 +86,14 @@ function App() {
     { id: 5, name: "Town Hall", thumbnail: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", lastVisited: "1 week ago", type: "Event", isOnline: false, userCount: 0, memberCount: 150, isFavorite: false, category: 'MEETING' },
     { id: 6, name: "Dev Standup", thumbnail: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", lastVisited: "1 week ago", type: "Meeting", isOnline: true, userCount: 5, memberCount: 12, isFavorite: true, category: 'TECH' },
   ]);
+
+  const markAsRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   const handleJoinSession = () => {
     setIsSessionLoading(true);
@@ -269,9 +284,11 @@ function App() {
           )}
 
           {activeNav === 'notifications' && (
-            <div className="empty-state" style={{ marginTop: '20vh' }}>
-              <h2>Notifications View Placeholder</h2>
-            </div>
+            <NotificationsView
+              notifications={notifications}
+              markAsRead={markAsRead}
+              markAllAsRead={markAllAsRead}
+            />
           )}
 
           {activeNav === 'spaces' && (

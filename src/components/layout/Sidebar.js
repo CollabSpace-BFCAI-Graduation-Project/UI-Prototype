@@ -94,13 +94,30 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser }) => {
                             {activeSettingTab === 'notifications' && (
                                 <div className="settings-section">
                                     <h4>Notifications</h4>
-                                    <p>Manage how you receive notifications.</p>
-                                    {/* Placeholder checkboxes */}
+                                    <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1.5rem' }}>
+                                        Choose what you want to be notified about.
+                                    </p>
+
+                                    <h5 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 0.75rem 0' }}>Communication</h5>
                                     <div className="setting-row">
-                                        <input type="checkbox" defaultChecked /> <span>Email Notifications</span>
+                                        <input type="checkbox" defaultChecked /> <span>Mentions (@name)</span>
                                     </div>
                                     <div className="setting-row">
-                                        <input type="checkbox" defaultChecked /> <span>Push Notifications</span>
+                                        <input type="checkbox" defaultChecked /> <span>Direct Messages</span>
+                                    </div>
+                                    <div className="setting-row">
+                                        <input type="checkbox" defaultChecked /> <span>Space Invites</span>
+                                    </div>
+
+                                    <h5 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', margin: '1.5rem 0 0.75rem 0' }}>Activity</h5>
+                                    <div className="setting-row">
+                                        <input type="checkbox" defaultChecked /> <span>Session Alerts</span>
+                                    </div>
+                                    <div className="setting-row">
+                                        <input type="checkbox" defaultChecked /> <span>File Uploads & Updates</span>
+                                    </div>
+                                    <div className="setting-row">
+                                        <input type="checkbox" /> <span>Task Assignments</span>
                                     </div>
                                 </div>
                             )}
