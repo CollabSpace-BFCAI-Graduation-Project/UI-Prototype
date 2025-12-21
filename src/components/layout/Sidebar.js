@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../../styles/layout.css';
 
 const Sidebar = ({ activeNav, setActiveNav, currentUser }) => {
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [activeSettingTab, setActiveSettingTab] = useState('general');
+
+    const toggleSettings = () => {
+        setIsSettingsOpen(!isSettingsOpen);
+    };
+
     return (
         <aside className="app-sidebar">
             <div className="sidebar-top">
@@ -39,10 +46,74 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser }) => {
             </div>
 
             <div className="sidebar-bottom">
-                <button className="profile-btn" aria-label="User Profile" title={currentUser.name}>
-                    <div className="profile-avatar" style={{ background: currentUser.avatarColor }}>{currentUser.initials}</div>
+                <button className="settings-btn" onClick={toggleSettings} title="Settings">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 </button>
+                <div className="profile-wrapper">
+                    <button className="profile-btn" aria-label="User Profile" title={currentUser.name}>
+                        <div className="profile-avatar" style={{ background: currentUser.avatarColor }}>{currentUser.initials}</div>
+                    </button>
+                </div>
             </div>
+
+            {/* Settings Modal */}
+            {isSettingsOpen && (
+                <>
+                    <div className="settings-backdrop" onClick={() => setIsSettingsOpen(false)}></div>
+                    <div className="settings-popup">
+                        <div className="settings-sidebar">
+                            <h3>Settings</h3>
+                            <ul>
+                                <li className={activeSettingTab === 'general' ? 'active' : ''} onClick={() => setActiveSettingTab('general')}>General</li>
+                                <li className={activeSettingTab === 'notifications' ? 'active' : ''} onClick={() => setActiveSettingTab('notifications')}>Notifications</li>
+                                <li className={activeSettingTab === 'privacy' ? 'active' : ''} onClick={() => setActiveSettingTab('privacy')}>Privacy</li>
+                            </ul>
+                        </div>
+                        <div className="settings-content">
+                            {activeSettingTab === 'general' && (
+                                <div className="settings-section">
+                                    <h4>General Settings</h4>
+                                    <div className="setting-group">
+                                        <label>Language</label>
+                                        <select defaultValue="en">
+                                            <option value="en">English (US)</option>
+                                            <option value="es">Spanish</option>
+                                            <option value="fr">French</option>
+                                        </select>
+                                    </div>
+                                    <div className="setting-group">
+                                        <label>Theme</label>
+                                        <div className="theme-options">
+                                            <button className="theme-btn active">Light</button>
+                                            <button className="theme-btn">Dark</button>
+                                            <button className="theme-btn">System</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {activeSettingTab === 'notifications' && (
+                                <div className="settings-section">
+                                    <h4>Notifications</h4>
+                                    <p>Manage how you receive notifications.</p>
+                                    {/* Placeholder checkboxes */}
+                                    <div className="setting-row">
+                                        <input type="checkbox" defaultChecked /> <span>Email Notifications</span>
+                                    </div>
+                                    <div className="setting-row">
+                                        <input type="checkbox" defaultChecked /> <span>Push Notifications</span>
+                                    </div>
+                                </div>
+                            )}
+                            {activeSettingTab === 'privacy' && (
+                                <div className="settings-section">
+                                    <h4>Privacy</h4>
+                                    <p>Privacy settings placeholder.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
         </aside>
     );
 };

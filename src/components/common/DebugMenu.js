@@ -9,7 +9,7 @@ const DebugMenu = ({ currentUser, setCurrentUser, activeSpaceMembers }) => {
                 style={{
                     position: 'fixed',
                     bottom: '20px',
-                    left: '20px',
+                    left: '90px',
                     zIndex: 10000,
                     width: '56px',
                     height: '56px',
@@ -38,7 +38,7 @@ const DebugMenu = ({ currentUser, setCurrentUser, activeSpaceMembers }) => {
                 <div style={{
                     position: 'fixed',
                     bottom: '90px',
-                    left: '20px',
+                    left: '90px',
                     zIndex: 10000,
                     background: 'white',
                     borderRadius: '16px',
