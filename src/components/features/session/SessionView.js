@@ -84,7 +84,11 @@ const SessionView = ({
                             <div className="members-list-placeholder">
                                 <p>Online (3)</p>
                                 <div className="member-item">
-                                    <div className="avatar-sm" style={{ background: currentUser.avatarColor }}>{currentUser.initials}</div>
+                                    {currentUser.avatarImage ? (
+                                        <img src={currentUser.avatarImage} alt={currentUser.name} className="avatar-sm avatar-sm-img" />
+                                    ) : (
+                                        <div className="avatar-sm" style={{ background: currentUser.avatarColor }}>{currentUser.initials}</div>
+                                    )}
                                     <span>{currentUser.name} (You)</span>
                                 </div>
                                 <div className="member-item">

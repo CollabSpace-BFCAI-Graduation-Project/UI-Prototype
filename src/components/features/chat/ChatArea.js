@@ -98,9 +98,17 @@ const ChatArea = ({ activeSpace, chatMessages, newMessage, setNewMessage, handle
 
                         {(chatMessages[activeSpace.id] || []).map(msg => (
                             <div key={msg.id} className={msg.type === 'system' ? 'system-message' : 'chat-message-row'}>
-                                <div className="user-avatar-sm" style={{ background: msg.avatarColor || 'gold' }}>
-                                    {msg.sender.charAt(0)}
-                                </div>
+                                {msg.avatarImage ? (
+                                    <img
+                                        src={msg.avatarImage}
+                                        alt={msg.sender}
+                                        className="user-avatar-sm user-avatar-img"
+                                    />
+                                ) : (
+                                    <div className="user-avatar-sm" style={{ background: msg.avatarColor || 'gold' }}>
+                                        {msg.sender.charAt(0)}
+                                    </div>
+                                )}
                                 <div className="message-content-col">
                                     <div className="message-meta">
                                         <span className="message-sender">{msg.sender}</span>

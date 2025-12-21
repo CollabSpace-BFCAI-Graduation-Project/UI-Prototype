@@ -55,6 +55,17 @@ export const usersApi = {
         apiCall(`/users/${id}`, {
             method: 'DELETE',
         }),
+
+    uploadAvatar: (id, imageData) =>
+        apiCall(`/users/${id}/avatar`, {
+            method: 'POST',
+            body: JSON.stringify({ imageData }),
+        }),
+
+    deleteAvatar: (id) =>
+        apiCall(`/users/${id}/avatar`, {
+            method: 'DELETE',
+        }),
 };
 
 // ============ SPACES API ============

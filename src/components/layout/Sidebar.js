@@ -63,9 +63,17 @@ const Sidebar = ({ activeNav, setActiveNav, currentUser, setIsProfileModalOpen }
                         title={currentUser.name}
                         onClick={() => setIsProfileModalOpen(true)}
                     >
-                        <div className="profile-avatar" style={{ background: currentUser.avatarColor }}>
-                            {currentUser.initials}
-                        </div>
+                        {currentUser.avatarImage ? (
+                            <img
+                                src={currentUser.avatarImage}
+                                alt={currentUser.name}
+                                className="profile-avatar profile-avatar-img"
+                            />
+                        ) : (
+                            <div className="profile-avatar" style={{ background: currentUser.avatarColor }}>
+                                {currentUser.initials}
+                            </div>
+                        )}
                     </button>
                 </div>
             </div>

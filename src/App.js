@@ -229,6 +229,7 @@ function App() {
       text: newMessage,
       type: 'user',
       avatarColor: currentUser.avatarColor,
+      avatarImage: currentUser.avatarImage || null,
       mentions: mentions.map(m => m.substring(1))
     };
 

@@ -833,6 +833,43 @@
     margin-bottom: 1rem;
 }
 
+.profile-image {
+    object-fit: cover;
+}
+
+.avatar-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0.75rem;
+}
+
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 0.5rem;
+    right: -0.25rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid white;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-upload-btn:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+.remove-image-btn {
+    margin-bottom: 1rem;
+}
+
 .avatar-color-picker {
     text-align: center;
 }

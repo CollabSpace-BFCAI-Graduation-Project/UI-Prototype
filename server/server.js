@@ -7,12 +7,21 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Directories
+const DATA_DIR = path.join(__dirname, 'data');
+const IMAGES_DIR = path.join(__dirname, 'images');
+
+// Ensure images directory exists
+if (!fs.existsSync(IMAGES_DIR)) {
+    fs.mkdirSync(IMAGES_DIR, { recursive: true });
+}
+
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' })); // Increase limit for base64 images
 
-// Data directory
-const DATA_DIR = path.join(__dirname, 'data');
+// Serve static images
+app.use('/images', express.static(IMAGES_DIR));
 
 // Helper functions for JSON file operations
 const readData = (filename) => {
@@ -123,6 +132,78 @@ app.delete('/api/users/:id', (req, res) => {
 
     writeData('users.json', filtered);
     res.json({ success: true });
+});
+
+// Upload avatar image
+app.post('/api/users/:id/avatar', (req, res) => {
+    const { imageData } = req.body; // base64 image
+
+    if (!imageData) {
+        return res.status(400).json({ error: 'No image data provided' });
+    }
+
+    const users = readData('users.json');
+    const index = users.findIndex(u => u.id === req.params.id);
+
+    if (index === -1) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Extract base64 data and extension
+    const matches = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
+    if (!matches) {
+        return res.status(400).json({ error: 'Invalid image format' });
+    }
+
+    const extension = matches[1];
+    const base64Data = matches[2];
+    const filename = `avatar_${req.params.id}_${Date.now()}.${extension}`;
+    const filepath = path.join(IMAGES_DIR, filename);
+
+    // Delete old avatar if exists
+    if (users[index].avatarImage) {
+        const oldFilename = users[index].avatarImage.split('/').pop();
+        const oldPath = path.join(IMAGES_DIR, oldFilename);
+        if (fs.existsSync(oldPath)) {
+            fs.unlinkSync(oldPath);
+        }
+    }
+
+    // Save new image
+    fs.writeFileSync(filepath, base64Data, 'base64');
+
+    // Update user with image URL
+    const avatarImage = `http://localhost:${PORT}/images/${filename}`;
+    users[index].avatarImage = avatarImage;
+    writeData('users.json', users);
+
+    const { password: _, ...userWithoutPassword } = users[index];
+    res.json(userWithoutPassword);
+});
+
+// Delete avatar image
+app.delete('/api/users/:id/avatar', (req, res) => {
+    const users = readData('users.json');
+    const index = users.findIndex(u => u.id === req.params.id);
+
+    if (index === -1) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete old avatar file if exists
+    if (users[index].avatarImage) {
+        const filename = users[index].avatarImage.split('/').pop();
+        const filepath = path.join(IMAGES_DIR, filename);
+        if (fs.existsSync(filepath)) {
+            fs.unlinkSync(filepath);
+        }
+    }
+
+    users[index].avatarImage = null;
+    writeData('users.json', users);
+
+    const { password: _, ...userWithoutPassword } = users[index];
+    res.json(userWithoutPassword);
 });
 
 // ============ SPACES ROUTES ============
