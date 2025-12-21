@@ -1,0 +1,191 @@
+/* Session Styles */
+
+.session-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #111827;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+.session-header {
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.session-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.session-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: white;
+}
+
+.session-timer {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+}
+
+.session-header-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-icon-session {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon-session:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.session-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+    align-content: center;
+}
+
+.video-tile {
+    background: #1f2937;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.video-tile.active-user {
+    border: 2px solid var(--color-primary);
+}
+
+.video-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #374151;
+}
+
+.user-label {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+}
+
+.session-controls {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.control-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: #374151;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-btn:hover {
+    background: #4b5563;
+    transform: scale(1.1);
+}
+
+.control-btn.danger {
+    background: #ef4444;
+}
+
+.control-btn.danger:hover {
+    background: #dc2626;
+}
+
+.session-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #111827;
+    color: white;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-left-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 2rem;
+}
+
+.loading-text {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.loading-subtext {
+    color: #9ca3af;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
