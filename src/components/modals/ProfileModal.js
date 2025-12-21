@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/modals.css';
+import { usersApi } from '../../services/api';
 
 const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser, onLogout }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -28,24 +29,37 @@ const ProfileModal = ({ isOpen, onClose, currentUser, setCurrentUser, onLogout }
 
     const handleSave = async () => {
         setSaving(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const updatedUser = {
-            ...currentUser,
-            name: formData.name,
-            bio: formData.bio,
-            initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-        };
-        setCurrentUser(updatedUser);
-        localStorage.setItem('collabspace_user', JSON.stringify(updatedUser));
+        try {
+            const updates = {
+                name: formData.name,
+                bio: formData.bio,
+                initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+            };
+            const updatedUser = await usersApi.update(currentUser.id, updates);
+            setCurrentUser(updatedUser);
+            localStorage.setItem('collabspace_user', JSON.stringify(updatedUser));
+        } catch (err) {
+            console.error('Failed to update profile:', err);
+            // Fallback to local update
+            const updatedUser = { ...currentUser, ...formData, initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) };
+            setCurrentUser(updatedUser);
+            localStorage.setItem('collabspace_user', JSON.stringify(updatedUser));
+        }
         setSaving(false);
         setIsEditing(false);
     };
 
-    const handleColorChange = (color) => {
+    const handleColorChange = async (color) => {
         const updatedUser = { ...currentUser, avatarColor: color };
         setCurrentUser(updatedUser);
         localStorage.setItem('collabspace_user', JSON.stringify(updatedUser));
+
+        // Save to backend
+        try {
+            await usersApi.update(currentUser.id, { avatarColor: color });
+        } catch (err) {
+            console.error('Failed to update avatar color:', err);
+        }
     };
 
     const handleSignOut = () => {
