@@ -59,6 +59,8 @@ const SpaceDetails = ({
                         activeSpaceMembers={activeSpaceMembers}
                         currentUser={currentUser}
                         setIsMembersModalOpen={setIsMembersModalOpen}
+                        activeSpace={space}
+                        setActiveSpace={setActiveSpace}
                     />
                 </div>
             </div>

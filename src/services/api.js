@@ -132,6 +132,12 @@ export const spaceMembersApi = {
             method: 'POST',
             body: JSON.stringify({ emails, inviterName, inviterId }),
         }),
+
+    leaveSpace: (spaceId, userId) =>
+        apiCall(`/spaces/${spaceId}/leave`, {
+            method: 'POST',
+            body: JSON.stringify({ userId }),
+        }),
 };
 
 // ============ INVITES API ============

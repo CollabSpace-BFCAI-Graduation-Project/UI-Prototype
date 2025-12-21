@@ -1,14 +1,31 @@
 import React from 'react';
+import { spaceMembersApi } from '../../../services/api';
 
-const SpaceInfoSidebar = ({ activeSpaceMembers, currentUser, setIsMembersModalOpen }) => {
+const SpaceInfoSidebar = ({ activeSpaceMembers, currentUser, setIsMembersModalOpen, activeSpace, setActiveSpace }) => {
     // Find permission for current user in this space
     const currentMember = activeSpaceMembers.find(m => m.userId === currentUser.id);
     const userRole = currentMember ? currentMember.role : 'Member';
     const isOwnerOrAdmin = userRole === 'Owner' || userRole === 'Admin';
+    const isOwner = userRole === 'Owner';
 
     // Find space owner
     const spaceOwner = activeSpaceMembers.find(m => m.role === 'Owner');
-    console.log(activeSpaceMembers);
+
+    const handleLeaveSpace = async () => {
+        if (!activeSpace?.id) return;
+
+        if (window.confirm(`Are you sure you want to leave "${activeSpace.name}"? You will need to be invited again to rejoin.`)) {
+            try {
+                await spaceMembersApi.leaveSpace(activeSpace.id, currentUser.id);
+                alert('You have left the space.');
+                setActiveSpace(null); // Go back to dashboard
+            } catch (err) {
+                console.error('Failed to leave space:', err);
+                alert(err.message || 'Failed to leave space');
+            }
+        }
+    };
+
     return (
         <div className="details-sidebar">
             <div className="info-card">
@@ -66,6 +83,20 @@ const SpaceInfoSidebar = ({ activeSpaceMembers, currentUser, setIsMembersModalOp
                     </button>
                 )}
             </div>
+
+            {/* Leave Space - only visible to non-owners */}
+            {currentMember && !isOwner && (
+                <button
+                    className="btn-danger-outline"
+                    style={{ width: '100%', marginTop: '1rem' }}
+                    onClick={handleLeaveSpace}
+                >
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: '6px' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Leave Space
+                </button>
+            )}
         </div>
     );
 };
