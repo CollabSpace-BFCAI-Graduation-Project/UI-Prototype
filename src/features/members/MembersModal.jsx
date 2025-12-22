@@ -1,24 +1,48 @@
 import React from 'react';
 import { X, UserCog, Trash2 } from 'lucide-react';
+import { useUIStore, useSpacesStore } from '../../store';
+import api from '../../services/api';
 
-export default function MembersModal({
-    isOpen,
-    onClose,
-    activeSpace,
-    onRoleChange
-}) {
-    if (!isOpen || !activeSpace) return null;
+export default function MembersModal() {
+    // Get state from stores
+    const { isMembersModalOpen, closeMembersModal } = useUIStore();
+    const { activeSpace, setActiveSpace, spaces } = useSpacesStore();
+
+    if (!isMembersModalOpen || !activeSpace) return null;
+
+    const handleRoleChange = async (memberId, newRole) => {
+        try {
+            await api.members.updateRole(activeSpace.id, memberId, newRole);
+        } catch (err) {
+            // Fallback handled
+        }
+
+        // Update in store
+        const updatedSpaces = spaces.map(s => {
+            if (s.id === activeSpace.id) {
+                const updatedMembers = s.members?.map(m => m.id === memberId ? { ...m, role: newRole } : m) || [];
+                return { ...s, members: updatedMembers };
+            }
+            return s;
+        });
+        useSpacesStore.setState({ spaces: updatedSpaces });
+
+        const updatedActiveSpace = updatedSpaces.find(s => s.id === activeSpace.id);
+        if (updatedActiveSpace) {
+            setActiveSpace(updatedActiveSpace);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeMembersModal}></div>
             <div className="relative w-full max-w-2xl bg-white border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] flex flex-col h-[600px] animate-in zoom-in-95">
                 <div className="p-6 border-b-2 border-black bg-purple-50 flex justify-between items-center rounded-t-2xl">
                     <div>
                         <h2 className="text-2xl font-black flex items-center gap-2"><UserCog size={24} /> Manage Members</h2>
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Space: {activeSpace.name}</p>
                     </div>
-                    <button onClick={onClose} className="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"><X size={20} /></button>
+                    <button onClick={closeMembersModal} className="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"><X size={20} /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="flex gap-2 mb-6">
@@ -29,7 +53,7 @@ export default function MembersModal({
                         {activeSpace.members?.map(member => (
                             <div key={member.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border-2 border-transparent hover:border-black transition-all">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full border-2 border-black flex items-center justify-center font-bold ${member.avatar}`}>{member.name[0]}</div>
+                                    <div className={`w-10 h-10 rounded-full border-2 border-black flex items-center justify-center font-bold ${member.avatar}`}>{member.name?.[0] || '?'}</div>
                                     <div>
                                         <p className="font-bold">{member.name}</p>
                                         <p className="text-xs text-gray-500 font-bold">{member.role}</p>
@@ -38,7 +62,7 @@ export default function MembersModal({
                                 <div className="flex items-center gap-2">
                                     <select
                                         defaultValue={member.role}
-                                        onChange={(e) => onRoleChange(member.id, e.target.value)}
+                                        onChange={(e) => handleRoleChange(member.id, e.target.value)}
                                         className="bg-white border-2 border-black rounded-lg px-2 py-1 text-sm font-bold outline-none cursor-pointer"
                                     >
                                         <option value="Owner">Owner</option>

@@ -2,15 +2,18 @@ import React from 'react';
 import { Grid, MessageSquare, Users, Settings } from 'lucide-react';
 import NavButton from './NavButton';
 import { getAvatarProps } from '../utils/helpers';
+import { useUIStore, useAuthStore } from '../../store';
 
-export default function Sidebar({
-    currentView,
-    setCurrentView,
-    enterChatLobby,
-    onSettingsClick,
-    user
-}) {
+export default function Sidebar() {
+    // Get state directly from stores
+    const { currentView, setCurrentView, openSettingsModal } = useUIStore();
+    const { user } = useAuthStore();
+
     const { imageUrl, initials, backgroundColor } = getAvatarProps(user);
+
+    const enterChatLobby = () => {
+        setCurrentView('chat');
+    };
 
     return (
         <aside className="fixed left-4 top-4 bottom-4 w-20 bg-white border-2 border-black rounded-full flex flex-col items-center py-8 z-40 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden md:flex">
@@ -46,12 +49,12 @@ export default function Sidebar({
                 <NavButton
                     icon={<Settings size={20} />}
                     tooltip="Settings"
-                    onClick={onSettingsClick}
+                    onClick={openSettingsModal}
                     className="hover:rotate-90 transition-transform duration-300"
                 />
 
                 <button
-                    onClick={onSettingsClick}
+                    onClick={openSettingsModal}
                     className="w-12 h-12 border-2 border-black rounded-full flex items-center justify-center hover:opacity-80 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none overflow-hidden"
                     style={{ backgroundColor: imageUrl ? 'transparent' : backgroundColor }}
                     title={user?.name || 'User'}

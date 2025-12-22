@@ -1,7 +1,12 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { useChatStore } from '../../../store';
 
-export default function ChatSidebar({ activeChatSpace, setActiveChatSpace }) {
+export default function ChatSidebar() {
+    const { activeChatSpace, setActiveChatSpace } = useChatStore();
+
+    if (!activeChatSpace) return null;
+
     return (
         <div className="w-80 bg-white border-2 border-black rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden hidden lg:flex flex-col">
             <div className="p-6 border-b-2 border-black bg-pink-50 flex items-center gap-2">

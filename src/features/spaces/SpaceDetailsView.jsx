@@ -1,18 +1,47 @@
 import React from 'react';
 import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye } from 'lucide-react';
 import SpaceStats from './components/SpaceStats';
+import { getFileIcon } from '../../shared/utils/helpers';
+import { useSpacesStore, useUIStore, useChatStore } from '../../store';
 
-export default function SpaceDetailsView({
-    activeSpace,
-    onBack,
-    onLaunchUnity,
-    onTextChat,
-    onInvite,
-    onFilesClick,
-    onMembersClick,
-    getFileIcon,
-    setViewingFile
-}) {
+export default function SpaceDetailsView() {
+    // Get state directly from stores
+    const { activeSpace, setActiveSpace } = useSpacesStore();
+    const {
+        setCurrentView,
+        openInviteModal,
+        openFilesModal,
+        openMembersModal,
+        setViewingFile,
+        setUnityLoadingProgress
+    } = useUIStore();
+    const { setActiveChatSpace } = useChatStore();
+
+    if (!activeSpace) return null;
+
+    const onBack = () => {
+        setActiveSpace(null);
+        setCurrentView('dashboard');
+    };
+
+    const onLaunchUnity = () => {
+        setUnityLoadingProgress(0);
+        setCurrentView('unity-view');
+        const interval = setInterval(() => {
+            const current = useUIStore.getState().unityLoadingProgress;
+            if (current >= 100) {
+                clearInterval(interval);
+                return;
+            }
+            useUIStore.setState({ unityLoadingProgress: current + 5 });
+        }, 100);
+    };
+
+    const onTextChat = () => {
+        setActiveChatSpace(activeSpace);
+        setCurrentView('chat');
+    };
+
     return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-300">
             <button onClick={onBack} className="mb-6 flex items-center gap-2 text-gray-500 font-bold hover:text-black hover:-translate-x-1 transition-all"><ArrowLeft size={20} /> Back to Dashboard</button>
@@ -41,7 +70,7 @@ export default function SpaceDetailsView({
                         <button onClick={onTextChat} className="flex-1 min-w-[140px] bg-yellow-300 text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-yellow-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                             <MessageSquare size={20} /> Text Chat
                         </button>
-                        <button onClick={onInvite} className="flex-1 min-w-[140px] bg-white text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
+                        <button onClick={openInviteModal} className="flex-1 min-w-[140px] bg-white text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                             <Link size={20} /> Invite
                         </button>
                     </div>
@@ -53,7 +82,7 @@ export default function SpaceDetailsView({
                     <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-black flex items-center gap-2"><FileText size={20} /> Shared Files</h3>
-                            <button onClick={onFilesClick} className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1">View All <ArrowLeft size={16} className="rotate-180" /></button>
+                            <button onClick={openFilesModal} className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1">View All <ArrowLeft size={16} className="rotate-180" /></button>
                         </div>
                         <div className="space-y-3">
                             {activeSpace.files && activeSpace.files.length > 0 ? (
@@ -78,14 +107,14 @@ export default function SpaceDetailsView({
 
                 {/* Right Info */}
                 <div className="space-y-6">
-                    <div onClick={onMembersClick} className="bg-white border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-gray-50 transition-colors group">
+                    <div onClick={openMembersModal} className="bg-white border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-gray-50 transition-colors group">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-black flex items-center gap-2"><Users size={20} /> Members</h3>
                             <ArrowLeft size={16} className="rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {(activeSpace.members || []).slice(0, 6).map((m, i) => (
-                                <div key={i} className={`w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center font-bold text-xs ${m.avatar}`}>{m.name[0]}</div>
+                                <div key={i} className={`w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center font-bold text-xs ${m.avatar}`}>{m.name?.[0] || '?'}</div>
                             ))}
                             <div className="w-10 h-10 rounded-xl bg-black text-white border-2 border-black flex items-center justify-center font-bold text-xs">+{(activeSpace.memberCount || 0) - (activeSpace.members?.length || 0)}</div>
                         </div>

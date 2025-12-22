@@ -1,6 +1,9 @@
 import React from 'react';
+import { useAuthStore } from '../../../store';
 
-export default function ChatMessage({ msg, currentUser }) {
+export default function ChatMessage({ msg }) {
+    const { user: currentUser } = useAuthStore();
+
     if (!msg) return null;
 
     // Support both formats: sender (backend) and user (legacy)

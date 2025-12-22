@@ -1,20 +1,47 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { MessageSquare, ArrowLeft } from 'lucide-react';
 import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
 import ChatSidebar from './components/ChatSidebar';
+import { useChatStore, useSpacesStore, useAuthStore } from '../../store';
 
-export default function ChatView({
-    spaces,
-    activeChatSpace,
-    setActiveChatSpace,
-    currentMessages,
-    chatInput,
-    setChatInput,
-    handleSendMessage,
-    messagesEndRef,
-    currentUser
-}) {
+export default function ChatView() {
+    // Get state directly from stores
+    const {
+        activeChatSpace,
+        setActiveChatSpace,
+        chatInput,
+        setChatInput,
+        sendMessage,
+        getCurrentMessages
+    } = useChatStore();
+
+    const { spaces } = useSpacesStore();
+    const { user } = useAuthStore();
+
+    const messagesEndRef = useRef(null);
+    const currentMessages = getCurrentMessages();
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [currentMessages]);
+
+    const handleSendMessage = async (e) => {
+        e?.preventDefault();
+        if (!chatInput.trim() || !activeChatSpace) return;
+
+        const messageData = {
+            senderId: user?.id,
+            text: chatInput,
+            type: 'user',
+            mentions: []
+        };
+
+        await sendMessage(messageData);
+        setChatInput('');
+    };
+
     // Chat Lobby - No active space selected
     if (!activeChatSpace) {
         return (
@@ -43,7 +70,7 @@ export default function ChatView({
     // Active Chat View
     return (
         <div className="h-[calc(100vh-4rem)] flex gap-6">
-            <ChatSidebar activeChatSpace={activeChatSpace} setActiveChatSpace={setActiveChatSpace} />
+            <ChatSidebar />
 
             <div className="flex-1 bg-white border-2 border-black rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col relative">
                 <div className="p-4 border-b-2 border-black flex justify-between items-center bg-gray-50">
@@ -55,7 +82,7 @@ export default function ChatView({
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
                     {currentMessages.map((msg) => (
-                        <ChatMessage key={msg.id} msg={msg} currentUser={currentUser} />
+                        <ChatMessage key={msg.id} msg={msg} />
                     ))}
                     <div ref={messagesEndRef} />
                 </div>

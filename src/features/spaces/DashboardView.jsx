@@ -2,35 +2,44 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import SpaceFilters from './components/SpaceFilters';
 import SpaceCard from './components/SpaceCard';
+import { useSpacesStore, useUIStore, useAuthStore } from '../../store';
 
-export default function DashboardView({
-    filteredSpaces,
-    activeTab,
-    setActiveTab,
-    activeCategory,
-    setActiveCategory,
-    activeStatus,
-    setActiveStatus,
-    searchQuery,
-    setSearchQuery,
-    viewMode,
-    setViewMode,
-    enterSpace,
-    onCreateClick,
-    userFavorites,
-    onToggleFavorite,
-    userName
-}) {
+export default function DashboardView() {
+    // Get state directly from stores
+    const {
+        getFilteredSpaces,
+        userFavorites,
+        toggleFavorite,
+        setActiveSpace,
+        viewMode,
+    } = useSpacesStore();
+
+    const { openCreateModal, setCurrentView } = useUIStore();
+    const { user } = useAuthStore();
+
+    const filteredSpaces = getFilteredSpaces();
+
+    const enterSpace = (space) => {
+        setActiveSpace(space);
+        setCurrentView('space-details');
+    };
+
+    const handleToggleFavorite = async (spaceId) => {
+        if (user?.id) {
+            await toggleFavorite(user.id, spaceId);
+        }
+    };
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">My Spaces</h1>
-                    <p className="text-gray-500 font-medium">Welcome back{userName ? `, ${userName.split(' ')[0]}` : ''}! 👋</p>
+                    <p className="text-gray-500 font-medium">Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋</p>
                 </div>
 
                 <button
-                    onClick={onCreateClick}
+                    onClick={openCreateModal}
                     className="group flex items-center gap-2 bg-black text-white px-6 py-3 rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(236,72,153,1)] hover:shadow-[6px_6px_0px_0px_rgba(236,72,153,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
                 >
                     <Plus size={20} className="group-hover:rotate-90 transition-transform" />
@@ -38,18 +47,7 @@ export default function DashboardView({
                 </button>
             </header>
 
-            <SpaceFilters
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                activeCategory={activeCategory}
-                setActiveCategory={setActiveCategory}
-                activeStatus={activeStatus}
-                setActiveStatus={setActiveStatus}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-            />
+            <SpaceFilters />
 
             {/* Spaces Grid */}
             {filteredSpaces.length > 0 ? (
@@ -61,7 +59,7 @@ export default function DashboardView({
                             viewMode={viewMode}
                             onEnter={enterSpace}
                             isFavorite={userFavorites?.includes(space.id)}
-                            onToggleFavorite={onToggleFavorite}
+                            onToggleFavorite={handleToggleFavorite}
                         />
                     ))}
                 </div>

@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 
-// Data & API
-import { SPACE_TEMPLATES, INITIAL_CHAT_HISTORY } from './data/mockData.jsx';
-import { getFileIcon } from './shared/utils/helpers.jsx';
-import api from './services/api';
-import { useSpaces, useMessages } from './hooks/useApi';
-import { useAuthContext } from './context/AuthContext.jsx';
+// Data
+import { SPACE_TEMPLATES } from './data/mockData.jsx';
+
+// Zustand Stores
+import { useAuthStore, useSpacesStore, useChatStore, useUIStore } from './store';
 
 // Shared Components
 import Sidebar from './shared/components/Sidebar';
@@ -22,7 +21,6 @@ import CreateSpaceModal from './features/spaces/CreateSpaceModal';
 import ChatView from './features/chat/ChatView';
 
 // Feature: Files
-import useFileUpload from './features/files/hooks/useFileUpload';
 import FilesModal from './features/files/FilesModal';
 import FilePreviewModal from './features/files/FilePreviewModal';
 
@@ -38,281 +36,49 @@ import SettingsModal from './features/settings/SettingsModal';
 import UnitySessionView from './features/session/UnitySessionView';
 
 export default function App() {
-  // --- Auth Context ---
-  const { user, isAuthenticated, login, register, logout, loading: authLoading, error: authError } = useAuthContext();
-
-  // --- Global State ---
-  const [currentView, setCurrentView] = useState('dashboard');
-  const [activeSpace, setActiveSpace] = useState(null);
-  const [activeChatSpace, setActiveChatSpace] = useState(null);
-
-  // --- Dashboard Filters State ---
-  const [activeTab, setActiveTab] = useState('all');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [activeStatus, setActiveStatus] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid');
-
-  // --- Chat State ---
-  const [chatInput, setChatInput] = useState('');
-  const [localChatHistory, setLocalChatHistory] = useState(INITIAL_CHAT_HISTORY);
-  const messagesEndRef = useRef(null);
-
-  // --- Modals State ---
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createStep, setCreateStep] = useState(1);
-  const [newSpaceName, setNewSpaceName] = useState('');
-  const [newSpaceDescription, setNewSpaceDescription] = useState('');
-  const [createdSpaceLink, setCreatedSpaceLink] = useState('');
-
-  // File Mgmt
-  const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
-  const [viewingFile, setViewingFile] = useState(null);
-  const [fileFilter, setFileFilter] = useState('all');
-
-  // Invite & Settings
-  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [settingsTab, setSettingsTab] = useState('general');
-  const [unityLoadingProgress, setUnityLoadingProgress] = useState(0);
-  const [inviteStatus, setInviteStatus] = useState('idle');
-  const [inviteEmail, setInviteEmail] = useState('');
-
-  // User favorites (user-specific)
-  const [userFavorites, setUserFavorites] = useState([]);
-  const currentUserId = user?.id || 'user-1'; // Use authenticated user's ID
+  // --- Zustand Stores ---
+  const {
+    user,
+    isAuthenticated,
+    login,
+    register,
+    loading: authLoading,
+    error: authError,
+    initialize: initAuth,
+  } = useAuthStore();
 
   const {
-    spaces,
+    activeSpace,
     loading: spacesLoading,
     error: spacesError,
-    createSpace,
-    setSpaces
-  } = useSpaces();
+    fetchSpaces,
+    fetchFavorites,
+  } = useSpacesStore();
 
-  // --- API Integration: Messages ---
-  const {
-    messages: apiMessages,
-    sendMessage: apiSendMessage,
-    refetch: refetchMessages
-  } = useMessages(activeChatSpace?.id);
+  const { currentView, unityLoadingProgress, setCurrentView } = useUIStore();
 
-  // --- File Upload Hook ---
-  const {
-    uploadState,
-    uploadProgress,
-    fileInputRef,
-    handleFileSelect,
-    triggerFileUpload
-  } = useFileUpload({ activeSpace, setActiveSpace, setSpaces });
+  // --- Effects ---
 
-  // --- Merge API messages with local fallback ---
-  const currentMessages = activeChatSpace
-    ? (apiMessages.length > 0 ? apiMessages : (localChatHistory[activeChatSpace.id] || []))
-    : [];
-
+  // Initialize auth on mount
   useEffect(() => {
-    if (currentView === 'chat' && activeChatSpace) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [currentMessages, currentView, activeChatSpace]);
+    initAuth();
+  }, [initAuth]);
 
-  // Refetch messages when switching chat spaces
+  // Fetch spaces on mount
   useEffect(() => {
-    if (activeChatSpace?.id) {
-      refetchMessages();
+    if (isAuthenticated) {
+      fetchSpaces();
     }
-  }, [activeChatSpace?.id, refetchMessages]);
+  }, [isAuthenticated, fetchSpaces]);
 
-  const handleSendMessage = async (e) => {
-    e?.preventDefault();
-    if (!chatInput.trim() || !activeChatSpace) return;
-
-    // Only send essential data - server joins with user data
-    const messageData = {
-      senderId: user?.id,
-      text: chatInput,
-      type: 'user',
-      mentions: []
-    };
-
-    try {
-      // Try API first - response includes joined user data
-      await apiSendMessage(messageData);
-    } catch (err) {
-      // Fallback to local state - include user data for display
-      const newMessage = {
-        id: Date.now(),
-        ...messageData,
-        sender: user?.name || 'User',
-        avatarColor: user?.avatarColor || '#ec4899',
-        avatarImage: user?.avatarImage ? `http://localhost:5000${user.avatarImage}` : null,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setLocalChatHistory(prev => ({
-        ...prev,
-        [activeChatSpace.id]: [...(prev[activeChatSpace.id] || []), newMessage]
-      }));
-    }
-
-    setChatInput('');
-  };
-
-  const handleCreateConfirm = async (template) => {
-    const spaceData = {
-      name: newSpaceName,
-      thumbnail: template.gradient,
-      category: template.category,
-      description: newSpaceDescription || "A brand new shiny space!",
-      ownerId: user?.id || null, // Pass current user's ID as owner
-      files: [],
-      members: [{ memberId: 'm1', userId: user?.id, name: user?.name || 'User', username: user?.username, role: 'Owner', avatarColor: user?.avatarColor || '#ec4899' }]
-    };
-
-    try {
-      // Try API first
-      await createSpace(spaceData);
-    } catch (err) {
-      // Fallback to local state
-      const newId = spaces.length + 1;
-      const newSpace = {
-        id: newId,
-        ...spaceData,
-      };
-      setSpaces(prev => [...prev, newSpace]);
-      setLocalChatHistory(prev => ({ ...prev, [newId]: [] }));
-    }
-
-    setCreatedSpaceLink(`https://collabspace.app/space/${Math.random().toString(36).substring(7)}`);
-    setCreateStep(3);
-  };
-
-  const handleFinalizeCreate = () => {
-    setIsCreateModalOpen(false);
-    setCreateStep(1);
-    setNewSpaceName('');
-    setNewSpaceDescription('');
-  };
-
-
-
-  const enterSpace = (space) => {
-    setActiveSpace(space);
-    setCurrentView('space-details');
-  };
-
-  const enterChatLobby = () => {
-    setCurrentView('chat');
-    setActiveChatSpace(null);
-  };
-
-  const filteredSpaces = spaces.filter(space => {
-    const matchesSearch = space.name.toLowerCase().includes(searchQuery.toLowerCase());
-    let matchesTab = true;
-    if (activeTab === 'favorites') matchesTab = userFavorites.includes(space.id);
-    let matchesCategory = true;
-    if (activeCategory !== 'all') matchesCategory = space.category === activeCategory;
-    let matchesStatus = true;
-    if (activeStatus === 'online') matchesStatus = space.isOnline === true;
-    if (activeStatus === 'offline') matchesStatus = space.isOnline === false;
-    return matchesSearch && matchesTab && matchesCategory && matchesStatus;
-  });
-
-  // Fetch user favorites on mount
+  // Fetch favorites when user changes
   useEffect(() => {
-    const fetchFavorites = async () => {
-      try {
-        const favs = await api.users.getFavorites(currentUserId);
-        setUserFavorites(favs);
-      } catch (err) {
-        console.log('Could not fetch favorites');
-      }
-    };
-    fetchFavorites();
-  }, [currentUserId]);
-
-  const handleToggleFavorite = async (spaceId) => {
-    try {
-      const result = await api.users.toggleFavorite(currentUserId, spaceId);
-      if (result.isFavorite) {
-        setUserFavorites(prev => [...prev, spaceId]);
-      } else {
-        setUserFavorites(prev => prev.filter(id => id !== spaceId));
-      }
-    } catch (err) {
-      // Optimistic toggle for offline support
-      setUserFavorites(prev =>
-        prev.includes(spaceId)
-          ? prev.filter(id => id !== spaceId)
-          : [...prev, spaceId]
-      );
+    if (user?.id) {
+      fetchFavorites(user.id);
     }
-  };
+  }, [user?.id, fetchFavorites]);
 
-  const enterUnityWorld = () => {
-    setUnityLoadingProgress(0);
-    setCurrentView('unity-view');
-    const interval = setInterval(() => {
-      setUnityLoadingProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 100);
-  };
-
-  // Invite Logic - with API integration
-  const handleCopyLink = () => {
-    setInviteStatus('generating');
-    setTimeout(() => {
-      setInviteStatus('copied');
-      setTimeout(() => setInviteStatus('idle'), 3000);
-    }, 1000);
-  };
-
-  const handleSendInvite = async () => {
-    if (!inviteEmail || !activeSpace) return;
-    setInviteStatus('sending');
-
-    try {
-      await api.members.invite(activeSpace.id, {
-        emails: [inviteEmail],
-        inviterName: 'Maryam',
-        inviterId: 'current-user-id'
-      });
-      setInviteStatus('sent');
-      setInviteEmail('');
-      setTimeout(() => setInviteStatus('idle'), 2000);
-    } catch (err) {
-      // Fallback - just show success
-      setInviteStatus('sent');
-      setInviteEmail('');
-      setTimeout(() => setInviteStatus('idle'), 2000);
-    }
-  };
-
-  const handleRoleChange = async (memberId, newRole) => {
-    if (!activeSpace) return;
-
-    try {
-      await api.members.updateRole(activeSpace.id, memberId, newRole);
-    } catch (err) {
-      // Fallback to local state
-    }
-
-    setSpaces(prev => prev.map(s => {
-      if (s.id === activeSpace.id) {
-        const updatedMembers = s.members?.map(m => m.id === memberId ? { ...m, role: newRole } : m) || [];
-        const updatedSpace = { ...s, members: updatedMembers };
-        setActiveSpace(updatedSpace);
-        return updatedSpace;
-      }
-      return s;
-    }));
-  };
+  // --- Render ---
 
   // Show auth page if not authenticated
   if (!isAuthenticated) {
@@ -329,14 +95,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FFFDF5] font-sans text-gray-900 selection:bg-pink-300 selection:text-black relative overflow-x-hidden">
 
-      {/* Sidebar */}
-      <Sidebar
-        currentView={currentView}
-        setCurrentView={setCurrentView}
-        enterChatLobby={enterChatLobby}
-        onSettingsClick={() => setIsSettingsModalOpen(true)}
-        user={user}
-      />
+      {/* Sidebar - uses stores directly */}
+      <Sidebar />
 
       {/* Main Content Area */}
       <main className="md:ml-28 p-4 md:p-8 min-h-screen transition-all duration-300">
@@ -356,57 +116,14 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW: DASHBOARD */}
-        {currentView === 'dashboard' && !spacesLoading && (
-          <DashboardView
-            filteredSpaces={filteredSpaces}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            activeStatus={activeStatus}
-            setActiveStatus={setActiveStatus}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            enterSpace={enterSpace}
-            onCreateClick={() => setIsCreateModalOpen(true)}
-            userFavorites={userFavorites}
-            onToggleFavorite={handleToggleFavorite}
-            userName={user?.name}
-          />
-        )}
+        {/* VIEW: DASHBOARD - uses stores directly */}
+        {currentView === 'dashboard' && !spacesLoading && <DashboardView />}
 
-        {/* VIEW: SPACE DETAILS */}
-        {currentView === 'space-details' && activeSpace && (
-          <SpaceDetailsView
-            activeSpace={activeSpace}
-            onBack={() => setCurrentView('dashboard')}
-            onLaunchUnity={enterUnityWorld}
-            onTextChat={() => { setActiveChatSpace(activeSpace); setCurrentView('chat'); }}
-            onInvite={() => setIsInviteModalOpen(true)}
-            onFilesClick={() => setIsFilesModalOpen(true)}
-            onMembersClick={() => setIsMembersModalOpen(true)}
-            getFileIcon={getFileIcon}
-            setViewingFile={setViewingFile}
-          />
-        )}
+        {/* VIEW: SPACE DETAILS - uses stores directly */}
+        {currentView === 'space-details' && activeSpace && <SpaceDetailsView />}
 
-        {/* VIEW: CHAT */}
-        {currentView === 'chat' && (
-          <ChatView
-            spaces={spaces}
-            activeChatSpace={activeChatSpace}
-            setActiveChatSpace={setActiveChatSpace}
-            currentMessages={currentMessages}
-            chatInput={chatInput}
-            setChatInput={setChatInput}
-            handleSendMessage={handleSendMessage}
-            messagesEndRef={messagesEndRef}
-            currentUser={user}
-          />
-        )}
+        {/* VIEW: CHAT - uses stores directly */}
+        {currentView === 'chat' && <ChatView />}
 
         {/* VIEW: TEAM */}
         {currentView === 'team' && <TeamView />}
@@ -421,89 +138,13 @@ export default function App() {
 
       </main>
 
-      {/* MODALS */}
-
-      <FilesModal
-        isOpen={isFilesModalOpen}
-        onClose={() => setIsFilesModalOpen(false)}
-        activeSpace={activeSpace}
-        fileFilter={fileFilter}
-        setFileFilter={setFileFilter}
-        uploadState={uploadState}
-        uploadProgress={uploadProgress}
-        triggerFileUpload={triggerFileUpload}
-        fileInputRef={fileInputRef}
-        handleFileSelect={handleFileSelect}
-        getFileIcon={getFileIcon}
-        setViewingFile={setViewingFile}
-      />
-
-      <InviteModal
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
-        activeSpace={activeSpace}
-        inviteStatus={inviteStatus}
-        inviteEmail={inviteEmail}
-        setInviteEmail={setInviteEmail}
-        onCopyLink={handleCopyLink}
-        onSendInvite={handleSendInvite}
-      />
-
-      <FilePreviewModal
-        file={viewingFile}
-        onClose={() => setViewingFile(null)}
-      />
-
-      <CreateSpaceModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        createStep={createStep}
-        setCreateStep={setCreateStep}
-        newSpaceName={newSpaceName}
-        setNewSpaceName={setNewSpaceName}
-        newSpaceDescription={newSpaceDescription}
-        setNewSpaceDescription={setNewSpaceDescription}
-        spaceTemplates={SPACE_TEMPLATES}
-        createdSpaceLink={createdSpaceLink}
-        onConfirm={handleCreateConfirm}
-        onFinalize={handleFinalizeCreate}
-        currentUser={user}
-      />
-
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        settingsTab={settingsTab}
-        setSettingsTab={setSettingsTab}
-        user={user}
-        onLogout={logout}
-        onUpdateProfile={async (data) => {
-          // Update profile via API
-          try {
-            const updated = await api.users.update(user.id, data);
-            // Refresh user in localStorage
-            localStorage.setItem('collabspace_user', JSON.stringify(updated));
-            window.location.reload(); // Simple refresh to update context
-          } catch (err) {
-            console.error('Failed to update profile:', err);
-          }
-        }}
-        onDeleteAccount={async () => {
-          try {
-            await api.users.delete(user.id);
-            logout();
-          } catch (err) {
-            console.error('Failed to delete account:', err);
-          }
-        }}
-      />
-
-      <MembersModal
-        isOpen={isMembersModalOpen}
-        onClose={() => setIsMembersModalOpen(false)}
-        activeSpace={activeSpace}
-        onRoleChange={handleRoleChange}
-      />
+      {/* MODALS - all use stores directly */}
+      <FilesModal />
+      <InviteModal />
+      <FilePreviewModal />
+      <CreateSpaceModal spaceTemplates={SPACE_TEMPLATES} />
+      <SettingsModal />
+      <MembersModal />
 
     </div>
   );

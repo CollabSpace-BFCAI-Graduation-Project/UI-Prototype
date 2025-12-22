@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Grid, List, ChevronDown, Check } from 'lucide-react';
+import { useSpacesStore } from '../../../store';
 
 function FilterDropdown({ value, options, onChange, color = "purple" }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -48,18 +49,21 @@ function FilterDropdown({ value, options, onChange, color = "purple" }) {
     );
 }
 
-export default function SpaceFilters({
-    activeTab,
-    setActiveTab,
-    activeCategory,
-    setActiveCategory,
-    activeStatus,
-    setActiveStatus,
-    searchQuery,
-    setSearchQuery,
-    viewMode,
-    setViewMode
-}) {
+export default function SpaceFilters() {
+    // Get state directly from store
+    const {
+        activeTab,
+        setActiveTab,
+        activeCategory,
+        setActiveCategory,
+        activeStatus,
+        setActiveStatus,
+        searchQuery,
+        setSearchQuery,
+        viewMode,
+        setViewMode,
+    } = useSpacesStore();
+
     const categoryOptions = [
         { value: 'all', label: 'All Categories' },
         { value: 'CREATIVE', label: '🎨 Creative' },

@@ -1,25 +1,61 @@
 import React from 'react';
 import { X, Link, Copy, Mail, CheckCircle2, Loader2 } from 'lucide-react';
+import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
+import api from '../../services/api';
 
-export default function InviteModal({
-    isOpen,
-    onClose,
-    activeSpace,
-    inviteStatus,
-    inviteEmail,
-    setInviteEmail,
-    onCopyLink,
-    onSendInvite
-}) {
-    if (!isOpen || !activeSpace) return null;
+export default function InviteModal() {
+    // Get state from stores
+    const {
+        isInviteModalOpen,
+        closeInviteModal,
+        inviteStatus,
+        setInviteStatus,
+        inviteEmail,
+        setInviteEmail
+    } = useUIStore();
+
+    const { activeSpace } = useSpacesStore();
+    const { user } = useAuthStore();
+
+    if (!isInviteModalOpen || !activeSpace) return null;
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(`https://gathering.fun/join/${activeSpace.id}`);
+            setInviteStatus('copied');
+            setTimeout(() => setInviteStatus('idle'), 3000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
+
+    const handleSendInvite = async () => {
+        if (!inviteEmail) return;
+        setInviteStatus('sending');
+
+        try {
+            await api.members.invite(activeSpace.id, {
+                emails: [inviteEmail],
+                inviterName: user?.name || 'User',
+                inviterId: user?.id
+            });
+            setInviteStatus('sent');
+            setInviteEmail('');
+            setTimeout(() => setInviteStatus('idle'), 2000);
+        } catch (err) {
+            setInviteStatus('sent');
+            setInviteEmail('');
+            setTimeout(() => setInviteStatus('idle'), 2000);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeInviteModal}></div>
             <div className="relative w-full max-w-lg bg-white border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] animate-in zoom-in-95 overflow-hidden">
                 <div className="p-6 border-b-2 border-black bg-yellow-50 flex justify-between items-center">
                     <h2 className="text-2xl font-black">Invite People 🚀</h2>
-                    <button onClick={onClose} className="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"><X size={20} /></button>
+                    <button onClick={closeInviteModal} className="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"><X size={20} /></button>
                 </div>
                 <div className="p-8 space-y-8">
                     {/* Option 1: Link */}
@@ -29,7 +65,7 @@ export default function InviteModal({
                             <div className="flex-1 bg-gray-100 border-2 border-black rounded-xl px-4 py-3 font-mono text-sm text-gray-600 truncate">
                                 https://gathering.fun/join/{activeSpace.id}
                             </div>
-                            <button onClick={onCopyLink} className="bg-black text-white px-4 rounded-xl font-bold border-2 border-black active:scale-95 transition-transform">
+                            <button onClick={handleCopyLink} className="bg-black text-white px-4 rounded-xl font-bold border-2 border-black active:scale-95 transition-transform">
                                 {inviteStatus === 'copied' ? <CheckCircle2 size={20} className="text-green-400" /> : <Copy size={20} />}
                             </button>
                         </div>
@@ -53,7 +89,7 @@ export default function InviteModal({
                                 className="flex-1 border-2 border-black rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-yellow-300 outline-none"
                             />
                             <button
-                                onClick={onSendInvite}
+                                onClick={handleSendInvite}
                                 disabled={!inviteEmail || inviteStatus === 'sending'}
                                 className="bg-yellow-300 text-black px-6 rounded-xl font-bold border-2 border-black hover:bg-yellow-400 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
                             >

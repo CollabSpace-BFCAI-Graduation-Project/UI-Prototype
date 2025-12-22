@@ -1,0 +1,77 @@
+import { create } from 'zustand';
+
+/**
+ * UI Store
+ * Manages views, modals, and general UI state
+ */
+const useUIStore = create((set) => ({
+    // Navigation
+    currentView: 'dashboard',
+    setCurrentView: (view) => set({ currentView: view }),
+
+    // Modals
+    isCreateModalOpen: false,
+    isFilesModalOpen: false,
+    isMembersModalOpen: false,
+    isSettingsModalOpen: false,
+    isInviteModalOpen: false,
+
+    // Modal actions
+    openCreateModal: () => set({ isCreateModalOpen: true }),
+    closeCreateModal: () => set({ isCreateModalOpen: false }),
+
+    openFilesModal: () => set({ isFilesModalOpen: true }),
+    closeFilesModal: () => set({ isFilesModalOpen: false }),
+
+    openMembersModal: () => set({ isMembersModalOpen: true }),
+    closeMembersModal: () => set({ isMembersModalOpen: false }),
+
+    openSettingsModal: () => set({ isSettingsModalOpen: true }),
+    closeSettingsModal: () => set({ isSettingsModalOpen: false }),
+
+    openInviteModal: () => set({ isInviteModalOpen: true }),
+    closeInviteModal: () => set({ isInviteModalOpen: false }),
+
+    // Create Space Flow
+    createStep: 1,
+    newSpaceName: '',
+    newSpaceDescription: '',
+    createdSpaceLink: '',
+
+    setCreateStep: (step) => set({ createStep: step }),
+    setNewSpaceName: (name) => set({ newSpaceName: name }),
+    setNewSpaceDescription: (desc) => set({ newSpaceDescription: desc }),
+    setCreatedSpaceLink: (link) => set({ createdSpaceLink: link }),
+
+    resetCreateFlow: () => set({
+        createStep: 1,
+        newSpaceName: '',
+        newSpaceDescription: '',
+        createdSpaceLink: '',
+        isCreateModalOpen: false,
+    }),
+
+    // Files
+    viewingFile: null,
+    fileFilter: 'all',
+
+    setViewingFile: (file) => set({ viewingFile: file }),
+    setFileFilter: (filter) => set({ fileFilter: filter }),
+
+    // Settings
+    settingsTab: 'general',
+    setSettingsTab: (tab) => set({ settingsTab: tab }),
+
+    // Unity/3D World
+    unityLoadingProgress: 0,
+    setUnityLoadingProgress: (progress) => set({ unityLoadingProgress: progress }),
+
+    // Invite
+    inviteStatus: 'idle',
+    inviteEmail: '',
+
+    setInviteStatus: (status) => set({ inviteStatus: status }),
+    setInviteEmail: (email) => set({ inviteEmail: email }),
+}));
+
+export default useUIStore;

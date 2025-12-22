@@ -2,17 +2,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Settings, Bell, LogOut, User, Shield, Trash2, Save, Camera } from 'lucide-react';
 import api from '../../services/api';
 import { formatDate, getImageUrl } from '../../shared/utils/helpers';
+import { useUIStore, useAuthStore } from '../../store';
 
-export default function SettingsModal({
-    isOpen,
-    onClose,
-    settingsTab,
-    setSettingsTab,
-    user,
-    onLogout,
-    onUpdateProfile,
-    onDeleteAccount
-}) {
+export default function SettingsModal() {
+    // Get state directly from stores
+    const {
+        isSettingsModalOpen,
+        closeSettingsModal,
+        settingsTab,
+        setSettingsTab
+    } = useUIStore();
+
+    const {
+        user,
+        logout,
+        updateProfile
+    } = useAuthStore();
+
     const [profileData, setProfileData] = useState({
         name: '',
         username: '',
@@ -34,18 +40,17 @@ export default function SettingsModal({
                 bio: user.bio || ''
             });
         }
-    }, [user, isOpen]);
+    }, [user, isSettingsModalOpen]);
 
-    if (!isOpen) return null;
+    if (!isSettingsModalOpen) return null;
 
     const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
     const handleSaveProfile = async () => {
-        if (!onUpdateProfile) return;
         setIsSaving(true);
         setSaveMessage('');
         try {
-            await onUpdateProfile(profileData);
+            await updateProfile(profileData);
             setSaveMessage('Profile updated successfully!');
             setTimeout(() => setSaveMessage(''), 3000);
         } catch (err) {
@@ -56,8 +61,13 @@ export default function SettingsModal({
     };
 
     const handleDeleteAccount = async () => {
-        if (deleteConfirmText !== 'DELETE' || !onDeleteAccount) return;
-        await onDeleteAccount();
+        if (deleteConfirmText !== 'DELETE') return;
+        try {
+            await api.users.delete(user.id);
+            logout();
+        } catch (err) {
+            console.error('Failed to delete account:', err);
+        }
         setShowDeleteConfirm(false);
     };
 
@@ -69,13 +79,11 @@ export default function SettingsModal({
         const file = e.target.files?.[0];
         if (!file || !user?.id) return;
 
-        // Check file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert('File too large. Max 5MB');
             return;
         }
 
-        // Check file type
         if (!file.type.startsWith('image/')) {
             alert('Please select an image file');
             return;
@@ -83,12 +91,10 @@ export default function SettingsModal({
 
         setIsUploadingAvatar(true);
         try {
-            // Convert to base64
             const reader = new FileReader();
             reader.onload = async () => {
                 const imageData = reader.result;
                 const updated = await api.users.uploadAvatar(user.id, imageData);
-                // Update localStorage and reload
                 const stored = JSON.parse(localStorage.getItem('collabspace_user') || '{}');
                 stored.avatarImage = updated.avatarImage;
                 localStorage.setItem('collabspace_user', JSON.stringify(stored));
@@ -128,11 +134,10 @@ export default function SettingsModal({
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeSettingsModal}></div>
             <div className="relative w-full max-w-4xl bg-[#FFFDF5] border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row h-[600px] overflow-hidden animate-in zoom-in-95">
-                <button onClick={onClose} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"><X size={20} /></button>
+                <button onClick={closeSettingsModal} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"><X size={20} /></button>
 
-                {/* Hidden file input for avatar */}
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -158,7 +163,7 @@ export default function SettingsModal({
                     </div>
                     <div className="mt-auto pt-6 border-t-2 border-gray-100">
                         <button
-                            onClick={onLogout}
+                            onClick={logout}
                             className="flex items-center gap-2 text-red-500 font-bold hover:underline w-full px-4 py-2 hover:bg-red-50 rounded-xl transition-colors"
                         >
                             <LogOut size={18} /> Log Out
@@ -286,7 +291,6 @@ export default function SettingsModal({
                         <div className="space-y-6">
                             <h3 className="text-xl font-black">Account Settings</h3>
 
-                            {/* Account Info */}
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
                                 <h4 className="font-bold mb-4">Account Information</h4>
                                 <div className="space-y-3 text-sm">
@@ -309,7 +313,6 @@ export default function SettingsModal({
                                 </div>
                             </div>
 
-                            {/* Danger Zone */}
                             <div className="bg-red-50 border-2 border-red-400 rounded-2xl p-6">
                                 <h4 className="font-bold text-red-600 mb-2 flex items-center gap-2">
                                     <Trash2 size={18} /> Danger Zone
