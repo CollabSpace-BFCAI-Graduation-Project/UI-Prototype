@@ -165,8 +165,9 @@ export default function App() {
       thumbnail: template.gradient,
       category: template.category,
       description: newSpaceDescription || "A brand new shiny space!",
+      ownerId: user?.id || null, // Pass current user's ID as owner
       files: [],
-      members: [{ memberId: 'm1', userId: 'u1', name: 'Maryam', username: 'maryam', role: 'Owner', avatarColor: '#ec4899' }]
+      members: [{ memberId: 'm1', userId: user?.id, name: user?.name || 'User', username: user?.username, role: 'Owner', avatarColor: user?.avatarColor || '#ec4899' }]
     };
 
     try {
@@ -183,7 +184,7 @@ export default function App() {
       setLocalChatHistory(prev => ({ ...prev, [newId]: [] }));
     }
 
-    setCreatedSpaceLink(`https://gathering.fun/space/${Math.random().toString(36).substring(7)}`);
+    setCreatedSpaceLink(`https://collabspace.app/space/${Math.random().toString(36).substring(7)}`);
     setCreateStep(3);
   };
 
@@ -328,26 +329,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FFFDF5] font-sans text-gray-900 selection:bg-pink-300 selection:text-black relative overflow-x-hidden">
 
-      {/* Custom Scrollbar Styles */}
-      <style>{`
-        ::-webkit-scrollbar {
-          width: 12px;
-          height: 12px;
-        }
-        ::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-left: 2px solid black;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #fbbf24;
-          border: 2px solid black;
-          border-radius: 99px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #f59e0b;
-        }
-      `}</style>
-
       {/* Sidebar */}
       <Sidebar
         currentView={currentView}
@@ -486,6 +467,7 @@ export default function App() {
         createdSpaceLink={createdSpaceLink}
         onConfirm={handleCreateConfirm}
         onFinalize={handleFinalizeCreate}
+        currentUser={user}
       />
 
       <SettingsModal

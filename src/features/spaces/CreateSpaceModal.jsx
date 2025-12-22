@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, ArrowLeft, Copy, Smile } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, ArrowLeft, Copy, Check, Mail, Send, UserPlus, Loader2, AlertCircle } from 'lucide-react';
 
 export default function CreateSpaceModal({
     isOpen,
@@ -13,9 +13,80 @@ export default function CreateSpaceModal({
     spaceTemplates,
     createdSpaceLink,
     onConfirm,
-    onFinalize
+    onFinalize,
+    currentUser
 }) {
+    const [copied, setCopied] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteSent, setInviteSent] = useState(false);
+    const [inviteEmails, setInviteEmails] = useState([]);
+    const [isAddingInvite, setIsAddingInvite] = useState(false);
+    const [addSuccess, setAddSuccess] = useState(false);
+    const [addError, setAddError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
     if (!isOpen) return null;
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(createdSpaceLink);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
+
+    const handleAddInvite = async () => {
+        if (!inviteEmail.trim()) return;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail)) return;
+
+        // Check for self-invite or duplicate
+        if (currentUser && inviteEmail === currentUser.email) {
+            setAddError(true);
+            setErrorMessage("You can't invite yourself!");
+            setTimeout(() => {
+                setAddError(false);
+                setErrorMessage('');
+            }, 2000);
+            return;
+        }
+
+        if (inviteEmails.includes(inviteEmail)) {
+            setAddError(true);
+            setErrorMessage("Already invited!");
+            setTimeout(() => {
+                setAddError(false);
+                setErrorMessage('');
+            }, 2000);
+            return;
+        }
+
+        setIsAddingInvite(true);
+        // Simulate small delay for feedback
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        setInviteEmails(prev => [...prev, inviteEmail]);
+        // Clear input immediately when successful
+        setInviteEmail('');
+        setIsAddingInvite(false);
+        setAddSuccess(true);
+        setTimeout(() => setAddSuccess(false), 1500);
+    };
+
+    const handleRemoveInvite = (email) => {
+        setInviteEmails(prev => prev.filter(e => e !== email));
+    };
+
+    const handleSendInvites = async () => {
+        if (inviteEmails.length === 0) return;
+        // TODO: Call API to send invites
+        setInviteSent(true);
+        setTimeout(() => {
+            setInviteSent(false);
+            setInviteEmails([]);
+        }, 2000);
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -57,10 +128,97 @@ export default function CreateSpaceModal({
 
                 {createStep === 3 && (
                     <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center text-center bg-[#FFFDF5]">
-                        <div className="w-20 h-20 bg-green-400 rounded-full border-4 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce"><Smile size={40} className="text-black" /></div>
-                        <h2 className="text-3xl font-black mb-2">Space Created! 🎉</h2><p className="text-gray-600 font-medium mb-8 max-w-md">Your space is ready for action.</p>
-                        <div className="w-full max-w-md bg-white border-2 border-black rounded-xl p-2 flex items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] mb-6"><div className="flex-1 px-4 font-mono text-sm truncate text-gray-600">{createdSpaceLink}</div><button className="bg-yellow-300 hover:bg-yellow-400 text-black p-2.5 rounded-lg border-2 border-black font-bold transition-colors"><Copy size={18} /></button></div>
-                        <div className="flex gap-4"><button onClick={onFinalize} className="px-6 py-3 bg-white border-2 border-black rounded-xl font-bold hover:bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none">Skip Invite</button><button onClick={onFinalize} className="px-6 py-3 bg-black text-white border-2 border-black rounded-xl font-bold hover:shadow-[4px_4px_0px_0px_rgba(236,72,153,1)] transition-shadow">Go to Space →</button></div>
+                        <h2 className="text-3xl font-black mb-2">Space Created! 🎉</h2>
+                        <p className="text-gray-600 font-medium mb-6 max-w-md">Your space is ready. Share the link or invite teammates!</p>
+
+                        {/* Copy Link Section */}
+                        <div className="w-full max-w-md bg-white border-2 border-black rounded-xl p-2 flex items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] mb-6">
+                            <div className="flex-1 px-4 font-mono text-sm truncate text-gray-600">{createdSpaceLink}</div>
+                            <button
+                                onClick={handleCopyLink}
+                                className={`p-2.5 rounded-lg border-2 border-black font-bold transition-all ${copied ? 'bg-green-400' : 'bg-yellow-300 hover:bg-yellow-400'}`}
+                            >
+                                {copied ? <Check size={18} /> : <Copy size={18} />}
+                            </button>
+                        </div>
+
+                        {/* Invite by Email Section */}
+                        <div className="w-full max-w-md mb-6">
+                            <div className="bg-white border-2 border-black rounded-xl p-2 flex items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+                                <input
+                                    type="email"
+                                    value={inviteEmail}
+                                    onChange={(e) => setInviteEmail(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddInvite()}
+                                    placeholder="teammate@example.com"
+                                    className="flex-1 px-4 text-sm font-mono font-medium focus:outline-none bg-transparent text-gray-600 text-center placeholder:text-gray-600"
+                                />
+                                <button
+                                    onClick={handleAddInvite}
+                                    disabled={isAddingInvite || addSuccess || addError}
+                                    className={`p-2.5 rounded-lg border-2 border-black font-bold transition-all disabled:opacity-50 ${addSuccess ? 'bg-green-400 text-black' :
+                                        addError ? 'bg-red-400 text-white' :
+                                            'bg-yellow-300 hover:bg-yellow-400'
+                                        }`}
+                                >
+                                    {isAddingInvite ? (
+                                        <Loader2 size={18} className="animate-spin" />
+                                    ) : addSuccess ? (
+                                        <Check size={18} />
+                                    ) : addError ? (
+                                        <AlertCircle size={18} />
+                                    ) : (
+                                        <UserPlus size={18} />
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Error Message */}
+                            {errorMessage && (
+                                <div className="text-red-500 text-xs font-bold mt-2 animate-in slide-in-from-top-1">
+                                    {errorMessage}
+                                </div>
+                            )}
+
+                            {/* Email Tags */}
+
+                            {/* Email Tags */}
+                            {inviteEmails.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {inviteEmails.map(email => (
+                                        <span
+                                            key={email}
+                                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-gray-700 rounded-lg text-sm font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                        >
+                                            {email}
+                                            <button
+                                                onClick={() => handleRemoveInvite(email)}
+                                                className="hover:text-red-500 ml-1"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Send Invites Button */}
+                            {inviteEmails.length > 0 && (
+                                <button
+                                    onClick={handleSendInvites}
+                                    disabled={inviteSent}
+                                    className={`w-full mt-3 py-2.5 rounded-xl border-2 border-black font-bold transition-all flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${inviteSent ? 'bg-green-400' : 'bg-yellow-300 hover:bg-yellow-400'}`}
+                                >
+                                    {inviteSent ? <><Check size={18} /> Invites Sent!</> : <><Send size={18} /> Send {inviteEmails.length} Invite{inviteEmails.length > 1 ? 's' : ''}</>}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-4">
+                            <button onClick={onFinalize} className="px-6 py-3 bg-white border-2 border-black rounded-xl font-bold hover:bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none">Skip for Now</button>
+                            <button onClick={onFinalize} className="px-6 py-3 bg-black text-white border-2 border-black rounded-xl font-bold hover:shadow-[4px_4px_0px_0px_rgba(236,72,153,1)] transition-shadow">Go to Space →</button>
+                        </div>
                     </div>
                 )}
             </div>

@@ -43,13 +43,12 @@ export default function Sidebar({
             </div>
 
             <div className="flex flex-col items-center gap-3">
-                <button
+                <NavButton
+                    icon={<Settings size={20} />}
+                    tooltip="Settings"
                     onClick={onSettingsClick}
-                    className="w-10 h-10 text-gray-400 hover:text-black hover:rotate-90 transition-all"
-                    title="Settings"
-                >
-                    <Settings size={24} />
-                </button>
+                    className="hover:rotate-90 transition-transform duration-300"
+                />
 
                 <button
                     onClick={onSettingsClick}

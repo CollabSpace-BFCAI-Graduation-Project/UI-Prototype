@@ -22,7 +22,7 @@ export default function SpaceDetailsView({
                 <div className="absolute inset-0 bg-black/10"></div>
                 <div className="absolute bottom-6 left-6 md:left-10 text-white drop-shadow-md">
                     <div className="flex items-center gap-3 mb-2">
-                        <span className="bg-white/90 text-black border-2 border-black px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">{activeSpace.type}</span>
+                        <span className="bg-white/90 text-black border-2 border-black px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">{activeSpace.category}</span>
                         {activeSpace.isOnline && <span className="bg-green-400 text-black border-2 border-black px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider animate-pulse">LIVE NOW</span>}
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-2 text-shadow-lg">{activeSpace.name}</h1>

@@ -1,4 +1,5 @@
 import React from 'react';
+import Tooltip from './Tooltip';
 
 export default function NavButton({ icon, active, tooltip, onClick }) {
     return (
@@ -8,9 +9,8 @@ export default function NavButton({ icon, active, tooltip, onClick }) {
         >
             {icon}
             {/* Tooltip */}
-            <span className="absolute left-14 bg-black text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                {tooltip}
-            </span>
+            {/* Tooltip */}
+            <Tooltip text={tooltip} />
         </button>
     );
 }
