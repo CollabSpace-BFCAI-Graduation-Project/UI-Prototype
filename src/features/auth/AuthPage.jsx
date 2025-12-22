@@ -85,7 +85,7 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
                 setFormError('Username: 3-20 chars, lowercase, numbers, underscores');
                 return;
             }
-            await onRegister(name, username, email, password);
+            await onRegister({ name, username, email, password });
         }
     };
 
