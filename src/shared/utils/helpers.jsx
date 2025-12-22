@@ -1,16 +1,63 @@
-import { FileText, Image as ImageIcon, Film, Presentation, File } from 'lucide-react';
+import { FileText, Image as ImageIcon, Film, Presentation, File, FileArchive, FileCode, FileSpreadsheet, Music } from 'lucide-react';
 
 // API Base URL for images
 const API_BASE_URL = 'http://localhost:5000';
 
+/**
+ * Get file icon based on file type/extension
+ * @param {string} type - File extension or type (e.g., 'PDF', 'png', 'doc')
+ * @returns {JSX.Element} Lucide icon component
+ */
 export const getFileIcon = (type) => {
-    switch (type) {
-        case 'doc': return <FileText size={20} className="text-blue-500" />;
-        case 'image': return <ImageIcon size={20} className="text-pink-500" />;
-        case 'video': return <Film size={20} className="text-purple-500" />;
-        case 'presentation': return <Presentation size={20} className="text-orange-500" />;
-        default: return <File size={20} className="text-gray-500" />;
+    const ext = (type || '').toLowerCase();
+
+    // Images
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico', 'fig'].includes(ext)) {
+        return <ImageIcon size={20} className="text-pink-500" />;
     }
+
+    // Videos
+    if (['mp4', 'mov', 'avi', 'mkv', 'webm', 'wmv', 'flv'].includes(ext)) {
+        return <Film size={20} className="text-purple-500" />;
+    }
+
+    // Audio
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'].includes(ext)) {
+        return <Music size={20} className="text-green-500" />;
+    }
+
+    // PDF (special case - distinct red color)
+    if (ext === 'pdf') {
+        return <FileText size={20} className="text-red-500" />;
+    }
+
+    // Documents (excluding PDF)
+    if (['doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) {
+        return <FileText size={20} className="text-blue-500" />;
+    }
+
+    // Spreadsheets
+    if (['xls', 'xlsx', 'csv', 'ods'].includes(ext)) {
+        return <FileSpreadsheet size={20} className="text-green-600" />;
+    }
+
+    // Presentations
+    if (['ppt', 'pptx', 'odp', 'key'].includes(ext)) {
+        return <Presentation size={20} className="text-orange-500" />;
+    }
+
+    // Archives
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
+        return <FileArchive size={20} className="text-yellow-600" />;
+    }
+
+    // Code files
+    if (['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'c', 'cpp', 'h', 'css', 'html', 'json', 'xml', 'md'].includes(ext)) {
+        return <FileCode size={20} className="text-emerald-500" />;
+    }
+
+    // Default
+    return <File size={20} className="text-gray-500" />;
 };
 
 /**
@@ -19,6 +66,17 @@ export const getFileIcon = (type) => {
  * @returns {string|null} Full URL or null if no path
  */
 export const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `${API_BASE_URL}${path}`;
+};
+
+/**
+ * Get full URL for a file download path from the backend
+ * @param {string} path - The relative file path (e.g., "/uploads/file.pdf")
+ * @returns {string|null} Full URL or null if no path
+ */
+export const getFileUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
     return `${API_BASE_URL}${path}`;

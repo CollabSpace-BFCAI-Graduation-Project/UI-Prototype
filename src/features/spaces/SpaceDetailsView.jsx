@@ -1,8 +1,9 @@
 import React from 'react';
-import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye, Settings } from 'lucide-react';
+import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye, Settings, LogOut } from 'lucide-react';
 import SpaceStats from './components/SpaceStats';
 import { getFileIcon } from '../../shared/utils/helpers';
 import { useSpacesStore, useUIStore, useChatStore, useAuthStore } from '../../store';
+import api from '../../services/api';
 
 export default function SpaceDetailsView() {
     // Get state directly from stores
@@ -15,6 +16,8 @@ export default function SpaceDetailsView() {
         setViewingFile,
         setUnityLoadingProgress,
         openSpaceSettingsModal,
+        openConfirmation,
+        openJoinSessionModal // Add join session modal
     } = useUIStore();
     const { setActiveChatSpace } = useChatStore();
     const { user } = useAuthStore();
@@ -27,6 +30,11 @@ export default function SpaceDetailsView() {
     };
 
     const onLaunchUnity = () => {
+        // Open the pre-join modal first
+        openJoinSessionModal();
+    };
+
+    const onStartUnitySession = () => {
         setUnityLoadingProgress(0);
         setCurrentView('unity-view');
         const interval = setInterval(() => {
@@ -42,6 +50,27 @@ export default function SpaceDetailsView() {
     const onTextChat = () => {
         setActiveChatSpace(activeSpace);
         setCurrentView('chat');
+    };
+
+    const handleLeaveSpace = () => {
+        openConfirmation({
+            title: 'Leave Space?',
+            message: `Are you sure you want to leave ${activeSpace.name}? You will need to be re-invited to join again.`,
+            confirmText: 'Leave Space',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await api.members.leave(activeSpace.id, user.id);
+                    // Refresh spaces list to reflect removal
+                    await useSpacesStore.getState().fetchSpaces();
+                    setActiveSpace(null);
+                    setCurrentView('dashboard');
+                } catch (err) {
+                    console.error('Failed to leave space:', err);
+                }
+            }
+        });
     };
 
     // Check if user can access settings (Admin or Owner)
@@ -82,6 +111,8 @@ export default function SpaceDetailsView() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
+
+
                     {/* Quick Actions */}
                     <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-wrap gap-4">
                         <button onClick={onLaunchUnity} className="flex-1 min-w-[200px] bg-green-400 text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-green-300 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 group">
@@ -94,6 +125,11 @@ export default function SpaceDetailsView() {
                         <button onClick={openInviteModal} className="flex-1 min-w-[140px] bg-white text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-gray-50 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                             <Link size={20} /> Invite
                         </button>
+                        {!isOwner && userMember && (
+                            <button onClick={handleLeaveSpace} className="flex-1 min-w-[140px] bg-red-100 text-red-600 font-bold py-3 px-4 rounded-xl border-2 border-red-500 hover:bg-red-200 shadow-[1px_1px_0px_0px_rgba(239,68,68,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
+                                <LogOut size={20} /> Leave
+                            </button>
+                        )}
                     </div>
                     {/* RECENT FILES */}
                     <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
@@ -108,9 +144,9 @@ export default function SpaceDetailsView() {
                                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:scale-110 transition-transform">
                                             {getFileIcon(file.type)}
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-gray-900">{file.name}</p>
-                                            <p className="text-xs text-gray-500 font-medium">Shared by {file.user} • {file.time}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-gray-900 truncate" title={file.name}>{file.name}</p>
+                                            <p className="text-xs text-gray-500 font-medium">Shared by {file.uploaderName} • {file.time}</p>
                                         </div>
                                         <button className="p-2 text-gray-400 hover:text-black hover:bg-gray-200 rounded-lg transition-colors"><Eye size={18} /></button>
                                     </div>
@@ -124,6 +160,14 @@ export default function SpaceDetailsView() {
 
                 {/* Right Info */}
                 <div className="space-y-6">
+                    {/* Stats */}
+                    <SpaceStats
+                        memberCount={activeSpace.memberCount || 0}
+                        fileCount={activeSpace.fileCount || 0}
+                        ownerName={activeSpace.members?.find(m => m.userId === activeSpace.ownerId)?.name}
+                        createdAt={activeSpace.createdAt}
+                    />
+
                     <div onClick={openMembersModal} className="bg-white border-2 border-black rounded-2xl p-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-gray-50 transition-colors group">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-black flex items-center gap-2"><Users size={20} /> Members</h3>
@@ -138,6 +182,6 @@ export default function SpaceDetailsView() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

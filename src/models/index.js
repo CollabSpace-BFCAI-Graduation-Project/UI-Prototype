@@ -144,10 +144,14 @@ export class SpaceFile {
         this.name = data.name || 'Untitled';
         this.type = data.type || 'doc';
         this.size = data.size || '0 KB';
-        this.uploadedBy = data.uploadedBy || data.user || 'Unknown'; // user who uploaded
-        this.time = data.time || '';
+        this.uploadedBy = data.uploadedBy || data.user || 'Unknown';
+        this.uploaderName = data.uploaderName || data.user || 'Unknown User';
         this.createdAt = data.createdAt || null;
-        this.url = data.url || null;
+        this.downloadUrl = data.downloadUrl || null;
+        this.storedFilename = data.storedFilename || null;
+        this.mimeType = data.mimeType || null;
+        // Calculate time dynamically from createdAt
+        this.time = formatRelativeTime(this.createdAt || new Date());
     }
 
     static fromApi(data) {

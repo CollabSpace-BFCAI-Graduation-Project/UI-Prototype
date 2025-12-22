@@ -11,8 +11,8 @@ export default function FileCard({ file, getFileIcon, onClick }) {
                 <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded border border-gray-200 uppercase">{file.type}</span>
             </div>
             <div>
-                <p className="font-bold text-sm line-clamp-2 leading-tight mb-1">{file.name}</p>
-                <p className="text-xs text-gray-500">{file.size} • {file.user}</p>
+                <p className="font-bold text-sm truncate leading-tight mb-1" title={file.name}>{file.name}</p>
+                <p className="text-xs text-gray-500">{file.size} • {file.uploaderName}</p>
             </div>
         </div>
     );

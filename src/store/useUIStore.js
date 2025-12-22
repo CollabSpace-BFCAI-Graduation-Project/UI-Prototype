@@ -49,6 +49,17 @@ const useUIStore = create((set) => ({
     closeSpaceSettingsModal: () => set({ isSpaceSettingsModalOpen: false }),
     setSpaceSettingsTab: (tab) => set({ spaceSettingsTab: tab }),
 
+    // Join Session Modal
+    isJoinSessionModalOpen: false,
+    openJoinSessionModal: () => set({ isJoinSessionModalOpen: true }),
+    closeJoinSessionModal: () => set({ isJoinSessionModalOpen: false }),
+
+    // Session Device Settings (shared between join modal and session)
+    sessionMicEnabled: true,
+    sessionCameraEnabled: true,
+    setSessionMicEnabled: (enabled) => set({ sessionMicEnabled: enabled }),
+    setSessionCameraEnabled: (enabled) => set({ sessionCameraEnabled: enabled }),
+
     openConfirmation: (data) => set({
         confirmationModal: {
             isOpen: true,

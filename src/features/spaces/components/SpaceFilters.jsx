@@ -82,7 +82,7 @@ export default function SpaceFilters() {
         <div className="bg-white border-2 border-black rounded-2xl p-4 mb-8 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col lg:flex-row gap-4 items-center justify-between sticky top-4 z-30">
             {/* Tabs */}
             <div className="flex p-1 bg-gray-100 rounded-xl border-2 border-black w-full lg:w-auto overflow-x-auto no-scrollbar">
-                {['all', 'favorites', 'member', 'owned'].map((tab) => (
+                {['all', 'favorites', 'owned'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}

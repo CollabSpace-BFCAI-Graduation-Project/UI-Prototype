@@ -16,7 +16,7 @@ export default function FilesModal() {
         setViewingFile
     } = useUIStore();
 
-    const { activeSpace, setActiveSpace } = useSpacesStore();
+    const { activeSpace } = useSpacesStore();
 
     // File upload hook
     const {
@@ -25,14 +25,7 @@ export default function FilesModal() {
         fileInputRef,
         handleFileSelect,
         triggerFileUpload
-    } = useFileUpload({
-        activeSpace,
-        setActiveSpace,
-        setSpaces: (fn) => {
-            const { spaces } = useSpacesStore.getState();
-            useSpacesStore.setState({ spaces: typeof fn === 'function' ? fn(spaces) : fn });
-        }
-    });
+    } = useFileUpload({ activeSpace });
 
     if (!isFilesModalOpen || !activeSpace) return null;
 
@@ -78,7 +71,23 @@ export default function FilesModal() {
 
                         {/* File Cards Filtered */}
                         {activeSpace.files && activeSpace.files
-                            .filter(f => fileFilter === 'all' || f.type === fileFilter)
+                            .filter(f => {
+                                if (fileFilter === 'all') return true;
+                                const ext = f.type?.toLowerCase();
+                                if (fileFilter === 'image') {
+                                    return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico', 'fig'].includes(ext);
+                                }
+                                if (fileFilter === 'video') {
+                                    return ['mp4', 'mov', 'avi', 'mkv', 'webm', 'wmv', 'flv'].includes(ext);
+                                }
+                                if (fileFilter === 'doc') {
+                                    return ['doc', 'docx', 'pdf', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'csv'].includes(ext);
+                                }
+                                if (fileFilter === 'presentation') {
+                                    return ['ppt', 'pptx', 'odp', 'key'].includes(ext);
+                                }
+                                return false;
+                            })
                             .map((file, i) => (
                                 <FileCard
                                     key={i}
@@ -93,3 +102,4 @@ export default function FilesModal() {
         </div>
     );
 }
+

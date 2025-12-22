@@ -57,7 +57,7 @@ export const users = {
 
 // ============ SPACES ============
 export const spaces = {
-    getAll: () => request('/spaces'),
+    getAll: (userId) => request(`/spaces${userId ? `?userId=${userId}` : ''}`),
     getById: (id) => request(`/spaces/${id}`),
     create: (data) => request('/spaces', { method: 'POST', body: data }),
     update: (id, data) => request(`/spaces/${id}`, { method: 'PUT', body: data }),
@@ -97,7 +97,32 @@ export const messages = {
 // ============ FILES ============
 export const files = {
     getBySpace: (spaceId) => request(`/files/${spaceId}`),
-    upload: (spaceId, data) => request(`/files/${spaceId}`, { method: 'POST', body: data }),
+    /**
+     * Upload a file to a space
+     * @param {string} spaceId - The space ID
+     * @param {File} file - The file object from input
+     * @param {string} uploadedBy - User ID who uploaded
+     */
+    upload: async (spaceId, file, uploadedBy) => {
+        // Convert file to base64
+        const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        return request(`/files/${spaceId}`, {
+            method: 'POST',
+            body: {
+                name: file.name,
+                fileData: base64,
+                uploadedBy: uploadedBy
+            }
+        });
+    },
+    download: (fileId) => `http://localhost:5000/api/files/${fileId}/download`,
+    delete: (fileId, userId) => request(`/files/${fileId}`, { method: 'DELETE', body: { userId } }),
 };
 
 // Export grouped API

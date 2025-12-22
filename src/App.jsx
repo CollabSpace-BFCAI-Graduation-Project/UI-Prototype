@@ -37,6 +37,7 @@ import SettingsModal from './features/settings/SettingsModal';
 
 // Feature: Session (3D World)
 import UnitySessionView from './features/session/UnitySessionView';
+import JoinSessionModal from './features/session/JoinSessionModal';
 
 export default function App() {
   // --- Zustand Stores ---
@@ -157,6 +158,7 @@ export default function App() {
       <SettingsModal />
       <MembersModal />
       <SpaceSettingsModal />
+      <JoinSessionModal />
       <ConfirmationModal />
 
       {/* Mobile Navigation */}

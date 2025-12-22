@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import api from '../services/api';
 import { Space } from '../models';
+import useAuthStore from './useAuthStore';
 
 /**
  * Spaces Store
@@ -25,11 +26,14 @@ const useSpacesStore = create((set, get) => ({
     setActiveSpace: (space) => set({ activeSpace: space }),
     clearActiveSpace: () => set({ activeSpace: null }),
 
+
+
     // Fetch all spaces
     fetchSpaces: async () => {
         set({ loading: true, error: null });
         try {
-            const data = await api.spaces.getAll();
+            const user = useAuthStore.getState().user;
+            const data = await api.spaces.getAll(user?.id);
             const spaces = Space.fromApiList(data);
             set({ spaces, loading: false });
             return spaces;

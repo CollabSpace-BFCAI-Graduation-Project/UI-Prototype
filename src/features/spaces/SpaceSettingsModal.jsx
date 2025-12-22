@@ -113,10 +113,10 @@ export default function SpaceSettingsModal() {
                                 key={tab.id}
                                 onClick={() => setSpaceSettingsTab(tab.id)}
                                 className={`w-full text-left px-4 py-3 rounded-xl font-bold border-2 transition-all flex items-center gap-3 ${spaceSettingsTab === tab.id
-                                        ? tab.id === 'danger'
-                                            ? 'bg-red-100 border-red-400 text-red-700'
-                                            : 'bg-yellow-300 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                                        : 'bg-transparent border-transparent hover:bg-gray-100'
+                                    ? tab.id === 'danger'
+                                        ? 'bg-red-100 border-red-400 text-red-700'
+                                        : 'bg-yellow-300 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                    : 'bg-transparent border-transparent hover:bg-gray-100'
                                     } ${tab.id === 'danger' ? 'text-red-600 hover:bg-red-50' : ''}`}
                             >
                                 <tab.icon size={18} />
@@ -150,18 +150,6 @@ export default function SpaceSettingsModal() {
                                         rows={3}
                                         className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none"
                                     />
-                                </div>
-                                <div>
-                                    <label className="block font-bold mb-2">Category</label>
-                                    <select
-                                        value={formData.category}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                                        className="w-full border-2 border-black rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer"
-                                    >
-                                        {CATEGORY_OPTIONS.map(cat => (
-                                            <option key={cat} value={cat}>{cat}</option>
-                                        ))}
-                                    </select>
                                 </div>
 
                                 {saveMessage && (
@@ -197,8 +185,8 @@ export default function SpaceSettingsModal() {
                                             key={i}
                                             onClick={() => setFormData(prev => ({ ...prev, thumbnail: gradient }))}
                                             className={`h-16 rounded-xl border-2 transition-all ${formData.thumbnail === gradient
-                                                    ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] scale-105'
-                                                    : 'border-gray-200 hover:border-black'
+                                                ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] scale-105'
+                                                : 'border-gray-200 hover:border-black'
                                                 }`}
                                             style={{ background: gradient }}
                                         />

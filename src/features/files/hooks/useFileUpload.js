@@ -1,63 +1,57 @@
 import { useState, useRef } from 'react';
+import api from '../../../services/api';
+import { useAuthStore, useSpacesStore } from '../../../store';
 
-export default function useFileUpload({ activeSpace, setActiveSpace, setSpaces }) {
+export default function useFileUpload({ activeSpace }) {
     const [uploadState, setUploadState] = useState('idle');
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
 
-    const handleFileSelect = (event) => {
+    const handleFileSelect = async (event) => {
         const file = event.target.files?.[0];
-        if (!file) return;
+        if (!file || !activeSpace) return;
 
-        // Determine mock type based on basic extension check or default to 'doc'
-        let mockType = 'doc';
-        if (file.type.startsWith('image/')) mockType = 'image';
-        else if (file.type.startsWith('video/')) mockType = 'video';
-        else if (file.name.endsWith('.ppt') || file.name.endsWith('.pptx')) mockType = 'presentation';
+        const user = useAuthStore.getState().user;
 
-        // Start Animation
+        // Start upload animation
         setUploadState('uploading');
         setUploadProgress(0);
 
-        const interval = setInterval(() => {
+        // Simulate progress while waiting for upload
+        const progressInterval = setInterval(() => {
             setUploadProgress(prev => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    return 100;
-                }
-                return prev + Math.floor(Math.random() * 25);
+                if (prev >= 90) return prev; // Cap at 90% until complete
+                return prev + Math.floor(Math.random() * 15);
             });
-        }, 400);
+        }, 300);
 
-        setTimeout(() => {
-            clearInterval(interval);
+        try {
+            // Real API upload
+            await api.files.upload(activeSpace.id, file, user?.id);
+
+            // Upload complete
+            clearInterval(progressInterval);
             setUploadProgress(100);
             setUploadState('success');
 
-            const newFile = {
-                id: `f${Date.now()}`,
-                name: file.name,
-                type: mockType,
-                user: 'Maryam',
-                time: 'Just now',
-                size: (file.size / 1024 / 1024).toFixed(1) + ' MB'
-            };
+            // Refresh spaces to get updated file list
+            await useSpacesStore.getState().fetchSpaces();
 
-            setSpaces(prevSpaces => prevSpaces.map(s => {
-                if (s.id === activeSpace.id) {
-                    const updatedSpace = { ...s, files: [newFile, ...s.files] };
-                    setActiveSpace(updatedSpace);
-                    return updatedSpace;
-                }
-                return s;
-            }));
-
+            // Reset after delay
             setTimeout(() => {
                 setUploadState('idle');
                 setUploadProgress(0);
-                if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+                if (fileInputRef.current) fileInputRef.current.value = '';
             }, 2000);
-        }, 2500);
+
+        } catch (error) {
+            console.error('Upload failed:', error);
+            clearInterval(progressInterval);
+            setUploadState('idle');
+            setUploadProgress(0);
+            alert('Failed to upload file. Please try again.');
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
     const triggerFileUpload = () => {
@@ -72,3 +66,4 @@ export default function useFileUpload({ activeSpace, setActiveSpace, setSpaces }
         triggerFileUpload
     };
 }
+

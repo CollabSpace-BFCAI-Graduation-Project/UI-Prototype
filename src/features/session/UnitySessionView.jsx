@@ -19,14 +19,7 @@ export default function UnitySessionView({
                     <UnityWorldCanvas />
 
                     {/* Game UI Overlay - Top */}
-                    <div className="absolute top-4 left-4 p-4">
-                        <button
-                            onClick={onLeave}
-                            className="bg-red-500 border-2 border-black text-white font-bold px-4 py-2 rounded-lg hover:bg-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none transition-all"
-                        >
-                            LEAVE WORLD
-                        </button>
-                    </div>
+
 
                     {/* Game UI Overlay - Bottom Control Bar */}
                     <SessionControlBar />
