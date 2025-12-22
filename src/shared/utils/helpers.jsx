@@ -1,7 +1,7 @@
 import { FileText, Image as ImageIcon, Film, Presentation, File, FileArchive, FileCode, FileSpreadsheet, Music } from 'lucide-react';
 
 // API Base URL for images
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
 
 /**
  * Get file icon based on file type/extension

@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Generic fetch wrapper with error handling
 async function request(endpoint, options = {}) {
@@ -121,7 +121,7 @@ export const files = {
             }
         });
     },
-    download: (fileId) => `http://localhost:5000/api/files/${fileId}/download`,
+    download: (fileId) => `${API_BASE_URL}/files/${fileId}/download`,
     delete: (fileId, userId) => request(`/files/${fileId}`, { method: 'DELETE', body: { userId } }),
 };
 
