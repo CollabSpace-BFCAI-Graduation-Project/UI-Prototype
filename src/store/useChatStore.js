@@ -59,7 +59,7 @@ const useChatStore = create((set, get) => ({
         };
 
         try {
-            const response = await api.messages.create(activeChatSpace.id, messageData);
+            const response = await api.messages.send(activeChatSpace.id, messageData);
             const apiMessage = Message.fromApi(response);
             set({ messages: [...messages, apiMessage] });
             return apiMessage;
