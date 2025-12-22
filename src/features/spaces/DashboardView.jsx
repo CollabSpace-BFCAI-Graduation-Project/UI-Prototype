@@ -40,7 +40,7 @@ export default function DashboardView() {
 
                 <button
                     onClick={openCreateModal}
-                    className="group flex items-center gap-2 bg-black text-white px-6 py-3 rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(236,72,153,1)] hover:shadow-[6px_6px_0px_0px_rgba(236,72,153,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
+                    className="group flex items-center gap-2 bg-black text-white px-6 py-3 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_rgba(236,72,153,1)] hover:shadow-[3px_3px_0px_0px_rgba(236,72,153,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
                 >
                     <Plus size={20} className="group-hover:rotate-90 transition-transform" />
                     <span>Create Space</span>

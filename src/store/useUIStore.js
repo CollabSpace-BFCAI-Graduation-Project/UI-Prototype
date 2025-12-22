@@ -15,6 +15,19 @@ const useUIStore = create((set) => ({
     isMembersModalOpen: false,
     isSettingsModalOpen: false,
     isInviteModalOpen: false,
+    isSpaceSettingsModalOpen: false,
+    spaceSettingsTab: 'general',
+
+    // Confirmation Modal
+    confirmationModal: {
+        isOpen: false,
+        title: '',
+        message: '',
+        confirmText: 'Confirm',
+        cancelText: 'Cancel',
+        type: 'danger', // danger, warning, info
+        onConfirm: null,
+    },
 
     // Modal actions
     openCreateModal: () => set({ isCreateModalOpen: true }),
@@ -31,6 +44,25 @@ const useUIStore = create((set) => ({
 
     openInviteModal: () => set({ isInviteModalOpen: true }),
     closeInviteModal: () => set({ isInviteModalOpen: false }),
+
+    openSpaceSettingsModal: () => set({ isSpaceSettingsModalOpen: true, spaceSettingsTab: 'general' }),
+    closeSpaceSettingsModal: () => set({ isSpaceSettingsModalOpen: false }),
+    setSpaceSettingsTab: (tab) => set({ spaceSettingsTab: tab }),
+
+    openConfirmation: (data) => set({
+        confirmationModal: {
+            isOpen: true,
+            title: data.title || 'Are you sure?',
+            message: data.message || '',
+            confirmText: data.confirmText || 'Confirm',
+            cancelText: data.cancelText || 'Cancel',
+            type: data.type || 'danger',
+            onConfirm: data.onConfirm,
+        }
+    }),
+    closeConfirmation: () => set((state) => ({
+        confirmationModal: { ...state.confirmationModal, isOpen: false }
+    })),
 
     // Create Space Flow
     createStep: 1,

@@ -14,6 +14,8 @@ function getRandomColor() {
     return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 }
 
+import { formatRelativeTime } from '../shared/utils/helpers';
+
 /**
  * User Model
  * Represents a user in the system
@@ -102,7 +104,8 @@ export class Space {
 export class SpaceMember {
     constructor(data = {}) {
         // Membership-specific fields
-        this.memberId = data.memberId || data.id || null; // The membership record ID
+        this.id = data.id || data.memberId || null; // Ensure ID is accessible as .id
+        this.memberId = data.memberId || data.id || null;
         this.spaceId = data.spaceId || null;
         this.role = data.role || 'Member';
         this.joinedAt = data.joinedAt || null;
@@ -218,8 +221,8 @@ export class Notification {
         this.inviteId = data.inviteId || null;
         this.action = data.action || null;
         this.read = data.read ?? false;
-        this.time = data.time || '';
         this.createdAt = data.createdAt || null;
+        this.time = formatRelativeTime(this.createdAt || data.time || new Date());
     }
 
     static fromApi(data) {

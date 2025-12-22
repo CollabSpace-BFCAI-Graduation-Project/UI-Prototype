@@ -4,10 +4,12 @@ import React, { useEffect } from 'react';
 import { SPACE_TEMPLATES } from './data/mockData.jsx';
 
 // Zustand Stores
-import { useAuthStore, useSpacesStore, useChatStore, useUIStore } from './store';
+import { useAuthStore, useSpacesStore, useChatStore, useUIStore, useNotificationsStore } from './store';
 
 // Shared Components
 import Sidebar from './shared/components/Sidebar';
+import MobileNav from './shared/components/MobileNav';
+import ConfirmationModal from './shared/components/ConfirmationModal';
 
 // Feature: Auth
 import AuthPage from './features/auth/AuthPage';
@@ -16,6 +18,7 @@ import AuthPage from './features/auth/AuthPage';
 import DashboardView from './features/spaces/DashboardView';
 import SpaceDetailsView from './features/spaces/SpaceDetailsView';
 import CreateSpaceModal from './features/spaces/CreateSpaceModal';
+import SpaceSettingsModal from './features/spaces/SpaceSettingsModal';
 
 // Feature: Chat
 import ChatView from './features/chat/ChatView';
@@ -78,6 +81,14 @@ export default function App() {
     }
   }, [user?.id, fetchFavorites]);
 
+  // Fetch notifications when user changes
+  const { fetchNotifications } = useNotificationsStore();
+  useEffect(() => {
+    if (user?.id) {
+      fetchNotifications(user.id);
+    }
+  }, [user?.id, fetchNotifications]);
+
   // --- Render ---
 
   // Show auth page if not authenticated
@@ -99,7 +110,7 @@ export default function App() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="md:ml-28 p-4 md:p-8 min-h-screen transition-all duration-300">
+      <main className="md:ml-28 p-4 md:p-8 pb-20 md:pb-8 min-h-screen transition-all duration-300">
 
         {/* Loading State */}
         {spacesLoading && currentView === 'dashboard' && (
@@ -145,6 +156,11 @@ export default function App() {
       <CreateSpaceModal spaceTemplates={SPACE_TEMPLATES} />
       <SettingsModal />
       <MembersModal />
+      <SpaceSettingsModal />
+      <ConfirmationModal />
+
+      {/* Mobile Navigation */}
+      <MobileNav />
 
     </div>
   );

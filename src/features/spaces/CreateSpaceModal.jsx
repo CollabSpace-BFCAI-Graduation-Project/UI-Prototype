@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ArrowLeft, Copy, Check, Mail, Send, UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
 import { SPACE_TEMPLATES } from '../../data/mockData';
+import api from '../../services/api';
 
 export default function CreateSpaceModal() {
     // Get state from stores
@@ -30,6 +31,8 @@ export default function CreateSpaceModal() {
     const [addSuccess, setAddSuccess] = useState(false);
     const [addError, setAddError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [createdSpaceId, setCreatedSpaceId] = useState(null);
+    const [isSendingInvites, setIsSendingInvites] = useState(false);
 
     if (!isCreateModalOpen) return null;
 
@@ -76,12 +79,27 @@ export default function CreateSpaceModal() {
     };
 
     const handleSendInvites = async () => {
-        if (inviteEmails.length === 0) return;
-        setInviteSent(true);
-        setTimeout(() => {
-            setInviteSent(false);
+        if (inviteEmails.length === 0 || !createdSpaceId) return;
+
+        setIsSendingInvites(true);
+        try {
+            await api.members.invite(createdSpaceId, {
+                emails: inviteEmails,
+                inviterName: user?.name,
+                inviterId: user?.id
+            });
+
+            setInviteSent(true);
             setInviteEmails([]);
-        }, 2000);
+            setTimeout(() => setInviteSent(false), 2000);
+        } catch (err) {
+            console.error('Failed to send invites:', err);
+            setAddError(true);
+            setErrorMessage('Failed to send invites');
+            setTimeout(() => { setAddError(false); setErrorMessage(''); }, 2000);
+        } finally {
+            setIsSendingInvites(false);
+        }
     };
 
     const handleConfirm = async (template) => {
@@ -103,13 +121,18 @@ export default function CreateSpaceModal() {
         };
 
         try {
-            await createSpace(spaceData);
+            const newSpace = await createSpace(spaceData);
+            if (newSpace?.id) {
+                setCreatedSpaceId(newSpace.id);
+                setCreatedSpaceLink(`https://collabspace.app/space/${Math.random().toString(36).substring(7)}`);
+                setCreateStep(3);
+            } else {
+                console.error('Space created but no ID returned');
+            }
         } catch (err) {
             console.error('Failed to create space:', err);
+            // Optionally set an error state here to show to user in Step 2
         }
-
-        setCreatedSpaceLink(`https://collabspace.app/space/${Math.random().toString(36).substring(7)}`);
-        setCreateStep(3);
     };
 
     return (
@@ -197,10 +220,16 @@ export default function CreateSpaceModal() {
                             {inviteEmails.length > 0 && (
                                 <button
                                     onClick={handleSendInvites}
-                                    disabled={inviteSent}
+                                    disabled={inviteSent || isSendingInvites}
                                     className={`w-full mt-3 py-2.5 rounded-xl border-2 border-black font-bold transition-all flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${inviteSent ? 'bg-green-400' : 'bg-yellow-300 hover:bg-yellow-400'}`}
                                 >
-                                    {inviteSent ? <><Check size={18} /> Invites Sent!</> : <><Send size={18} /> Send {inviteEmails.length} Invite{inviteEmails.length > 1 ? 's' : ''}</>}
+                                    {isSendingInvites ? (
+                                        <><Loader2 size={18} className="animate-spin" /> Sending...</>
+                                    ) : inviteSent ? (
+                                        <><Check size={18} /> Invites Sent!</>
+                                    ) : (
+                                        <><Send size={18} /> Send {inviteEmails.length} Invite{inviteEmails.length > 1 ? 's' : ''}</>
+                                    )}
                                 </button>
                             )}
                         </div>
