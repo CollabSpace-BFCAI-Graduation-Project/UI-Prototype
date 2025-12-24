@@ -1,5 +1,74 @@
-import React, { useState } from 'react';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Check, X } from 'lucide-react';
+
+// Password validation helper
+function validatePassword(password) {
+    return {
+        minLength: password.length >= 8,
+        hasUppercase: /[A-Z]/.test(password),
+        hasLowercase: /[a-z]/.test(password),
+        hasNumber: /[0-9]/.test(password),
+        hasSpecial: /[@!#$%&*\-_+=?.]/.test(password),
+    };
+}
+
+// Password Strength Meter Component (Compact)
+function PasswordStrengthMeter({ password }) {
+    const checks = useMemo(() => validatePassword(password), [password]);
+    const passedCount = Object.values(checks).filter(Boolean).length;
+    const allPassed = passedCount === 5;
+
+    const requirements = [
+        { key: 'minLength', label: '8+ chars', passed: checks.minLength },
+        { key: 'hasUppercase', label: 'A-Z', passed: checks.hasUppercase },
+        { key: 'hasLowercase', label: 'a-z', passed: checks.hasLowercase },
+        { key: 'hasNumber', label: '0-9', passed: checks.hasNumber },
+        { key: 'hasSpecial', label: '!@#$', passed: checks.hasSpecial },
+    ];
+
+    const getStrengthColor = () => {
+        if (passedCount <= 1) return 'bg-red-500';
+        if (passedCount <= 2) return 'bg-orange-500';
+        if (passedCount <= 3) return 'bg-yellow-500';
+        if (passedCount <= 4) return 'bg-lime-500';
+        return 'bg-green-500';
+    };
+
+    if (!password) return null;
+
+    return (
+        <div className="mt-1.5 px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+            {/* Strength bar + label inline */}
+            <div className="flex items-center gap-2">
+                <div className="flex gap-0.5 flex-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                        <div
+                            key={i}
+                            className={`h-1 flex-1 rounded-full transition-all duration-200 ${i <= passedCount ? getStrengthColor() : 'bg-gray-200'
+                                }`}
+                        />
+                    ))}
+                </div>
+                <span className={`text-[10px] font-bold whitespace-nowrap ${allPassed ? 'text-green-600' : 'text-gray-500'}`}>
+                    {allPassed ? '✓ Strong' : `${passedCount}/5`}
+                </span>
+            </div>
+            {/* Compact inline requirements */}
+            <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
+                {requirements.map((req) => (
+                    <span
+                        key={req.key}
+                        className={`text-[10px] flex items-center gap-0.5 ${req.passed ? 'text-green-600' : 'text-gray-400'
+                            }`}
+                    >
+                        {req.passed ? <Check size={10} /> : <X size={10} />}
+                        {req.label}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 // Reusable Input Component with animation
 function Input({
@@ -77,8 +146,11 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
                 setFormError('Passwords do not match');
                 return;
             }
-            if (password.length < 6) {
-                setFormError('Password must be at least 6 characters');
+            // Validate password strength
+            const checks = validatePassword(password);
+            const allPassed = Object.values(checks).every(Boolean);
+            if (!allPassed) {
+                setFormError('Password does not meet all requirements');
                 return;
             }
             if (!/^[a-z0-9_]{3,20}$/.test(username)) {
@@ -190,28 +262,32 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
 
                             {/* Password fields - Two columns for signup */}
                             {!isLogin ? (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Input
-                                        label="Password"
-                                        icon={Lock}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        showToggle
-                                        showPassword={showPassword}
-                                        onTogglePassword={() => setShowPassword(!showPassword)}
-                                    />
-                                    <Input
-                                        label="Confirm"
-                                        icon={Lock}
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        showToggle
-                                        showPassword={showPassword}
-                                        onTogglePassword={() => setShowPassword(!showPassword)}
-                                    />
-                                </div>
+                                <>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Input
+                                            label="Password"
+                                            icon={Lock}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            showToggle
+                                            showPassword={showPassword}
+                                            onTogglePassword={() => setShowPassword(!showPassword)}
+                                        />
+                                        <Input
+                                            label="Confirm"
+                                            icon={Lock}
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            showToggle
+                                            showPassword={showPassword}
+                                            onTogglePassword={() => setShowPassword(!showPassword)}
+                                        />
+                                    </div>
+                                    {/* Real-time password strength meter */}
+                                    <PasswordStrengthMeter password={password} />
+                                </>
                             ) : (
                                 <Input
                                     label="Password"
