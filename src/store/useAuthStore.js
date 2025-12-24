@@ -91,8 +91,43 @@ const useAuthStore = create((set, get) => ({
         }
     },
 
-    // Initialize from localStorage
+    // Initialize from localStorage or OAuth callback
     initialize: () => {
+        // Check for OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const userParam = urlParams.get('user');
+        const errorParam = urlParams.get('error');
+
+        if (userParam) {
+            try {
+                const user = JSON.parse(decodeURIComponent(userParam));
+                set({ user, isAuthenticated: true });
+                localStorage.setItem('user', JSON.stringify(user));
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            } catch (e) {
+                console.error('Failed to parse OAuth user data:', e);
+            }
+        }
+
+        if (errorParam) {
+            const errorMessages = {
+                'oauth_denied': 'Google sign-in was cancelled',
+                'invalid_state': 'Security validation failed. Please try again.',
+                'no_code': 'Authentication failed. Please try again.',
+                'token_failed': 'Failed to get access token from Google',
+                'no_user_info': 'Could not retrieve your Google profile',
+                'user_not_found': 'User account not found',
+                'callback_failed': 'Authentication callback failed'
+            };
+            set({ error: { error: errorMessages[errorParam] || 'Authentication failed' } });
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
+
+        // Check localStorage
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
             try {
