@@ -1,5 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Check, X } from 'lucide-react';
+
+// Debounce hook
+function useDebounce(value, delay) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay]);
+
+    return debouncedValue;
+}
 
 // Password validation helper
 function validatePassword(password) {
@@ -12,9 +24,10 @@ function validatePassword(password) {
     };
 }
 
-// Password Strength Meter Component (Compact)
+// Password Strength Meter Component (Compact) with debounce
 function PasswordStrengthMeter({ password }) {
-    const checks = useMemo(() => validatePassword(password), [password]);
+    const debouncedPassword = useDebounce(password, 300);
+    const checks = useMemo(() => validatePassword(debouncedPassword), [debouncedPassword]);
     const passedCount = Object.values(checks).filter(Boolean).length;
     const allPassed = passedCount === 5;
 
@@ -34,7 +47,7 @@ function PasswordStrengthMeter({ password }) {
         return 'bg-green-500';
     };
 
-    if (!password) return null;
+    if (!debouncedPassword) return null;
 
     return (
         <div className="mt-1.5 px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
@@ -131,14 +144,19 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
         e.preventDefault();
         setFormError('');
 
+        // Auto-trim all fields
+        const trimmedName = name.trim();
+        const trimmedUsername = username.trim();
+        const trimmedEmail = email.trim();
+
         if (isLogin) {
-            if (!email || !password) {
+            if (!trimmedEmail || !password) {
                 setFormError('Please fill in all fields');
                 return;
             }
-            await onLogin(email, password);
+            await onLogin(trimmedEmail, password);
         } else {
-            if (!name || !username || !email || !password || !confirmPassword) {
+            if (!trimmedName || !trimmedUsername || !trimmedEmail || !password || !confirmPassword) {
                 setFormError('Please fill in all fields');
                 return;
             }
@@ -153,11 +171,11 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
                 setFormError('Password does not meet all requirements');
                 return;
             }
-            if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+            if (!/^[a-z0-9_]{3,20}$/.test(trimmedUsername)) {
                 setFormError('Username: 3-20 chars, lowercase, numbers, underscores');
                 return;
             }
-            await onRegister({ name, username, email, password });
+            await onRegister({ name: trimmedName, username: trimmedUsername, email: trimmedEmail, password });
         }
     };
 
