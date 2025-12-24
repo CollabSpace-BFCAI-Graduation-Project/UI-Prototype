@@ -22,7 +22,11 @@ async function request(endpoint, options = {}) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP ${response.status}`);
+            const error = new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
+            // Attach the full error response for lockout info, warnings, etc.
+            error.data = errorData;
+            error.status = response.status;
+            throw error;
         }
 
         return await response.json();

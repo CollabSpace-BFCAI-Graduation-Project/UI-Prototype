@@ -139,6 +139,29 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const [formError, setFormError] = useState('');
+    const [lockoutCountdown, setLockoutCountdown] = useState(0);
+
+    // Lockout countdown timer
+    useEffect(() => {
+        if (error?.lockedUntil) {
+            const updateCountdown = () => {
+                const remaining = Math.max(0, Math.ceil((new Date(error.lockedUntil).getTime() - Date.now()) / 1000));
+                setLockoutCountdown(remaining);
+                return remaining;
+            };
+
+            const remaining = updateCountdown();
+            if (remaining > 0) {
+                const interval = setInterval(() => {
+                    const r = updateCountdown();
+                    if (r <= 0) clearInterval(interval);
+                }, 1000);
+                return () => clearInterval(interval);
+            }
+        } else {
+            setLockoutCountdown(0);
+        }
+    }, [error?.lockedUntil]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -240,8 +263,36 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
 
                     {/* Error Message */}
                     {(error || formError) && (
-                        <div className="bg-red-50 border-2 border-red-400 text-red-700 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium animate-in fade-in shake duration-300">
-                            {formError || error}
+                        <div className={`px-4 py-2.5 rounded-xl mb-4 text-sm font-medium animate-in fade-in duration-300 ${error?.warning
+                            ? 'bg-yellow-50 border-2 border-yellow-400 text-yellow-800'
+                            : error?.lockedUntil
+                                ? 'bg-orange-50 border-2 border-orange-400 text-orange-800'
+                                : 'bg-red-50 border-2 border-red-400 text-red-700'
+                            }`}>
+                            {error?.message || error?.error || formError || (typeof error === 'string' ? error : 'An error occurred')}
+                            {error?.remainingAttempts !== undefined && !error?.warning && (
+                                <span className="text-gray-500 text-xs ml-2">
+                                    ({error.remainingAttempts} attempts remaining)
+                                </span>
+                            )}
+                            {error?.lockedUntil && (
+                                <div className="flex items-center gap-2 mt-2 text-sm">
+                                    <span className="text-lg">🔒</span>
+                                    <div>
+                                        <div className="font-bold">Account locked</div>
+                                        {lockoutCountdown > 0 ? (
+                                            <div className="text-xs flex items-center gap-1">
+                                                Try again in
+                                                <span className="inline-block px-2 py-0.5 bg-orange-200 rounded font-mono font-bold text-orange-900 animate-pulse">
+                                                    {Math.floor(lockoutCountdown / 60)}:{String(lockoutCountdown % 60).padStart(2, '0')}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-green-600 font-medium">✓ You can try again now!</div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 

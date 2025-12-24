@@ -23,7 +23,9 @@ const useAuthStore = create((set, get) => ({
             localStorage.setItem('user', JSON.stringify(userData));
             return userData;
         } catch (err) {
-            set({ error: err.message || 'Login failed', loading: false });
+            // Store the full error data for warnings, lockout info, etc.
+            const errorData = err.data || { error: err.message || 'Login failed' };
+            set({ error: errorData, loading: false });
             throw err;
         }
     },
