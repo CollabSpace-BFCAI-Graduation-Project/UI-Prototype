@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Prevent page shift when scrollbar appears */
+html {
+    scrollbar-gutter: stable;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
