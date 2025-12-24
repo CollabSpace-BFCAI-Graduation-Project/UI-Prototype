@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
+import { getImageUrl } from '../../../shared/utils/helpers';
 
 export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onToggleFavorite }) {
     // Calculate member count from members array or use memberCount property
@@ -61,8 +62,8 @@ export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onTogg
                                 style={{ backgroundColor: member.avatarImage ? 'transparent' : (member.avatarColor || '#6b7280') }}
                                 title={member.name}
                             >
-                                {member.avatarImage ? (
-                                    <img src={member.avatarImage} alt={member.name} className="w-full h-full object-cover" />
+                                {getImageUrl(member.avatarImage) ? (
+                                    <img src={getImageUrl(member.avatarImage)} alt={member.name} className="w-full h-full object-cover" />
                                 ) : (
                                     member.name?.[0] || '?'
                                 )}

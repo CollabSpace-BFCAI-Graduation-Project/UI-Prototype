@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '../../../store';
+import { getImageUrl } from '../../../shared/utils/helpers';
 
 export default function ChatMessage({ msg }) {
     const { user: currentUser } = useAuthStore();
@@ -15,7 +16,7 @@ export default function ChatMessage({ msg }) {
     const isMe = currentUser && senderId && senderId === currentUser.id;
 
     // Avatar - use message avatar data directly (server already joins user data)
-    const avatarImage = msg.avatarImage;
+    const avatarImage = getImageUrl(msg.avatarImage);
     const avatarColor = msg.avatarColor || '#ec4899';
     const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
