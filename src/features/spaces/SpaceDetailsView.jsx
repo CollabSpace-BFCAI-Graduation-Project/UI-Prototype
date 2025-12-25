@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye, Settings, LogOut } from 'lucide-react';
 import SpaceStats from './components/SpaceStats';
-import { getFileIcon } from '../../shared/utils/helpers';
+import { getFileIcon, isImageThumbnail, getSpaceThumbnailStyle, getSpaceThumbnailUrl } from '../../shared/utils/helpers';
 import { useSpacesStore, useUIStore, useChatStore, useAuthStore } from '../../store';
 import api from '../../services/api';
 
@@ -85,7 +85,18 @@ export default function SpaceDetailsView() {
             <button onClick={onBack} className="mb-6 flex items-center gap-2 text-gray-500 font-bold hover:text-black hover:-translate-x-1 transition-all"><ArrowLeft size={20} /> Back to Dashboard</button>
 
             {/* Hero */}
-            <div className="w-full h-64 rounded-3xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden mb-8" style={{ background: activeSpace.thumbnail }}>
+            <div
+                className="w-full h-64 rounded-3xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden mb-8"
+                style={getSpaceThumbnailStyle(activeSpace.thumbnail)}
+            >
+                {/* Show image if thumbnail is a URL */}
+                {isImageThumbnail(activeSpace.thumbnail) && (
+                    <img
+                        src={getSpaceThumbnailUrl(activeSpace.thumbnail)}
+                        alt={activeSpace.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                )}
                 <div className="absolute inset-0 bg-black/10"></div>
 
                 {/* Settings Button - Only for Admin/Owner */}

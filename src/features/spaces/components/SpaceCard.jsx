@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
-import { getImageUrl } from '../../../shared/utils/helpers';
+import { getImageUrl, isImageThumbnail, getSpaceThumbnailStyle, getSpaceThumbnailUrl } from '../../../shared/utils/helpers';
 import { useAuthStore } from '../../../store';
 
 export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onToggleFavorite }) {
@@ -22,9 +22,21 @@ export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onTogg
             onClick={() => onEnter(space)}
             className={`group relative bg-white border-2 border-black rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer ${viewMode === 'list' ? 'flex items-center' : ''}`}
         >
-            <div className={`relative ${viewMode === 'grid' ? 'h-40' : 'h-full w-48 shrink-0'}`} style={{ background: space.thumbnail }}>
+            <div
+                className={`relative ${viewMode === 'grid' ? 'h-40' : 'h-full w-48 shrink-0'} overflow-hidden`}
+                style={getSpaceThumbnailStyle(space.thumbnail)}
+            >
+                {/* Show image if thumbnail is a URL */}
+                {isImageThumbnail(space.thumbnail) && (
+                    <img
+                        src={getSpaceThumbnailUrl(space.thumbnail)}
+                        alt={space.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                )}
+
                 {/* Online status badge */}
-                <div className="absolute top-3 left-3 flex gap-2">
+                <div className="absolute top-3 left-3 flex gap-2 z-10">
                     {space.isOnline ? (
                         <span className="bg-green-400 text-black border-2 border-black text-xs font-bold px-2 py-1 rounded-lg shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] animate-pulse">
                             LIVE {space.userCount > 0 && `(${space.userCount})`}
@@ -39,7 +51,7 @@ export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onTogg
                 {/* Favorite button */}
                 <button
                     onClick={handleFavoriteClick}
-                    className="absolute top-3 right-3 bg-white p-2 rounded-lg border-2 border-black hover:bg-pink-50 transition-colors shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[1px] active:translate-x-[1px]"
+                    className="absolute top-3 right-3 z-10 bg-white p-2 rounded-lg border-2 border-black hover:bg-pink-50 transition-colors shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[1px] active:translate-x-[1px]"
                 >
                     <Heart size={16} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"} />
                 </button>

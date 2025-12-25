@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, Palette, Trash2, Save, AlertTriangle, Lock, Globe } from 'lucide-react';
+import { X, Settings, Palette, Trash2, Save, AlertTriangle, Lock, Globe, Image, Upload } from 'lucide-react';
 import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
+import api from '../../services/api';
+import { getImageUrl } from '../../shared/utils/helpers';
 
 const GRADIENT_OPTIONS = [
     'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -38,10 +40,14 @@ export default function SpaceSettingsModal() {
     const [saveMessage, setSaveMessage] = useState('');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [thumbnailType, setThumbnailType] = useState('gradient'); // 'gradient' or 'image'
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     // Initialize form data when modal opens
     useEffect(() => {
         if (activeSpace && isSpaceSettingsModalOpen) {
+            const isImageThumbnail = activeSpace.thumbnail?.startsWith('/uploads') || activeSpace.thumbnail?.startsWith('http');
+            setThumbnailType(isImageThumbnail ? 'image' : 'gradient');
             setFormData({
                 name: activeSpace.name || '',
                 description: activeSpace.description || '',
@@ -51,6 +57,28 @@ export default function SpaceSettingsModal() {
             });
         }
     }, [activeSpace, isSpaceSettingsModalOpen]);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploadingImage(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const result = await api.spaces.uploadThumbnail(activeSpace.id, reader.result);
+                setFormData(prev => ({ ...prev, thumbnail: result.thumbnailImage }));
+                setIsUploadingImage(false);
+                setSaveMessage('Thumbnail updated!');
+                setTimeout(() => setSaveMessage(''), 3000);
+            };
+            reader.readAsDataURL(file);
+        } catch (err) {
+            console.error('Upload failed:', err);
+            setSaveMessage('Upload failed');
+            setIsUploadingImage(false);
+        }
+    };
 
     if (!isSpaceSettingsModalOpen || !activeSpace) return null;
 
@@ -162,8 +190,8 @@ export default function SpaceSettingsModal() {
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, visibility: 'public' }))}
                                             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${formData.visibility === 'public'
-                                                    ? 'border-green-500 bg-green-50 text-green-700'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-green-500 bg-green-50 text-green-700'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             <Globe size={18} />
@@ -173,8 +201,8 @@ export default function SpaceSettingsModal() {
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, visibility: 'private' }))}
                                             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${formData.visibility === 'private'
-                                                    ? 'border-purple-500 bg-purple-50 text-purple-700'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             <Lock size={18} />
@@ -214,38 +242,113 @@ export default function SpaceSettingsModal() {
                         <div className="space-y-6">
                             <h3 className="text-xl font-black">Appearance</h3>
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
-                                <label className="block font-bold mb-4">Thumbnail Gradient</label>
-                                <div className="grid grid-cols-4 gap-3 mb-6">
-                                    {GRADIENT_OPTIONS.map((gradient, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setFormData(prev => ({ ...prev, thumbnail: gradient }))}
-                                            className={`h-16 rounded-xl border-2 transition-all ${formData.thumbnail === gradient
-                                                ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] scale-105'
-                                                : 'border-gray-200 hover:border-black'
-                                                }`}
-                                            style={{ background: gradient }}
-                                        />
-                                    ))}
+                                {/* Type Toggle */}
+                                <label className="block font-bold mb-3">Thumbnail Type</label>
+                                <div className="flex gap-3 mb-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setThumbnailType('gradient')}
+                                        className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${thumbnailType === 'gradient'
+                                            ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <Palette size={18} />
+                                        Gradient
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setThumbnailType('image')}
+                                        className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${thumbnailType === 'image'
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <Image size={18} />
+                                        Image
+                                    </button>
                                 </div>
 
+                                {/* Gradient Picker */}
+                                {thumbnailType === 'gradient' && (
+                                    <>
+                                        <label className="block font-bold mb-4">Choose Gradient</label>
+                                        <div className="grid grid-cols-4 gap-3 mb-6">
+                                            {GRADIENT_OPTIONS.map((gradient, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setFormData(prev => ({ ...prev, thumbnail: gradient }))}
+                                                    className={`h-16 rounded-xl border-2 transition-all ${formData.thumbnail === gradient
+                                                        ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] scale-105'
+                                                        : 'border-gray-200 hover:border-black'
+                                                        }`}
+                                                    style={{ background: gradient }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Image Upload */}
+                                {thumbnailType === 'image' && (
+                                    <div className="mb-6">
+                                        <label className="block font-bold mb-4">Upload Image</label>
+                                        <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-black hover:bg-gray-50 transition-all">
+                                            {isUploadingImage ? (
+                                                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Upload size={32} className="text-gray-400 mb-2" />
+                                                    <span className="text-sm font-bold text-gray-500">Click to upload image</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
+                                )}
+
+                                {/* Preview */}
                                 <div>
                                     <label className="block font-bold mb-2">Preview</label>
                                     <div
-                                        className="h-32 rounded-xl border-2 border-black flex items-center justify-center text-white font-black text-2xl"
-                                        style={{ background: formData.thumbnail }}
+                                        className="h-32 rounded-xl border-2 border-black flex items-center justify-center text-white font-black text-2xl overflow-hidden"
+                                        style={formData.thumbnail?.startsWith('linear-gradient')
+                                            ? { background: formData.thumbnail }
+                                            : { backgroundColor: '#333' }
+                                        }
                                     >
-                                        {formData.name || 'Space Name'}
+                                        {formData.thumbnail && !formData.thumbnail.startsWith('linear-gradient') ? (
+                                            <img
+                                                src={getImageUrl(formData.thumbnail)}
+                                                alt="Preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            formData.name || 'Space Name'
+                                        )}
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                    className="mt-6 bg-black text-white px-6 py-3 rounded-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(16,185,129,1)] hover:shadow-[6px_6px_0px_0px_rgba(16,185,129,1)] hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    <Save size={18} /> Save Appearance
-                                </button>
+                                {saveMessage && (
+                                    <div className={`mt-4 text-sm font-bold ${saveMessage.includes('updated') || saveMessage.includes('saved') ? 'text-green-600' : 'text-red-500'}`}>
+                                        {saveMessage}
+                                    </div>
+                                )}
+
+                                {thumbnailType === 'gradient' && (
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="mt-6 bg-black text-white px-6 py-3 rounded-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(16,185,129,1)] hover:shadow-[6px_6px_0px_0px_rgba(16,185,129,1)] hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        <Save size={18} /> Save Appearance
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}

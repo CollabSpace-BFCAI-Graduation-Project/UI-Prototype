@@ -85,6 +85,12 @@ export const spaces = {
         body: { currentOwnerId, newOwnerId }
     }),
 
+    // Thumbnail
+    uploadThumbnail: (spaceId, imageData) => request(`/spaces/${spaceId}/thumbnail`, {
+        method: 'POST',
+        body: { imageData }
+    }),
+
     update: (id, data) => request(`/spaces/${id}`, { method: 'PUT', body: data }),
     delete: (id) => request(`/spaces/${id}`, { method: 'DELETE' }),
 };

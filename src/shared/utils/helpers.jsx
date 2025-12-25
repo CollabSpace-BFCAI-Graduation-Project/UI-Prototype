@@ -72,6 +72,38 @@ export const getImageUrl = (path) => {
 };
 
 /**
+ * Check if thumbnail is an image (vs gradient)
+ * @param {string} thumbnail - The thumbnail value
+ * @returns {boolean} True if it's an image URL
+ */
+export const isImageThumbnail = (thumbnail) => {
+    if (!thumbnail) return false;
+    return !thumbnail.startsWith('linear-gradient');
+};
+
+/**
+ * Get inline style for space thumbnail background
+ * @param {string} thumbnail - The thumbnail value (gradient or image path)
+ * @returns {object} Style object for the container
+ */
+export const getSpaceThumbnailStyle = (thumbnail) => {
+    if (!thumbnail || thumbnail.startsWith('linear-gradient')) {
+        return { background: thumbnail || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' };
+    }
+    return { backgroundColor: '#333' };
+};
+
+/**
+ * Get full URL for space thumbnail image
+ * @param {string} thumbnail - The thumbnail value
+ * @returns {string|null} Full URL for image or null if gradient
+ */
+export const getSpaceThumbnailUrl = (thumbnail) => {
+    if (!thumbnail || thumbnail.startsWith('linear-gradient')) return null;
+    return getImageUrl(thumbnail);
+};
+
+/**
  * Get full URL for a file download path from the backend
  * @param {string} path - The relative file path (e.g., "/uploads/file.pdf")
  * @returns {string|null} Full URL or null if no path
