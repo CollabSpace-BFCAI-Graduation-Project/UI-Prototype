@@ -156,7 +156,46 @@ export default function SettingsModal() {
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const [cropperImage, setCropperImage] = useState(null);
+    const [validationErrors, setValidationErrors] = useState({});
     const fileInputRef = useRef(null);
+
+    // Validation functions
+    const validateName = (name) => {
+        if (!name || name.trim().length < 2) return 'Name must be at least 2 characters';
+        if (name.trim().length > 30) return 'Name must be less than 30 characters';
+        return null;
+    };
+
+    const validateUsername = (username) => {
+        if (!username || username.length < 3) return 'Username must be at least 3 characters';
+        if (username.length > 20) return 'Username must be less than 20 characters';
+        if (!/^[a-z0-9_]+$/.test(username)) return 'Username can only contain lowercase letters, numbers, and underscores';
+        return null;
+    };
+
+    const validateBio = (bio) => {
+        if (bio && bio.length > 160) return 'Bio must be less than 160 characters';
+        return null;
+    };
+
+    // Real-time validation on field change
+    const handleFieldChange = (field, value) => {
+        setProfileData(prev => ({ ...prev, [field]: value }));
+
+        let error = null;
+        if (field === 'name') error = validateName(value);
+        else if (field === 'username') error = validateUsername(value);
+        else if (field === 'bio') error = validateBio(value);
+
+        setValidationErrors(prev => ({
+            ...prev,
+            [field]: error
+        }));
+    };
+
+    const hasValidationErrors = () => {
+        return Object.values(validationErrors).some(err => err !== null);
+    };
 
     // Initialize form with user data when modal opens or user changes
     useEffect(() => {
@@ -174,10 +213,31 @@ export default function SettingsModal() {
     const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
     const handleSaveProfile = async () => {
+        // Validate all fields before saving
+        const nameError = validateName(profileData.name);
+        const usernameError = validateUsername(profileData.username);
+        const bioError = validateBio(profileData.bio);
+
+        const errors = {
+            name: nameError,
+            username: usernameError,
+            bio: bioError
+        };
+        setValidationErrors(errors);
+
+        // Check if any errors exist
+        if (Object.values(errors).some(err => err !== null)) {
+            setSaveMessage('');
+            return;
+        }
+
         setIsSaving(true);
         setSaveMessage('');
         try {
-            await updateProfile(profileData);
+            await updateProfile({
+                ...profileData,
+                name: profileData.name.trim()
+            });
             setSaveMessage('Profile updated successfully!');
             setTimeout(() => setSaveMessage(''), 3000);
         } catch (err) {
@@ -388,9 +448,15 @@ export default function SettingsModal() {
                                         <input
                                             type="text"
                                             value={profileData.name}
-                                            onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                                            className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300"
+                                            onChange={(e) => handleFieldChange('name', e.target.value)}
+                                            maxLength={30}
+                                            className={`w-full border-2 rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 ${validationErrors.name ? 'border-red-500 bg-red-50' : 'border-black'
+                                                }`}
                                         />
+                                        {validationErrors.name && (
+                                            <p className="text-xs text-red-500 mt-1">{validationErrors.name}</p>
+                                        )}
+                                        <p className="text-xs text-gray-400 mt-1">{profileData.name.length}/30 characters</p>
                                     </div>
                                     <div>
                                         <label className="block font-bold mb-2">Username</label>
@@ -399,10 +465,16 @@ export default function SettingsModal() {
                                             <input
                                                 type="text"
                                                 value={profileData.username}
-                                                onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
-                                                className="w-full border-2 border-black rounded-xl p-3 pl-8 font-medium outline-none focus:ring-2 focus:ring-pink-300"
+                                                onChange={(e) => handleFieldChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                                maxLength={20}
+                                                className={`w-full border-2 rounded-xl p-3 pl-8 font-medium outline-none focus:ring-2 focus:ring-pink-300 ${validationErrors.username ? 'border-red-500 bg-red-50' : 'border-black'
+                                                    }`}
                                             />
                                         </div>
+                                        {validationErrors.username && (
+                                            <p className="text-xs text-red-500 mt-1">{validationErrors.username}</p>
+                                        )}
+                                        <p className="text-xs text-gray-400 mt-1">{profileData.username.length}/20 characters</p>
                                     </div>
                                 </div>
                                 <div>
@@ -419,11 +491,17 @@ export default function SettingsModal() {
                                     <label className="block font-bold mb-2">Bio</label>
                                     <textarea
                                         value={profileData.bio}
-                                        onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                                        onChange={(e) => handleFieldChange('bio', e.target.value)}
                                         rows={3}
+                                        maxLength={160}
                                         placeholder="Tell us about yourself..."
-                                        className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none"
+                                        className={`w-full border-2 rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none ${validationErrors.bio ? 'border-red-500 bg-red-50' : 'border-black'
+                                            }`}
                                     />
+                                    {validationErrors.bio && (
+                                        <p className="text-xs text-red-500 mt-1">{validationErrors.bio}</p>
+                                    )}
+                                    <p className="text-xs text-gray-400 mt-1">{profileData.bio?.length || 0}/160 characters</p>
                                 </div>
 
                                 {saveMessage && (
