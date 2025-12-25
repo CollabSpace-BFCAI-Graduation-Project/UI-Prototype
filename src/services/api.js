@@ -115,6 +115,15 @@ export const members = {
 export const invites = {
     accept: (inviteId) => request(`/invites/${inviteId}/accept`, { method: 'POST' }),
     decline: (inviteId) => request(`/invites/${inviteId}/decline`, { method: 'POST' }),
+    getBySpace: (spaceId) => request(`/spaces/${spaceId}/invites`),
+    revoke: (inviteId) => request(`/invites/${inviteId}`, { method: 'DELETE' }),
+};
+
+// Space request management
+export const requests = {
+    cancel: (spaceId, requestId) => request(`/spaces/${spaceId}/requests/${requestId}`, { method: 'DELETE' }),
+    getMy: (userId) => request(`/users/${userId}/join-requests`),
+    cancelMy: (userId, requestId) => request(`/users/${userId}/join-requests/${requestId}`, { method: 'DELETE' }),
 };
 
 // ============ NOTIFICATIONS ============
@@ -211,6 +220,7 @@ const api = {
     spaces,
     members,
     invites,
+    requests,
     notifications,
     messages,
     files,

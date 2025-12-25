@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Settings, Bell, LogOut, User, Shield, Trash2, Save, Camera, ZoomIn, ZoomOut, Check } from 'lucide-react';
+import { X, Settings, Bell, LogOut, User, Shield, Trash2, Save, Camera, ZoomIn, ZoomOut, Check, Clock, Loader } from 'lucide-react';
 import api from '../../services/api';
 import { formatDate, getImageUrl } from '../../shared/utils/helpers';
 import { useUIStore, useAuthStore } from '../../store';
@@ -164,6 +164,8 @@ export default function SettingsModal() {
     });
     const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
     const [privacyMessage, setPrivacyMessage] = useState('');
+    const [pendingRequests, setPendingRequests] = useState([]);
+    const [loadingRequests, setLoadingRequests] = useState(false);
     const fileInputRef = useRef(null);
 
     // Fetch privacy settings when modal opens
@@ -179,6 +181,32 @@ export default function SettingsModal() {
             }).catch(console.error);
         }
     }, [user?.id, isSettingsModalOpen]);
+
+    // Fetch pending join requests when requests tab is selected
+    useEffect(() => {
+        if (settingsTab === 'requests' && user?.id && isSettingsModalOpen) {
+            console.log('[MyRequests] Fetching pending requests for user:', user.id);
+            setLoadingRequests(true);
+            api.requests.getMy(user.id)
+                .then(data => {
+                    console.log('[MyRequests] Received data:', data);
+                    setPendingRequests(data || []);
+                })
+                .catch(err => {
+                    console.error('[MyRequests] Fetch error:', err);
+                })
+                .finally(() => setLoadingRequests(false));
+        }
+    }, [settingsTab, user?.id, isSettingsModalOpen]);
+
+    const handleCancelRequest = async (requestId) => {
+        try {
+            await api.requests.cancelMy(user.id, requestId);
+            setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+        } catch (err) {
+            console.error('Failed to cancel request:', err);
+        }
+    };
 
     const handleSavePrivacy = async () => {
         setIsSavingPrivacy(true);
@@ -390,6 +418,7 @@ export default function SettingsModal() {
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
+        { id: 'requests', label: 'My Requests', icon: Clock },
         { id: 'privacy', label: 'Privacy', icon: Shield },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'general', label: 'General', icon: Settings }
@@ -604,6 +633,49 @@ export default function SettingsModal() {
                         </div>
                     )}
 
+                    {/* My Requests Tab */}
+                    {settingsTab === 'requests' && (
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-black flex items-center gap-2">
+                                <Clock size={20} /> Pending Join Requests
+                            </h3>
+                            <p className="text-gray-500 text-sm">
+                                These are spaces you've requested to join. They're waiting for approval from the space admin.
+                            </p>
+
+                            <div className="bg-white border-2 border-black rounded-2xl p-6">
+                                {loadingRequests ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <Loader className="animate-spin text-gray-400" size={24} />
+                                    </div>
+                                ) : pendingRequests.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500 font-medium">
+                                        <Clock size={32} className="mx-auto mb-2 opacity-50" />
+                                        <p>No pending requests</p>
+                                        <p className="text-xs text-gray-400 mt-1">Request to join spaces and they'll appear here</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {pendingRequests.map(req => (
+                                            <div key={req.id} className="flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-300 rounded-xl">
+                                                <div>
+                                                    <p className="font-bold">{req.spaceName}</p>
+                                                    <p className="text-xs text-gray-500">Waiting for approval...</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleCancelRequest(req.id)}
+                                                    className="px-4 py-2 bg-red-500 text-white font-bold text-sm rounded-lg border-2 border-red-600 hover:bg-red-600 transition-colors"
+                                                >
+                                                    Cancel Request
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Privacy Tab */}
                     {settingsTab === 'privacy' && (
                         <div className="space-y-6">
@@ -623,8 +695,8 @@ export default function SettingsModal() {
                                         <label
                                             key={option.value}
                                             className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${privacySettings.profileVisibility === option.value
-                                                    ? 'border-pink-500 bg-pink-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-pink-500 bg-pink-50'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             <input

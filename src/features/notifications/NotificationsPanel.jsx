@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, Check, X, User, MessageSquare, FileText, Zap, UserPlus } from 'lucide-react';
-import { useNotificationsStore, useSpacesStore, useAuthStore } from '../../store';
+import { useNotificationsStore, useSpacesStore } from '../../store';
 
 const NOTIFICATION_ICONS = {
     invite: UserPlus,
@@ -36,7 +36,6 @@ function NotificationItem({ notification, onAcceptInvite, onDeclineInvite, onMar
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm">
-                        {/* <span className="font-bold">{notification.author}</span>{' '} */}
                         <span className="text-gray-600">{notification.text}</span>{' '}
                         <span className="font-bold text-pink-600">{notification.target}</span>
                     </p>
@@ -111,7 +110,6 @@ export default function NotificationsPanel({ isOpen, onClose, triggerRef }) {
     const handleAccept = async (inviteId, notificationId) => {
         const success = await acceptInvite(inviteId, notificationId);
         if (success) {
-            // Refresh spaces to show newly joined space
             fetchSpaces();
         }
     };

@@ -44,6 +44,8 @@ export default function SpaceSettingsModal() {
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [bannedUsers, setBannedUsers] = useState([]);
     const [loadingBans, setLoadingBans] = useState(false);
+    const [pendingInvites, setPendingInvites] = useState([]);
+    const [loadingInvites, setLoadingInvites] = useState(false);
 
     // Initialize form data when modal opens
     useEffect(() => {
@@ -68,6 +70,17 @@ export default function SpaceSettingsModal() {
                 .then(setBannedUsers)
                 .catch(console.error)
                 .finally(() => setLoadingBans(false));
+        }
+    }, [spaceSettingsTab, activeSpace?.id, isSpaceSettingsModalOpen]);
+
+    // Fetch pending invites when tab is selected
+    useEffect(() => {
+        if (spaceSettingsTab === 'invites' && activeSpace?.id && isSpaceSettingsModalOpen) {
+            setLoadingInvites(true);
+            api.invites.getBySpace(activeSpace.id)
+                .then(setPendingInvites)
+                .catch(console.error)
+                .finally(() => setLoadingInvites(false));
         }
     }, [spaceSettingsTab, activeSpace?.id, isSpaceSettingsModalOpen]);
 
@@ -134,6 +147,7 @@ export default function SpaceSettingsModal() {
     const tabs = [
         { id: 'general', label: 'General', icon: Settings },
         { id: 'appearance', label: 'Appearance', icon: Palette },
+        ...(canAccess ? [{ id: 'invites', label: 'Pending Invites', icon: Globe }] : []),
         ...(canAccess ? [{ id: 'banned', label: 'Banned Users', icon: Ban }] : []),
         ...(isOwner ? [{ id: 'danger', label: 'Danger Zone', icon: Trash2 }] : []),
     ];
@@ -144,6 +158,15 @@ export default function SpaceSettingsModal() {
             setBannedUsers(prev => prev.filter(b => b.id !== banId));
         } catch (err) {
             console.error('Failed to unban:', err);
+        }
+    };
+
+    const handleRevokeInvite = async (inviteId) => {
+        try {
+            await api.invites.revoke(inviteId);
+            setPendingInvites(prev => prev.filter(i => i.id !== inviteId));
+        } catch (err) {
+            console.error('Failed to revoke invite:', err);
         }
     };
 
@@ -371,6 +394,57 @@ export default function SpaceSettingsModal() {
                                     >
                                         <Save size={18} /> Save Appearance
                                     </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Pending Invites Tab */}
+                    {spaceSettingsTab === 'invites' && (
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-black flex items-center gap-2">
+                                <Globe size={20} /> Pending Invites
+                            </h3>
+                            <div className="bg-white border-2 border-black rounded-2xl p-6">
+                                {loadingInvites ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <Loader className="animate-spin text-gray-400" size={24} />
+                                    </div>
+                                ) : pendingInvites.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500 font-medium">
+                                        No pending invites
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {pendingInvites.map(invite => (
+                                            <div key={invite.id} className="flex items-center justify-between p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className="w-10 h-10 rounded-full border-2 border-black flex items-center justify-center text-white text-sm font-bold overflow-hidden"
+                                                        style={{ backgroundColor: invite.avatarColor || '#3b82f6' }}
+                                                    >
+                                                        {invite.avatarImage ? (
+                                                            <img src={getImageUrl(invite.avatarImage)} alt={invite.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            invite.name?.[0] || '?'
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold">{invite.name}</p>
+                                                        <p className="text-xs text-gray-500">
+                                                            @{invite.username} • Invited {new Date(invite.createdAt).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRevokeInvite(invite.id)}
+                                                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-sm border-2 border-red-600 hover:bg-red-600 transition-colors"
+                                                >
+                                                    Revoke
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>

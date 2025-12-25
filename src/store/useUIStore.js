@@ -17,6 +17,7 @@ const useUIStore = create((set) => ({
     isInviteModalOpen: false,
     isSpaceSettingsModalOpen: false,
     spaceSettingsTab: 'general',
+    settingsTab: 'profile',
 
     // Confirmation Modal
     confirmationModal: {
@@ -48,6 +49,7 @@ const useUIStore = create((set) => ({
     openSpaceSettingsModal: () => set({ isSpaceSettingsModalOpen: true, spaceSettingsTab: 'general' }),
     closeSpaceSettingsModal: () => set({ isSpaceSettingsModalOpen: false }),
     setSpaceSettingsTab: (tab) => set({ spaceSettingsTab: tab }),
+    setSettingsTab: (tab) => set({ settingsTab: tab }),
 
     // Join Session Modal
     isJoinSessionModalOpen: false,
