@@ -10,6 +10,7 @@ import { useAuthStore, useSpacesStore, useChatStore, useUIStore, useNotification
 import Sidebar from './shared/components/Sidebar';
 import MobileNav from './shared/components/MobileNav';
 import ConfirmationModal from './shared/components/ConfirmationModal';
+import InfoModal from './shared/components/InfoModal';
 
 // Feature: Auth
 import AuthPage from './features/auth/AuthPage';
@@ -160,6 +161,7 @@ export default function App() {
       <SpaceSettingsModal />
       <JoinSessionModal />
       <ConfirmationModal />
+      <InfoModal />
 
       {/* Mobile Navigation */}
       <MobileNav />

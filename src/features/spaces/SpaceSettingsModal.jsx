@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, Palette, Trash2, Save, AlertTriangle, Lock, Globe, Image, Upload } from 'lucide-react';
+import { X, Settings, Palette, Trash2, Save, AlertTriangle, Lock, Globe, Image, Upload, Ban, Loader } from 'lucide-react';
 import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
 import api from '../../services/api';
 import { getImageUrl } from '../../shared/utils/helpers';
@@ -42,6 +42,8 @@ export default function SpaceSettingsModal() {
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [thumbnailType, setThumbnailType] = useState('gradient'); // 'gradient' or 'image'
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [bannedUsers, setBannedUsers] = useState([]);
+    const [loadingBans, setLoadingBans] = useState(false);
 
     // Initialize form data when modal opens
     useEffect(() => {
@@ -57,6 +59,17 @@ export default function SpaceSettingsModal() {
             });
         }
     }, [activeSpace, isSpaceSettingsModalOpen]);
+
+    // Fetch banned users when tab is selected
+    useEffect(() => {
+        if (spaceSettingsTab === 'banned' && activeSpace?.id && isSpaceSettingsModalOpen) {
+            setLoadingBans(true);
+            api.spaces.getBans(activeSpace.id)
+                .then(setBannedUsers)
+                .catch(console.error)
+                .finally(() => setLoadingBans(false));
+        }
+    }, [spaceSettingsTab, activeSpace?.id, isSpaceSettingsModalOpen]);
 
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
@@ -121,8 +134,18 @@ export default function SpaceSettingsModal() {
     const tabs = [
         { id: 'general', label: 'General', icon: Settings },
         { id: 'appearance', label: 'Appearance', icon: Palette },
+        ...(canAccess ? [{ id: 'banned', label: 'Banned Users', icon: Ban }] : []),
         ...(isOwner ? [{ id: 'danger', label: 'Danger Zone', icon: Trash2 }] : []),
     ];
+
+    const handleUnban = async (banId) => {
+        try {
+            await api.spaces.unban(activeSpace.id, banId);
+            setBannedUsers(prev => prev.filter(b => b.id !== banId));
+        } catch (err) {
+            console.error('Failed to unban:', err);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -348,6 +371,57 @@ export default function SpaceSettingsModal() {
                                     >
                                         <Save size={18} /> Save Appearance
                                     </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Banned Users Tab */}
+                    {spaceSettingsTab === 'banned' && (
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-black flex items-center gap-2">
+                                <Ban size={20} /> Banned Users
+                            </h3>
+                            <div className="bg-white border-2 border-black rounded-2xl p-6">
+                                {loadingBans ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <Loader className="animate-spin text-gray-400" size={24} />
+                                    </div>
+                                ) : bannedUsers.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500 font-medium">
+                                        No banned users
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {bannedUsers.map(ban => (
+                                            <div key={ban.id} className="flex items-center justify-between p-3 bg-red-50 border-2 border-red-200 rounded-xl">
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className="w-10 h-10 rounded-full border-2 border-black flex items-center justify-center text-white text-sm font-bold overflow-hidden"
+                                                        style={{ backgroundColor: ban.avatarColor || '#ef4444' }}
+                                                    >
+                                                        {ban.avatarImage ? (
+                                                            <img src={getImageUrl(ban.avatarImage)} alt={ban.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            ban.name?.[0] || '?'
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold">{ban.name}</p>
+                                                        <p className="text-xs text-gray-500">
+                                                            Banned by {ban.bannedByName || 'Unknown'} • {new Date(ban.createdAt).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleUnban(ban.id)}
+                                                    className="bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm border-2 border-green-600 hover:bg-green-600 transition-colors"
+                                                >
+                                                    Unban
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>

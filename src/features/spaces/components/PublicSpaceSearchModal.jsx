@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Search, X, Users, Globe, Lock, ArrowRight, Loader } from 'lucide-react';
-import { useAuthStore, useSpacesStore } from '../../../store';
+import { useAuthStore, useSpacesStore, useUIStore } from '../../../store';
 import api from '../../../services/api';
 
 // Simple debounce utility
@@ -21,6 +21,7 @@ function useDebounce(callback, delay) {
 export default function PublicSpaceSearchModal({ isOpen, onClose }) {
     const { user } = useAuthStore();
     const { joinSpace } = useSpacesStore();
+    const { openInfo } = useUIStore();
     const [query, setQuery] = useState('');
     const [allSpaces, setAllSpaces] = useState([]); // Store all public spaces
     const [filteredResults, setFilteredResults] = useState([]); // Displayed results
@@ -78,7 +79,11 @@ export default function PublicSpaceSearchModal({ isOpen, onClose }) {
             setFilteredResults(prev => updateSpaceStatus(prev));
         } catch (err) {
             console.error('Failed to request join', err);
-            alert('Failed to send join request');
+            openInfo({
+                title: 'Request Failed',
+                message: err?.message || 'Failed to send join request. You may be banned from this space.',
+                type: 'error'
+            });
         } finally {
             setJoiningId(null);
         }

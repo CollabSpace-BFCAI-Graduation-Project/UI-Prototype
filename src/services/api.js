@@ -93,6 +93,10 @@ export const spaces = {
 
     update: (id, data) => request(`/spaces/${id}`, { method: 'PUT', body: data }),
     delete: (id) => request(`/spaces/${id}`, { method: 'DELETE' }),
+
+    // Bans
+    getBans: (spaceId) => request(`/spaces/${spaceId}/bans`),
+    unban: (spaceId, banId) => request(`/spaces/${spaceId}/bans/${banId}`, { method: 'DELETE' }),
 };
 
 // ============ SPACE MEMBERS ============
@@ -101,6 +105,7 @@ export const members = {
     add: (spaceId, data) => request(`/spaces/${spaceId}/members`, { method: 'POST', body: data }),
     updateRole: (spaceId, memberId, role) => request(`/spaces/${spaceId}/members/${memberId}`, { method: 'PUT', body: { role } }),
     remove: (spaceId, memberId) => request(`/spaces/${spaceId}/members/${memberId}`, { method: 'DELETE' }),
+    ban: (spaceId, memberId, bannedBy, reason) => request(`/spaces/${spaceId}/members/${memberId}/ban`, { method: 'POST', body: { bannedBy, reason } }),
     leave: (spaceId, userId) => request(`/spaces/${spaceId}/leave`, { method: 'POST', body: { userId } }),
     invite: (spaceId, data) => request(`/spaces/${spaceId}/invite`, { method: 'POST', body: data }),
 };

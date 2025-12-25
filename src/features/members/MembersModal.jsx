@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, UserCog, Trash2, Check, Loader } from 'lucide-react';
+import { X, UserCog, Trash2, Check, Loader, Ban } from 'lucide-react';
 import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
 import api from '../../services/api';
 import UserProfileModal from '../profile/UserProfileModal';
@@ -166,6 +166,45 @@ export default function MembersModal() {
         });
     };
 
+    const handleBan = (memberId) => {
+        if (!memberId) {
+            console.error('Cannot ban member: memberId is undefined');
+            return;
+        }
+        const member = activeSpace.members?.find(m => m.id === memberId);
+        const memberName = member?.name || 'this member';
+
+        openConfirmation({
+            title: 'Ban Member?',
+            message: `Are you sure you want to ban ${memberName}? They will be removed and cannot rejoin or request to join this space.`,
+            confirmText: 'Ban',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await api.members.ban(activeSpace.id, memberId, user.id, null);
+
+                    // Update in store
+                    const updatedSpaces = spaces.map(s => {
+                        if (s.id === activeSpace.id) {
+                            const updatedMembers = s.members?.filter(m => m.id !== memberId) || [];
+                            return { ...s, members: updatedMembers };
+                        }
+                        return s;
+                    });
+                    useSpacesStore.setState({ spaces: updatedSpaces });
+
+                    const updatedActiveSpace = updatedSpaces.find(s => s.id === activeSpace.id);
+                    if (updatedActiveSpace) {
+                        setActiveSpace(updatedActiveSpace);
+                    }
+                } catch (err) {
+                    console.error('Failed to ban member:', err);
+                }
+            }
+        });
+    };
+
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeMembersModal}></div>
@@ -276,9 +315,14 @@ export default function MembersModal() {
                                                 )}
                                             </select>
                                             {canManageMembers && member.id !== currentUserMember?.id && member.role !== 'Owner' && (
-                                                <button onClick={() => handleKick(member.id)} className="p-2 hover:bg-red-100 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Remove member">
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <>
+                                                    <button onClick={() => handleKick(member.id)} className="p-2 hover:bg-yellow-100 rounded-lg text-gray-400 hover:text-yellow-600 transition-colors" title="Remove member">
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleBan(member.id)} className="p-2 hover:bg-red-100 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Ban member">
+                                                        <Ban size={18} />
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     </div>

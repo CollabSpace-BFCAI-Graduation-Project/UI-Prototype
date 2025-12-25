@@ -75,6 +75,25 @@ const useUIStore = create((set) => ({
         confirmationModal: { ...state.confirmationModal, isOpen: false }
     })),
 
+    // Info Modal (for alerts/errors)
+    infoModal: {
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info', // 'info', 'success', 'error'
+    },
+    openInfo: (data) => set({
+        infoModal: {
+            isOpen: true,
+            title: data.title || 'Information',
+            message: data.message || '',
+            type: data.type || 'info',
+        }
+    }),
+    closeInfo: () => set((state) => ({
+        infoModal: { ...state.infoModal, isOpen: false }
+    })),
+
     // Create Space Flow
     createStep: 1,
     newSpaceName: '',
