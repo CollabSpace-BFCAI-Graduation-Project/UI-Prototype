@@ -52,6 +52,10 @@ export const users = {
     deleteAvatar: (id) => request(`/users/${id}/avatar`, { method: 'DELETE' }),
     getSpaces: (userId) => request(`/users/${userId}/spaces`),
     getInvites: (userId) => request(`/users/${userId}/invites`),
+    // Profile & Privacy
+    getProfile: (id, viewerId) => request(`/users/${id}/profile?viewerId=${viewerId}`),
+    updatePrivacy: (id, data) => request(`/users/${id}/privacy`, { method: 'PUT', body: data }),
+    getSharedSpaces: (id, viewerId) => request(`/users/${id}/shared-spaces?viewerId=${viewerId}`),
     // Favorites
     getFavorites: (userId) => request(`/users/${userId}/favorites`),
     addFavorite: (userId, spaceId) => request(`/users/${userId}/favorites/${spaceId}`, { method: 'POST' }),

@@ -158,7 +158,42 @@ export default function SettingsModal() {
     const [cropperImage, setCropperImage] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
     const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
+    const [privacySettings, setPrivacySettings] = useState({
+        showEmail: false,
+        profileVisibility: 'public'
+    });
+    const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+    const [privacyMessage, setPrivacyMessage] = useState('');
     const fileInputRef = useRef(null);
+
+    // Fetch privacy settings when modal opens
+    useEffect(() => {
+        if (user?.id && isSettingsModalOpen) {
+            api.users.getProfile(user.id, user.id).then(profile => {
+                if (profile) {
+                    setPrivacySettings({
+                        showEmail: profile.showEmail === 1 || profile.showEmail === true,
+                        profileVisibility: profile.profileVisibility || 'public'
+                    });
+                }
+            }).catch(console.error);
+        }
+    }, [user?.id, isSettingsModalOpen]);
+
+    const handleSavePrivacy = async () => {
+        setIsSavingPrivacy(true);
+        setPrivacyMessage('');
+        try {
+            await api.users.updatePrivacy(user.id, privacySettings);
+            setPrivacyMessage('Privacy settings saved!');
+            setTimeout(() => setPrivacyMessage(''), 3000);
+        } catch (err) {
+            console.error('Failed to save privacy:', err);
+            setPrivacyMessage('Failed to save settings');
+        } finally {
+            setIsSavingPrivacy(false);
+        }
+    };
 
     // Validation functions
     const validateName = (name) => {
@@ -355,7 +390,7 @@ export default function SettingsModal() {
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
-        { id: 'account', label: 'Account', icon: Shield },
+        { id: 'privacy', label: 'Privacy', icon: Shield },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'general', label: 'General', icon: Settings }
     ];
@@ -409,8 +444,8 @@ export default function SettingsModal() {
                             {/* Avatar Section with Drag & Drop */}
                             <div
                                 className={`flex items-center gap-6 p-4 rounded-2xl border-2 border-dashed transition-all ${isDraggingAvatar
-                                        ? 'border-pink-500 bg-pink-50 scale-[1.02]'
-                                        : 'border-transparent'
+                                    ? 'border-pink-500 bg-pink-50 scale-[1.02]'
+                                    : 'border-transparent'
                                     }`}
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
@@ -569,25 +604,75 @@ export default function SettingsModal() {
                         </div>
                     )}
 
-                    {/* Account Tab */}
-                    {settingsTab === 'account' && (
+                    {/* Privacy Tab */}
+                    {settingsTab === 'privacy' && (
                         <div className="space-y-6">
-                            <h3 className="text-xl font-black">Account Settings</h3>
+                            <h3 className="text-xl font-black">Privacy Settings</h3>
 
+                            {/* Profile Visibility */}
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
-                                <h4 className="font-bold mb-4">Account Information</h4>
-                                <div className="space-y-3 text-sm">
-                                    <div className="flex justify-between py-2 border-b border-gray-100">
+                                <h4 className="font-bold mb-4">Profile Visibility</h4>
+                                <p className="text-sm text-gray-500 mb-4">Control who can see your full profile information.</p>
+
+                                <div className="space-y-3">
+                                    {[
+                                        { value: 'public', label: 'Public', desc: 'Anyone can view your profile' },
+                                        { value: 'members', label: 'Members Only', desc: 'Only people in your shared spaces' },
+                                        { value: 'private', label: 'Private', desc: 'Only you can see your profile' }
+                                    ].map(option => (
+                                        <label
+                                            key={option.value}
+                                            className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${privacySettings.profileVisibility === option.value
+                                                    ? 'border-pink-500 bg-pink-50'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="profileVisibility"
+                                                value={option.value}
+                                                checked={privacySettings.profileVisibility === option.value}
+                                                onChange={(e) => setPrivacySettings(prev => ({ ...prev, profileVisibility: e.target.value }))}
+                                                className="mt-1"
+                                            />
+                                            <div>
+                                                <div className="font-bold">{option.label}</div>
+                                                <div className="text-sm text-gray-500">{option.desc}</div>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Data Sharing */}
+                            <div className="bg-white border-2 border-black rounded-2xl p-6">
+                                <h4 className="font-bold mb-4">Data Sharing</h4>
+                                <p className="text-sm text-gray-500 mb-4">Choose what information others can see on your profile.</p>
+
+                                <label className="flex items-center justify-between p-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 cursor-pointer">
+                                    <div>
+                                        <div className="font-bold">Show Email</div>
+                                        <div className="text-sm text-gray-500">Display your email address on your profile</div>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="checkbox"
+                                            checked={privacySettings.showEmail}
+                                            onChange={(e) => setPrivacySettings(prev => ({ ...prev, showEmail: e.target.checked }))}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {/* Account Info */}
+                            <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6">
+                                <h4 className="font-bold mb-4 text-gray-600">Account Information</h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between py-2 border-b border-gray-200">
                                         <span className="text-gray-500">User ID</span>
                                         <span className="font-mono font-bold">{user?.id?.slice(0, 8)}...</span>
-                                    </div>
-                                    <div className="flex justify-between py-2 border-b border-gray-100">
-                                        <span className="text-gray-500">Email</span>
-                                        <span className="font-bold">{user?.email}</span>
-                                    </div>
-                                    <div className="flex justify-between py-2 border-b border-gray-100">
-                                        <span className="text-gray-500">Username</span>
-                                        <span className="font-bold">@{user?.username}</span>
                                     </div>
                                     <div className="flex justify-between py-2">
                                         <span className="text-gray-500">Member since</span>
@@ -596,6 +681,25 @@ export default function SettingsModal() {
                                 </div>
                             </div>
 
+                            {privacyMessage && (
+                                <div className={`text-sm font-bold ${privacyMessage.includes('saved') ? 'text-green-600' : 'text-red-500'}`}>
+                                    {privacyMessage}
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleSavePrivacy}
+                                disabled={isSavingPrivacy}
+                                className="bg-black text-white px-6 py-3 rounded-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(16,185,129,1)] hover:shadow-[6px_6px_0px_0px_rgba(16,185,129,1)] hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {isSavingPrivacy ? (
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <><Save size={18} /> Save Privacy Settings</>
+                                )}
+                            </button>
+
+                            {/* Danger Zone */}
                             <div className="bg-red-50 border-2 border-red-400 rounded-2xl p-6">
                                 <h4 className="font-bold text-red-600 mb-2 flex items-center gap-2">
                                     <Trash2 size={18} /> Danger Zone

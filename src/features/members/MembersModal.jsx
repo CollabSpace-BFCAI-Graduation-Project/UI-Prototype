@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, UserCog, Trash2 } from 'lucide-react';
 import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
 import api from '../../services/api';
+import UserProfileModal from '../profile/UserProfileModal';
 
 export default function MembersModal() {
     // Get state from stores
@@ -18,8 +19,9 @@ export default function MembersModal() {
     });
 
     // Local state for quick invite
-    const [inviteEmail, setInviteEmail] = React.useState('');
-    const [isInviting, setIsInviting] = React.useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [isInviting, setIsInviting] = useState(false);
+    const [viewingProfileId, setViewingProfileId] = useState(null);
 
     if (!isMembersModalOpen || !activeSpace) return null;
 
@@ -140,10 +142,14 @@ export default function MembersModal() {
                     <div className="space-y-4">
                         {activeSpace.members?.map(member => (
                             <div key={member.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border-2 border-transparent hover:border-black transition-all">
-                                <div className="flex items-center gap-3">
+                                <div
+                                    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => setViewingProfileId(member.userId)}
+                                    title="View profile"
+                                >
                                     <div className={`w-10 h-10 rounded-full border-2 border-black flex items-center justify-center font-bold ${member.avatar}`}>{member.name?.[0] || '?'}</div>
                                     <div>
-                                        <p className="font-bold">{member.name}</p>
+                                        <p className="font-bold hover:text-pink-600 transition-colors">{member.name}</p>
                                         <p className="text-xs text-gray-500 font-bold">{member.role}</p>
                                     </div>
                                 </div>
@@ -174,6 +180,15 @@ export default function MembersModal() {
                     </div>
                 </div>
             </div>
+
+            {/* User Profile Modal */}
+            {viewingProfileId && (
+                <UserProfileModal
+                    userId={viewingProfileId}
+                    viewerId={user?.id}
+                    onClose={() => setViewingProfileId(null)}
+                />
+            )}
         </div>
     );
 }
