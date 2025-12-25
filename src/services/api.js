@@ -56,6 +56,7 @@ export const users = {
     getProfile: (id, viewerId) => request(`/users/${id}/profile?viewerId=${viewerId}`),
     updatePrivacy: (id, data) => request(`/users/${id}/privacy`, { method: 'PUT', body: data }),
     getSharedSpaces: (id, viewerId) => request(`/users/${id}/shared-spaces?viewerId=${viewerId}`),
+    search: (query, viewerId) => request(`/users/search?q=${encodeURIComponent(query)}&viewerId=${viewerId}`),
     // Favorites
     getFavorites: (userId) => request(`/users/${userId}/favorites`),
     addFavorite: (userId, spaceId) => request(`/users/${userId}/favorites/${spaceId}`, { method: 'POST' }),
