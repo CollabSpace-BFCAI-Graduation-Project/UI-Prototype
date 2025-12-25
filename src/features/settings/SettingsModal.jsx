@@ -1,8 +1,133 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Settings, Bell, LogOut, User, Shield, Trash2, Save, Camera } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { X, Settings, Bell, LogOut, User, Shield, Trash2, Save, Camera, ZoomIn, ZoomOut, Check } from 'lucide-react';
 import api from '../../services/api';
 import { formatDate, getImageUrl } from '../../shared/utils/helpers';
 import { useUIStore, useAuthStore } from '../../store';
+
+// Allowed file types and max size
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+// Simple Image Cropper Component
+function ImageCropper({ imageUrl, onCrop, onCancel }) {
+    const canvasRef = useRef(null);
+    const [zoom, setZoom] = useState(1);
+    const [offset, setOffset] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const imgRef = useRef(new Image());
+
+    useEffect(() => {
+        imgRef.current.src = imageUrl;
+        imgRef.current.onload = () => drawImage();
+    }, [imageUrl]);
+
+    useEffect(() => {
+        drawImage();
+    }, [zoom, offset]);
+
+    const drawImage = () => {
+        const canvas = canvasRef.current;
+        if (!canvas || !imgRef.current.complete) return;
+
+        const ctx = canvas.getContext('2d');
+        // Use higher resolution for output (512x512) but display at 200x200
+        const outputSize = 512;
+        const displaySize = 200;
+        const scale_factor = outputSize / displaySize;
+
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+
+        ctx.fillStyle = '#f3f4f6';
+        ctx.fillRect(0, 0, outputSize, outputSize);
+
+        const img = imgRef.current;
+        const scale = Math.max(outputSize / img.width, outputSize / img.height) * zoom;
+        const w = img.width * scale;
+        const h = img.height * scale;
+        const x = (outputSize - w) / 2 + (offset.x * scale_factor);
+        const y = (outputSize - h) / 2 + (offset.y * scale_factor);
+
+        ctx.drawImage(img, x, y, w, h);
+    };
+
+    const handleMouseDown = (e) => {
+        setIsDragging(true);
+        const rect = e.target.getBoundingClientRect();
+        setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging) return;
+        setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+    };
+
+    const handleMouseUp = () => setIsDragging(false);
+
+    const handleCrop = () => {
+        const canvas = canvasRef.current;
+        // Use PNG for better quality (lossless)
+        const croppedData = canvas.toDataURL('image/png');
+        onCrop(croppedData);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-2xl border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] p-6 w-full max-w-sm">
+                <h3 className="text-lg font-bold mb-4">Crop Avatar</h3>
+
+                <div className="flex justify-center mb-4">
+                    <div className="relative">
+                        <canvas
+                            ref={canvasRef}
+                            className="rounded-full border-4 border-black cursor-move"
+                            style={{ width: 200, height: 200 }}
+                            onMouseDown={handleMouseDown}
+                            onMouseMove={handleMouseMove}
+                            onMouseUp={handleMouseUp}
+                            onMouseLeave={handleMouseUp}
+                        />
+                        <div className="absolute inset-0 rounded-full border-4 border-dashed border-pink-400 pointer-events-none" />
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 mb-4">
+                    <button
+                        onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
+                        className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                        <ZoomOut size={20} />
+                    </button>
+                    <span className="text-sm font-medium w-16 text-center">{Math.round(zoom * 100)}%</span>
+                    <button
+                        onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+                        className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                        <ZoomIn size={20} />
+                    </button>
+                </div>
+
+                <p className="text-xs text-gray-500 text-center mb-4">Drag to reposition • Zoom to resize</p>
+
+                <div className="flex gap-2">
+                    <button
+                        onClick={onCancel}
+                        className="flex-1 py-2 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl border-2 border-black hover:bg-gray-200 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleCrop}
+                        className="flex-1 py-2 px-4 bg-green-500 text-white font-bold rounded-xl border-2 border-black shadow-[3px_3px_0_0_rgba(0,0,0,1)] hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                    >
+                        <Check size={18} /> Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function SettingsModal() {
     // Get state directly from stores
@@ -29,6 +154,8 @@ export default function SettingsModal() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const [cropperImage, setCropperImage] = useState(null);
     const fileInputRef = useRef(null);
 
     // Initialize form with user data when modal opens or user changes
@@ -72,6 +199,7 @@ export default function SettingsModal() {
     };
 
     const handleAvatarClick = () => {
+        setUploadError('');
         fileInputRef.current?.click();
     };
 
@@ -79,31 +207,45 @@ export default function SettingsModal() {
         const file = e.target.files?.[0];
         if (!file || !user?.id) return;
 
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File too large. Max 5MB');
+        setUploadError('');
+
+        // Validate file type
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setUploadError('Invalid file type. Please use JPG, PNG, WebP, or GIF.');
+            e.target.value = '';
             return;
         }
 
-        if (!file.type.startsWith('image/')) {
-            alert('Please select an image file');
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+            setUploadError('File too large. Maximum size is 2MB.');
+            e.target.value = '';
             return;
         }
 
+        // Read and show cropper
+        const reader = new FileReader();
+        reader.onload = () => {
+            setCropperImage(reader.result);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const handleCropComplete = async (croppedImageData) => {
+        setCropperImage(null);
         setIsUploadingAvatar(true);
+        setUploadError('');
         try {
-            const reader = new FileReader();
-            reader.onload = async () => {
-                const imageData = reader.result;
-                const updated = await api.users.uploadAvatar(user.id, imageData);
-                const stored = JSON.parse(localStorage.getItem('collabspace_user') || '{}');
-                stored.avatarImage = updated.avatarImage;
-                localStorage.setItem('collabspace_user', JSON.stringify(stored));
-                window.location.reload();
-            };
-            reader.readAsDataURL(file);
+            const updated = await api.users.uploadAvatar(user.id, croppedImageData);
+            const stored = JSON.parse(localStorage.getItem('collabspace_user') || '{}');
+            stored.avatarImage = updated.avatarImage;
+            localStorage.setItem('collabspace_user', JSON.stringify(stored));
+            setSaveMessage('Avatar updated successfully!');
+            setTimeout(() => window.location.reload(), 500);
         } catch (err) {
             console.error('Failed to upload avatar:', err);
-            alert('Failed to upload avatar');
+            setUploadError('Failed to upload avatar. Please try again.');
         } finally {
             setIsUploadingAvatar(false);
         }
@@ -215,9 +357,28 @@ export default function SettingsModal() {
                                             Remove avatar
                                         </button>
                                     )}
-                                    <p className="text-sm text-gray-500 mt-1">JPG, PNG. Max 5MB</p>
+                                    <p className="text-sm text-gray-500 mt-1">JPG, PNG, WebP, GIF. Max 2MB</p>
+                                    {uploadError && (
+                                        <p className="text-sm text-red-500 font-medium mt-1">{uploadError}</p>
+                                    )}
                                 </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleAvatarUpload}
+                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                    className="hidden"
+                                />
                             </div>
+
+                            {/* Image Cropper Modal */}
+                            {cropperImage && (
+                                <ImageCropper
+                                    imageUrl={cropperImage}
+                                    onCrop={handleCropComplete}
+                                    onCancel={() => setCropperImage(null)}
+                                />
+                            )}
 
                             {/* Profile Form */}
                             <div className="bg-white border-2 border-black rounded-2xl p-6 space-y-4">
