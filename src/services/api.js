@@ -78,6 +78,13 @@ export const spaces = {
     getRequests: (spaceId) => request(`/spaces/${spaceId}/requests`),
     approveRequest: (spaceId, requestId) => request(`/spaces/${spaceId}/requests/${requestId}/approve`, { method: 'POST' }),
     rejectRequest: (spaceId, requestId) => request(`/spaces/${spaceId}/requests/${requestId}/reject`, { method: 'POST' }),
+
+    // Ownership
+    transferOwnership: (spaceId, currentOwnerId, newOwnerId) => request(`/spaces/${spaceId}/transfer-ownership`, {
+        method: 'POST',
+        body: { currentOwnerId, newOwnerId }
+    }),
+
     update: (id, data) => request(`/spaces/${id}`, { method: 'PUT', body: data }),
     delete: (id) => request(`/spaces/${id}`, { method: 'DELETE' }),
 };

@@ -153,6 +153,26 @@ const useSpacesStore = create((set, get) => ({
         }
     },
 
+    transferOwnership: async (spaceId, currentOwnerId, newOwnerId) => {
+        try {
+            await api.spaces.transferOwnership(spaceId, currentOwnerId, newOwnerId);
+            // Optimistic update of active space
+            set(state => {
+                if (state.activeSpace?.id === spaceId) {
+                    return {
+                        activeSpace: {
+                            ...state.activeSpace,
+                            ownerId: newOwnerId
+                        }
+                    };
+                }
+                return {};
+            });
+        } catch (err) {
+            throw err;
+        }
+    },
+
     // Filters
     setActiveTab: (tab) => set({ activeTab: tab }),
     setActiveCategory: (category) => set({ activeCategory: category }),

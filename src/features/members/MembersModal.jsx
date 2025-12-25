@@ -111,6 +111,19 @@ export default function MembersModal() {
         }
     };
 
+    const handleTransferOwnership = async (newOwnerId) => {
+        try {
+            await useSpacesStore.getState().transferOwnership(activeSpace.id, user.id, newOwnerId);
+
+            // Close modal to force refresh or update local state
+            // For now, simple alert and close
+            closeMembersModal();
+        } catch (err) {
+            console.error('Failed to transfer ownership:', err);
+            alert('Failed to transfer ownership');
+        }
+    };
+
     const currentUserMember = activeSpace.members?.find(m => m.userId === user?.id);
     const canManageMembers = currentUserMember?.role === 'Owner' || currentUserMember?.role === 'Admin';
 
@@ -230,17 +243,39 @@ export default function MembersModal() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <select
-                                                defaultValue={member.role}
-                                                onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                                                disabled={!canManageMembers || member.role === 'Owner'}
+                                                value={member.role} // controlled component
+                                                onChange={(e) => {
+                                                    const newRole = e.target.value;
+                                                    if (newRole === 'TRANSFER_OWNERSHIP') {
+                                                        // Confirm transfer
+                                                        openConfirmation({
+                                                            title: 'Transfer Ownership?',
+                                                            message: `Are you sure you want to transfer ownership of this space to ${member.name}? You will lose ownership and become an Admin.`,
+                                                            confirmText: 'Transfer Ownership',
+                                                            cancelText: 'Cancel',
+                                                            type: 'danger',
+                                                            onConfirm: () => handleTransferOwnership(member.userId)
+                                                        });
+                                                    } else {
+                                                        handleRoleChange(member.id, newRole);
+                                                    }
+                                                }}
+                                                disabled={!canManageMembers || member.role === 'Owner' || member.userId === user?.id}
                                                 className="bg-white border-2 border-black rounded-lg px-2 py-1 text-sm font-bold outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                <option value="Owner">Owner</option>
-                                                <option value="Admin">Admin</option>
-                                                <option value="Member">Member</option>
-                                                <option value="Viewer">Viewer</option>
+                                                {member.role === 'Owner' ? (
+                                                    <option value="Owner">Owner</option>
+                                                ) : (
+                                                    <>
+                                                        <option value="Admin">Admin</option>
+                                                        <option value="Member">Member</option>
+                                                        {currentUserMember?.role === 'Owner' && (
+                                                            <option value="TRANSFER_OWNERSHIP" className="text-red-600 font-bold">👑 Make Owner</option>
+                                                        )}
+                                                    </>
+                                                )}
                                             </select>
-                                            {canManageMembers && member.id !== currentUserMember?.id && (
+                                            {canManageMembers && member.id !== currentUserMember?.id && member.role !== 'Owner' && (
                                                 <button onClick={() => handleKick(member.id)} className="p-2 hover:bg-red-100 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Remove member">
                                                     <Trash2 size={18} />
                                                 </button>
