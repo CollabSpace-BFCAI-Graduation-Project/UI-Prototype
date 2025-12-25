@@ -111,6 +111,48 @@ const useSpacesStore = create((set, get) => ({
         }
     },
 
+    // Join Requests
+    joinSpace: async (spaceId) => {
+        try {
+            const user = useAuthStore.getState().user;
+            if (!user) throw new Error('Must be logged in');
+            return await api.spaces.join(spaceId, user.id);
+        } catch (err) {
+            throw err;
+        }
+    },
+
+    fetchSpaceRequests: async (spaceId) => {
+        try {
+            return await api.spaces.getRequests(spaceId);
+        } catch (err) {
+            console.error('Failed to fetch requests', err);
+            return [];
+        }
+    },
+
+    approveRequest: async (spaceId, requestId) => {
+        try {
+            await api.spaces.approveRequest(spaceId, requestId);
+            // If active space is the one we approved for, refresh it to update member list
+            const { activeSpace, updateSpace } = get();
+            if (activeSpace?.id === spaceId) {
+                // Ideally trigger a refresh of members here
+                // For now, we rely on the component to refresh members
+            }
+        } catch (err) {
+            throw err;
+        }
+    },
+
+    rejectRequest: async (spaceId, requestId) => {
+        try {
+            await api.spaces.rejectRequest(spaceId, requestId);
+        } catch (err) {
+            throw err;
+        }
+    },
+
     // Filters
     setActiveTab: (tab) => set({ activeTab: tab }),
     setActiveCategory: (category) => set({ activeCategory: category }),

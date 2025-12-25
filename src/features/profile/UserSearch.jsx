@@ -8,35 +8,49 @@ import UserProfileModal from './UserProfileModal';
 export default function UserSearch() {
     const { user } = useAuthStore();
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState([]);
+    const [allUsers, setAllUsers] = useState([]); // Store all users
+    const [results, setResults] = useState([]); // Filtered results
     const [isSearching, setIsSearching] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState(null);
     const inputRef = useRef(null);
-    const debounceRef = useRef(null);
 
+    // Load users on open
     useEffect(() => {
-        if (query.length < 2) {
-            setResults([]);
+        if (isOpen) {
+            loadAllUsers();
+        }
+    }, [isOpen]);
+
+    const loadAllUsers = async () => {
+        setIsSearching(true);
+        try {
+            const data = await api.users.search('', user?.id);
+            setAllUsers(data);
+            setResults(data);
+        } catch (err) {
+            console.error('Failed to load users:', err);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSearch = (e) => {
+        const val = e.target.value;
+        setQuery(val);
+
+        if (!val) {
+            setResults(allUsers);
             return;
         }
 
-        // Debounce search
-        clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(async () => {
-            setIsSearching(true);
-            try {
-                const data = await api.users.search(query, user?.id);
-                setResults(data);
-            } catch (err) {
-                console.error('Search failed:', err);
-            } finally {
-                setIsSearching(false);
-            }
-        }, 300);
-
-        return () => clearTimeout(debounceRef.current);
-    }, [query, user?.id]);
+        const lowerVal = val.toLowerCase();
+        const filtered = allUsers.filter(u =>
+            u.name.toLowerCase().includes(lowerVal) ||
+            u.username.toLowerCase().includes(lowerVal)
+        );
+        setResults(filtered);
+    };
 
     const handleResultClick = (userId) => {
         setViewingProfileId(userId);
@@ -67,13 +81,13 @@ export default function UserSearch() {
                                 ref={inputRef}
                                 type="text"
                                 value={query}
-                                onChange={(e) => setQuery(e.target.value)}
+                                onChange={handleSearch}
                                 placeholder="Search by name or @username..."
                                 className="flex-1 text-lg font-medium outline-none"
                                 autoFocus
                             />
                             {query && (
-                                <button onClick={() => setQuery('')} className="text-gray-400 hover:text-gray-600">
+                                <button onClick={() => { setQuery(''); setResults(allUsers); }} className="text-gray-400 hover:text-gray-600">
                                     <X size={18} />
                                 </button>
                             )}
@@ -84,10 +98,6 @@ export default function UserSearch() {
                             {isSearching ? (
                                 <div className="flex justify-center p-8">
                                     <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
-                                </div>
-                            ) : query.length < 2 ? (
-                                <div className="p-8 text-center text-gray-400">
-                                    Type at least 2 characters to search
                                 </div>
                             ) : results.length === 0 ? (
                                 <div className="p-8 text-center text-gray-400">

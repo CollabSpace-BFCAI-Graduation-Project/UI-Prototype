@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, Palette, Trash2, Save, AlertTriangle } from 'lucide-react';
+import { X, Settings, Palette, Trash2, Save, AlertTriangle, Lock, Globe } from 'lucide-react';
 import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
 
 const GRADIENT_OPTIONS = [
@@ -32,6 +32,7 @@ export default function SpaceSettingsModal() {
         description: '',
         category: '',
         thumbnail: '',
+        visibility: 'public',
     });
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState('');
@@ -46,6 +47,7 @@ export default function SpaceSettingsModal() {
                 description: activeSpace.description || '',
                 category: activeSpace.category || 'CREATIVE',
                 thumbnail: activeSpace.thumbnail || GRADIENT_OPTIONS[0],
+                visibility: activeSpace.visibility || 'public',
             });
         }
     }, [activeSpace, isSpaceSettingsModalOpen]);
@@ -150,6 +152,40 @@ export default function SpaceSettingsModal() {
                                         rows={3}
                                         className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none"
                                     />
+                                </div>
+
+                                {/* Privacy Setting */}
+                                <div>
+                                    <label className="block font-bold mb-3">Space Privacy</label>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, visibility: 'public' }))}
+                                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${formData.visibility === 'public'
+                                                    ? 'border-green-500 bg-green-50 text-green-700'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <Globe size={18} />
+                                            Public
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, visibility: 'private' }))}
+                                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${formData.visibility === 'private'
+                                                    ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <Lock size={18} />
+                                            Private
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        {formData.visibility === 'public'
+                                            ? 'Anyone can find and view this space'
+                                            : 'Only invited members can access this space'}
+                                    </p>
                                 </div>
 
                                 {saveMessage && (

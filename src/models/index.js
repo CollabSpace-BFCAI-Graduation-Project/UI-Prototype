@@ -65,6 +65,8 @@ export class Space {
         this.category = data.category || data.type || 'MEETING'; // Support legacy 'type' field
         this.ownerId = data.ownerId || null;
         this.createdAt = data.createdAt || null;
+        this.visibility = data.visibility || 'public';
+        this.requestsCount = data.requestsCount || 0;
         this.files = (data.files || []).map(f => new SpaceFile(f));
         this.members = (data.members || []).map(m => new SpaceMember(m));
     }
@@ -89,6 +91,7 @@ export class Space {
             thumbnail: this.thumbnail,
             category: this.category,
             ownerId: this.ownerId,
+            visibility: this.visibility,
         };
     }
 }

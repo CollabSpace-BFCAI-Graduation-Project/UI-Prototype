@@ -67,8 +67,17 @@ export const users = {
 // ============ SPACES ============
 export const spaces = {
     getAll: (userId) => request(`/spaces${userId ? `?userId=${userId}` : ''}`),
+    search: (query, userId) => request(`/spaces/search?q=${encodeURIComponent(query)}&userId=${userId}`),
     getById: (id) => request(`/spaces/${id}`),
     create: (data) => request('/spaces', { method: 'POST', body: data }),
+    update: (id, data) => request(`/spaces/${id}`, { method: 'PUT', body: data }),
+    delete: (id) => request(`/spaces/${id}`, { method: 'DELETE' }),
+
+    // Join Requests
+    join: (spaceId, userId) => request(`/spaces/${spaceId}/join`, { method: 'POST', body: { userId } }),
+    getRequests: (spaceId) => request(`/spaces/${spaceId}/requests`),
+    approveRequest: (spaceId, requestId) => request(`/spaces/${spaceId}/requests/${requestId}/approve`, { method: 'POST' }),
+    rejectRequest: (spaceId, requestId) => request(`/spaces/${spaceId}/requests/${requestId}/reject`, { method: 'POST' }),
     update: (id, data) => request(`/spaces/${id}`, { method: 'PUT', body: data }),
     delete: (id) => request(`/spaces/${id}`, { method: 'DELETE' }),
 };

@@ -12,26 +12,39 @@ export default function TeamView() {
     const [isSearching, setIsSearching] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState(null);
 
-    useEffect(() => {
-        if (query.length < 2) {
-            setResults([]);
-            return;
-        }
+    const [allUsers, setAllUsers] = useState([]);
 
-        const timer = setTimeout(async () => {
+    // Load all users on mount
+    useEffect(() => {
+        const loadUsers = async () => {
             setIsSearching(true);
             try {
-                const data = await api.users.search(query, user?.id);
+                const data = await api.users.search('', user?.id);
+                setAllUsers(data);
                 setResults(data);
             } catch (err) {
-                console.error('Search failed:', err);
+                console.error('Failed to load users:', err);
             } finally {
                 setIsSearching(false);
             }
-        }, 300);
+        };
+        loadUsers();
+    }, [user?.id]);
 
-        return () => clearTimeout(timer);
-    }, [query, user?.id]);
+    // Local filtering
+    useEffect(() => {
+        if (!query) {
+            setResults(allUsers);
+            return;
+        }
+
+        const lowerVal = query.toLowerCase();
+        const filtered = allUsers.filter(u =>
+            u.name.toLowerCase().includes(lowerVal) ||
+            u.username.toLowerCase().includes(lowerVal)
+        );
+        setResults(filtered);
+    }, [query, allUsers]);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl mx-auto">
@@ -69,13 +82,13 @@ export default function TeamView() {
                     <div className="flex justify-center p-12">
                         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
                     </div>
-                ) : query.length < 2 ? (
+                ) : results.length === 0 ? (
                     <div className="p-12 text-center">
-                        <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search size={40} className="text-blue-400" />
+                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Users size={40} className="text-gray-400" />
                         </div>
-                        <h3 className="text-xl font-bold mb-2">Search for People</h3>
-                        <p className="text-gray-500">Type at least 2 characters to find users</p>
+                        <h3 className="text-xl font-bold mb-2">No Users Found</h3>
+                        <p className="text-gray-500">Try a different search term</p>
                     </div>
                 ) : results.length === 0 ? (
                     <div className="p-12 text-center">

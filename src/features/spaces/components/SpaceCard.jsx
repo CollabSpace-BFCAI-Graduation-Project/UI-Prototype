@@ -1,10 +1,14 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { getImageUrl } from '../../../shared/utils/helpers';
+import { useAuthStore } from '../../../store';
 
 export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onToggleFavorite }) {
+    const { user } = useAuthStore();
     // Calculate member count from members array or use memberCount property
     const memberCount = space.members?.length || space.memberCount || 0;
+    const requestsCount = space.requestsCount || 0;
+    const isOwner = user?.id === space.ownerId;
 
     const handleFavoriteClick = (e) => {
         e.stopPropagation();

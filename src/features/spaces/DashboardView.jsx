@@ -1,13 +1,15 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Globe } from 'lucide-react';
 import SpaceFilters from './components/SpaceFilters';
 import SpaceCard from './components/SpaceCard';
+import PublicSpaceSearchModal from './components/PublicSpaceSearchModal';
 import { useSpacesStore, useUIStore, useAuthStore } from '../../store';
 
 export default function DashboardView() {
     // Get state directly from stores
     const {
         getFilteredSpaces,
+        // ... (other destructured props)
         userFavorites,
         toggleFavorite,
         setActiveSpace,
@@ -16,6 +18,7 @@ export default function DashboardView() {
 
     const { openCreateModal, setCurrentView } = useUIStore();
     const { user } = useAuthStore();
+    const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
 
     const filteredSpaces = getFilteredSpaces();
 
@@ -38,14 +41,26 @@ export default function DashboardView() {
                     <p className="text-gray-500 font-medium">Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋</p>
                 </div>
 
-                <button
-                    onClick={openCreateModal}
-                    className="group flex items-center gap-2 bg-black text-white px-6 py-3 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_rgba(236,72,153,1)] hover:shadow-[3px_3px_0px_0px_rgba(236,72,153,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
-                >
-                    <Plus size={20} className="group-hover:rotate-90 transition-transform" />
-                    <span>Create Space</span>
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsPublicSearchOpen(true)}
+                        className="flex items-center gap-2 bg-yellow-300 text-black px-5 py-3 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
+                    >
+                        <Globe size={20} />
+                        <span>Find Spaces</span>
+                    </button>
+
+                    <button
+                        onClick={openCreateModal}
+                        className="group flex items-center gap-2 bg-black text-white px-6 py-3 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_rgba(236,72,153,1)] hover:shadow-[3px_3px_0px_0px_rgba(236,72,153,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
+                    >
+                        <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+                        <span>Create Space</span>
+                    </button>
+                </div>
             </header>
+
+            <PublicSpaceSearchModal isOpen={isPublicSearchOpen} onClose={() => setIsPublicSearchOpen(false)} />
 
             <SpaceFilters />
 
