@@ -157,6 +157,7 @@ export default function SettingsModal() {
     const [uploadError, setUploadError] = useState('');
     const [cropperImage, setCropperImage] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
+    const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
     const fileInputRef = useRef(null);
 
     // Validation functions
@@ -263,8 +264,8 @@ export default function SettingsModal() {
         fileInputRef.current?.click();
     };
 
-    const handleAvatarUpload = async (e) => {
-        const file = e.target.files?.[0];
+    // Shared file processing logic
+    const processAvatarFile = (file) => {
         if (!file || !user?.id) return;
 
         setUploadError('');
@@ -272,14 +273,12 @@ export default function SettingsModal() {
         // Validate file type
         if (!ALLOWED_TYPES.includes(file.type)) {
             setUploadError('Invalid file type. Please use JPG, PNG, WebP, or GIF.');
-            e.target.value = '';
             return;
         }
 
         // Validate file size
         if (file.size > MAX_FILE_SIZE) {
             setUploadError('File too large. Maximum size is 2MB.');
-            e.target.value = '';
             return;
         }
 
@@ -289,7 +288,34 @@ export default function SettingsModal() {
             setCropperImage(reader.result);
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        processAvatarFile(file);
         e.target.value = '';
+    };
+
+    // Drag and drop handlers
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingAvatar(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingAvatar(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingAvatar(false);
+
+        const file = e.dataTransfer.files?.[0];
+        processAvatarFile(file);
     };
 
     const handleCropComplete = async (croppedImageData) => {
@@ -380,11 +406,20 @@ export default function SettingsModal() {
                         <div className="space-y-6">
                             <h3 className="text-xl font-black">Profile Settings</h3>
 
-                            {/* Avatar Section */}
-                            <div className="flex items-center gap-6">
+                            {/* Avatar Section with Drag & Drop */}
+                            <div
+                                className={`flex items-center gap-6 p-4 rounded-2xl border-2 border-dashed transition-all ${isDraggingAvatar
+                                        ? 'border-pink-500 bg-pink-50 scale-[1.02]'
+                                        : 'border-transparent'
+                                    }`}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
                                 <div
                                     onClick={handleAvatarClick}
-                                    className="w-24 h-24 rounded-full border-4 border-black flex items-center justify-center text-4xl font-black text-white relative group cursor-pointer overflow-hidden"
+                                    className={`w-24 h-24 rounded-full border-4 flex items-center justify-center text-4xl font-black text-white relative group cursor-pointer overflow-hidden transition-all ${isDraggingAvatar ? 'border-pink-500 scale-110' : 'border-black'
+                                        }`}
                                     style={{ backgroundColor: user?.avatarColor || '#ec4899' }}
                                 >
                                     {user?.avatarImage ? (
@@ -392,9 +427,15 @@ export default function SettingsModal() {
                                     ) : (
                                         initials
                                     )}
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <div className={`absolute inset-0 bg-black/50 transition-opacity flex items-center justify-center ${isDraggingAvatar ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                        }`}>
                                         {isUploadingAvatar ? (
                                             <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        ) : isDraggingAvatar ? (
+                                            <div className="text-white text-center">
+                                                <Camera size={24} className="mx-auto mb-1" />
+                                                <span className="text-xs font-bold">Drop here</span>
+                                            </div>
                                         ) : (
                                             <Camera size={24} className="text-white" />
                                         )}
@@ -417,7 +458,10 @@ export default function SettingsModal() {
                                             Remove avatar
                                         </button>
                                     )}
-                                    <p className="text-sm text-gray-500 mt-1">JPG, PNG, WebP, GIF. Max 2MB</p>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        JPG, PNG, WebP, GIF. Max 2MB
+                                        <span className="block text-xs text-gray-400">or drag & drop an image</span>
+                                    </p>
                                     {uploadError && (
                                         <p className="text-sm text-red-500 font-medium mt-1">{uploadError}</p>
                                     )}
