@@ -108,6 +108,7 @@ export const members = {
     ban: (spaceId, memberId, bannedBy, reason) => request(`/spaces/${spaceId}/members/${memberId}/ban`, { method: 'POST', body: { bannedBy, reason } }),
     leave: (spaceId, userId) => request(`/spaces/${spaceId}/leave`, { method: 'POST', body: { userId } }),
     invite: (spaceId, data) => request(`/spaces/${spaceId}/invite`, { method: 'POST', body: data }),
+    inviteUser: (spaceId, userId, inviterId) => request(`/spaces/${spaceId}/invite-user`, { method: 'POST', body: { userId, inviterId } }),
 };
 
 // ============ INVITES ============

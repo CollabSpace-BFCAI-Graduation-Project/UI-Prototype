@@ -1,13 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { X, Lock, Mail, Calendar, Users, ExternalLink } from 'lucide-react';
+import { X, Lock, Mail, Calendar, Users, UserPlus, ChevronDown, Loader } from 'lucide-react';
 import api from '../../services/api';
 import { formatDate, getImageUrl } from '../../shared/utils/helpers';
+import { useSpacesStore, useUIStore } from '../../store';
 
 export default function UserProfileModal({ userId, viewerId, onClose }) {
+    const { spaces } = useSpacesStore();
+    const { openInfo } = useUIStore();
+
     const [profile, setProfile] = useState(null);
     const [sharedSpaces, setSharedSpaces] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showInviteDropdown, setShowInviteDropdown] = useState(false);
+    const [invitingToSpace, setInvitingToSpace] = useState(null);
+
+    // Get spaces the viewer can invite to (exclude spaces user is already in)
+    const inviteableSpaces = spaces.filter(s => {
+        // Check if viewer is admin/owner of this space
+        const viewerMember = s.members?.find(m => m.userId === viewerId);
+        const canInvite = viewerMember?.role === 'Owner' || viewerMember?.role === 'Admin';
+        // Check if target user is NOT already a member
+        const targetIsMember = s.members?.some(m => m.userId === userId);
+        return canInvite && !targetIsMember;
+    });
+
+    const handleInvite = async (spaceId) => {
+        setInvitingToSpace(spaceId);
+        try {
+            await api.members.inviteUser(spaceId, userId, viewerId);
+            openInfo({
+                title: 'Invite Sent!',
+                message: `${profile?.name || 'User'} has been invited to the space.`,
+                type: 'success'
+            });
+            setShowInviteDropdown(false);
+        } catch (err) {
+            console.error('Failed to invite:', err);
+            openInfo({
+                title: 'Invite Failed',
+                message: err?.message || 'Could not send invite. They may already be invited or banned.',
+                type: 'error'
+            });
+        } finally {
+            setInvitingToSpace(null);
+        }
+    };
 
     useEffect(() => {
         if (!userId || !viewerId) return;
@@ -117,6 +155,44 @@ export default function UserProfileModal({ userId, viewerId, onClose }) {
                                     <span>Joined {formatDate(profile.createdAt)}</span>
                                 </div>
                             </div>
+
+                            {/* Invite to Space */}
+                            {inviteableSpaces.length > 0 && userId !== viewerId && (
+                                <div className="mb-6 relative">
+                                    <button
+                                        onClick={() => setShowInviteDropdown(!showInviteDropdown)}
+                                        className="w-full flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none transition-all"
+                                    >
+                                        <UserPlus size={18} />
+                                        Invite to Space
+                                        <ChevronDown size={16} className={`transition-transform ${showInviteDropdown ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {showInviteDropdown && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-h-48 overflow-y-auto z-10">
+                                            {inviteableSpaces.map(space => (
+                                                <button
+                                                    key={space.id}
+                                                    onClick={() => handleInvite(space.id)}
+                                                    disabled={invitingToSpace === space.id}
+                                                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left disabled:opacity-50"
+                                                >
+                                                    <div
+                                                        className="w-8 h-8 rounded-lg flex-shrink-0"
+                                                        style={{ background: space.thumbnail || '#e5e7eb' }}
+                                                    />
+                                                    <span className="font-medium text-sm truncate flex-1">{space.name}</span>
+                                                    {invitingToSpace === space.id ? (
+                                                        <Loader size={16} className="animate-spin text-pink-500" />
+                                                    ) : (
+                                                        <UserPlus size={16} className="text-pink-500" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Shared Spaces */}
                             {sharedSpaces.length > 0 && (
