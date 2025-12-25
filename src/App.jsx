@@ -11,6 +11,7 @@ import Sidebar from './shared/components/Sidebar';
 import MobileNav from './shared/components/MobileNav';
 import ConfirmationModal from './shared/components/ConfirmationModal';
 import InfoModal from './shared/components/InfoModal';
+import InputModal from './shared/components/InputModal';
 
 // Feature: Auth
 import AuthPage from './features/auth/AuthPage';
@@ -162,6 +163,7 @@ export default function App() {
       <JoinSessionModal />
       <ConfirmationModal />
       <InfoModal />
+      <InputModal />
 
       {/* Mobile Navigation */}
       <MobileNav />

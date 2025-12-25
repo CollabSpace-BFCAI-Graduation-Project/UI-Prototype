@@ -6,7 +6,7 @@ import UserProfileModal from '../profile/UserProfileModal';
 
 export default function MembersModal() {
     // Get state from stores
-    const { isMembersModalOpen, closeMembersModal, openConfirmation } = useUIStore();
+    const { isMembersModalOpen, closeMembersModal, openConfirmation, openInputModal } = useUIStore();
     const { activeSpace, setActiveSpace, spaces } = useSpacesStore();
     const { user } = useAuthStore();
 
@@ -174,15 +174,17 @@ export default function MembersModal() {
         const member = activeSpace.members?.find(m => m.id === memberId);
         const memberName = member?.name || 'this member';
 
-        openConfirmation({
+        openInputModal({
             title: 'Ban Member?',
             message: `Are you sure you want to ban ${memberName}? They will be removed and cannot rejoin or request to join this space.`,
+            inputLabel: 'Reason (optional)',
+            inputPlaceholder: 'Why are you banning this member?',
             confirmText: 'Ban',
             cancelText: 'Cancel',
             type: 'danger',
-            onConfirm: async () => {
+            onConfirm: async (reason) => {
                 try {
-                    await api.members.ban(activeSpace.id, memberId, user.id, null);
+                    await api.members.ban(activeSpace.id, memberId, user.id, reason || null);
 
                     // Update in store
                     const updatedSpaces = spaces.map(s => {

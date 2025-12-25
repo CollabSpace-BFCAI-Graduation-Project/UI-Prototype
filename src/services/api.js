@@ -135,27 +135,69 @@ export const messages = {
 export const files = {
     getBySpace: (spaceId) => request(`/files/${spaceId}`),
     /**
-     * Upload a file to a space
+     * Upload a file to a space with real progress tracking
      * @param {string} spaceId - The space ID
      * @param {File} file - The file object from input
      * @param {string} uploadedBy - User ID who uploaded
+     * @param {function} onProgress - Callback with (percent, loaded, total)
      */
-    upload: async (spaceId, file, uploadedBy) => {
-        // Convert file to base64
-        const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
+    upload: (spaceId, file, uploadedBy, onProgress) => {
+        return new Promise((resolve, reject) => {
+            const totalSize = file.size;
 
-        return request(`/files/${spaceId}`, {
-            method: 'POST',
-            body: {
-                name: file.name,
-                fileData: base64,
-                uploadedBy: uploadedBy
-            }
+            // Phase 1: Read file (0-30% of progress)
+            const reader = new FileReader();
+
+            reader.onprogress = (e) => {
+                if (e.lengthComputable && onProgress) {
+                    const readPercent = Math.round((e.loaded / e.total) * 30);
+                    onProgress(readPercent, e.loaded, totalSize);
+                }
+            };
+
+            reader.onload = () => {
+                const base64 = reader.result;
+                if (onProgress) onProgress(30, Math.round(totalSize * 0.3), totalSize);
+
+                const body = JSON.stringify({
+                    name: file.name,
+                    fileData: base64,
+                    uploadedBy: uploadedBy
+                });
+
+                const xhr = new XMLHttpRequest();
+
+                // Phase 2: Upload (30-100%)
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable && onProgress) {
+                        const uploadPercent = 30 + Math.round((e.loaded / e.total) * 70);
+                        const uploadedBytes = Math.round(totalSize * 0.3 + (e.loaded / e.total) * totalSize * 0.7);
+                        onProgress(uploadPercent, uploadedBytes, totalSize);
+                    }
+                });
+
+                xhr.addEventListener('load', () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            resolve(JSON.parse(xhr.responseText));
+                        } catch {
+                            resolve(xhr.responseText);
+                        }
+                    } else {
+                        reject(new Error(xhr.statusText || 'Upload failed'));
+                    }
+                });
+
+                xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+                xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
+
+                xhr.open('POST', `${API_BASE_URL}/files/${spaceId}`);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.send(body);
+            };
+
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsDataURL(file);
         });
     },
     download: (fileId) => `${API_BASE_URL}/files/${fileId}/download`,

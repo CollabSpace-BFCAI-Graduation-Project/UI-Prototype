@@ -94,6 +94,35 @@ const useUIStore = create((set) => ({
         infoModal: { ...state.infoModal, isOpen: false }
     })),
 
+    // Input Modal (for confirmation with text input)
+    inputModal: {
+        isOpen: false,
+        title: '',
+        message: '',
+        inputLabel: '',
+        inputPlaceholder: '',
+        confirmText: 'Confirm',
+        cancelText: 'Cancel',
+        type: 'danger',
+        onConfirm: null,
+    },
+    openInputModal: (data) => set({
+        inputModal: {
+            isOpen: true,
+            title: data.title || 'Input Required',
+            message: data.message || '',
+            inputLabel: data.inputLabel || '',
+            inputPlaceholder: data.inputPlaceholder || '',
+            confirmText: data.confirmText || 'Confirm',
+            cancelText: data.cancelText || 'Cancel',
+            type: data.type || 'danger',
+            onConfirm: data.onConfirm,
+        }
+    }),
+    closeInputModal: () => set((state) => ({
+        inputModal: { ...state.inputModal, isOpen: false }
+    })),
+
     // Create Space Flow
     createStep: 1,
     newSpaceName: '',

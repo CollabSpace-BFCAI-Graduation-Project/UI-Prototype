@@ -36,7 +36,7 @@ function NotificationItem({ notification, onAcceptInvite, onDeclineInvite, onMar
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm">
-                        <span className="font-bold">{notification.author}</span>{' '}
+                        {/* <span className="font-bold">{notification.author}</span>{' '} */}
                         <span className="text-gray-600">{notification.text}</span>{' '}
                         <span className="font-bold text-pink-600">{notification.target}</span>
                     </p>

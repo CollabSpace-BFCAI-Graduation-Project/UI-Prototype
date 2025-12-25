@@ -5,6 +5,8 @@ import { useAuthStore, useSpacesStore } from '../../../store';
 export default function useFileUpload({ activeSpace }) {
     const [uploadState, setUploadState] = useState('idle');
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadedBytes, setUploadedBytes] = useState(0);
+    const [totalBytes, setTotalBytes] = useState(0);
     const fileInputRef = useRef(null);
 
     const handleFileSelect = async (event) => {
@@ -16,21 +18,18 @@ export default function useFileUpload({ activeSpace }) {
         // Start upload animation
         setUploadState('uploading');
         setUploadProgress(0);
-
-        // Simulate progress while waiting for upload
-        const progressInterval = setInterval(() => {
-            setUploadProgress(prev => {
-                if (prev >= 90) return prev; // Cap at 90% until complete
-                return prev + Math.floor(Math.random() * 15);
-            });
-        }, 300);
+        setUploadedBytes(0);
+        setTotalBytes(0);
 
         try {
-            // Real API upload
-            await api.files.upload(activeSpace.id, file, user?.id);
+            // Real API upload with progress tracking
+            await api.files.upload(activeSpace.id, file, user?.id, (progress, loaded, total) => {
+                setUploadProgress(progress);
+                setUploadedBytes(loaded);
+                setTotalBytes(total);
+            });
 
             // Upload complete
-            clearInterval(progressInterval);
             setUploadProgress(100);
             setUploadState('success');
 
@@ -41,14 +40,17 @@ export default function useFileUpload({ activeSpace }) {
             setTimeout(() => {
                 setUploadState('idle');
                 setUploadProgress(0);
+                setUploadedBytes(0);
+                setTotalBytes(0);
                 if (fileInputRef.current) fileInputRef.current.value = '';
             }, 2000);
 
         } catch (error) {
             console.error('Upload failed:', error);
-            clearInterval(progressInterval);
             setUploadState('idle');
             setUploadProgress(0);
+            setUploadedBytes(0);
+            setTotalBytes(0);
             alert('Failed to upload file. Please try again.');
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
@@ -61,6 +63,8 @@ export default function useFileUpload({ activeSpace }) {
     return {
         uploadState,
         uploadProgress,
+        uploadedBytes,
+        totalBytes,
         fileInputRef,
         handleFileSelect,
         triggerFileUpload

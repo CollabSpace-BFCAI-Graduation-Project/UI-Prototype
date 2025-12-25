@@ -1,9 +1,19 @@
 import React from 'react';
 import { UploadCloud, Loader2, CheckCircle2 } from 'lucide-react';
 
+// Format bytes to human readable (1.3 MB)
+const formatBytes = (bytes) => {
+    if (!bytes || bytes === 0) return '0 B';
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return bytes + ' B';
+};
+
 export default function UploadCard({
     uploadState,
     uploadProgress,
+    uploadedBytes,
+    totalBytes,
     triggerFileUpload,
     fileInputRef,
     handleFileSelect
@@ -28,7 +38,10 @@ export default function UploadCard({
                     <div className="w-full h-3 bg-gray-200 rounded-full border-2 border-black overflow-hidden relative">
                         <div className="h-full bg-blue-400 transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
                     </div>
-                    <p className="text-xs font-bold mt-2 animate-pulse">Uploading...</p>
+                    <p className="text-xs font-bold mt-2 text-blue-600">
+                        {formatBytes(uploadedBytes)} / {formatBytes(totalBytes)}
+                    </p>
+                    <p className="text-xs text-gray-500">{uploadProgress}%</p>
                 </div>
             ) : (
                 <div className="animate-in zoom-in">
@@ -39,3 +52,4 @@ export default function UploadCard({
         </div>
     );
 }
+

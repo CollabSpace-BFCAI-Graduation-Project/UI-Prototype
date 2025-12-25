@@ -22,7 +22,7 @@ export default function Sidebar() {
                 onClick={() => setCurrentView('dashboard')}
                 className="w-12 h-12 bg-yellow-300 border-2 border-black rounded-xl flex items-center justify-center text-xl font-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] mb-8 transform hover:scale-110 hover:-rotate-6 active:scale-95 transition-transform cursor-pointer"
             >
-                G
+                C
             </div>
 
             <div className="flex-1 w-full flex flex-col items-center gap-4">

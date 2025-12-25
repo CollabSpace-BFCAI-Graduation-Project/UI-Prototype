@@ -22,6 +22,8 @@ export default function FilesModal() {
     const {
         uploadState,
         uploadProgress,
+        uploadedBytes,
+        totalBytes,
         fileInputRef,
         handleFileSelect,
         triggerFileUpload
@@ -64,6 +66,8 @@ export default function FilesModal() {
                         <UploadCard
                             uploadState={uploadState}
                             uploadProgress={uploadProgress}
+                            uploadedBytes={uploadedBytes}
+                            totalBytes={totalBytes}
                             triggerFileUpload={triggerFileUpload}
                             fileInputRef={fileInputRef}
                             handleFileSelect={handleFileSelect}
