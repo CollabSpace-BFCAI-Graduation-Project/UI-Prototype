@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileText, Folder, FolderPlus, ChevronRight, Home, Edit2, Trash2, Scissors, Copy, Clipboard, CheckSquare, Square } from 'lucide-react';
+import { X, FileText, Folder, FolderPlus, ChevronRight, Home, Edit2, Trash2, Scissors, Copy, Clipboard, CheckSquare, Square, LayoutGrid, List } from 'lucide-react';
 import FileCard from './components/FileCard';
 import UploadCard from './components/UploadCard';
 import { getFileIcon } from '../../shared/utils/helpers';
@@ -36,6 +36,7 @@ export default function FilesModal() {
     const [selectedFiles, setSelectedFiles] = useState([]); // array of file ids
     const [clipboard, setClipboard] = useState({ files: [], mode: null }); // mode: 'cut' | 'copy'
     const [selectMode, setSelectMode] = useState(false);
+    const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
     const longPressTimer = React.useRef(null);
     const longPressTriggered = React.useRef(false);
 
@@ -511,16 +512,36 @@ export default function FilesModal() {
                     )}
 
                     {/* Filter Chips */}
-                    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                        {['all', 'image', 'video', 'doc', 'presentation'].map(f => (
+                    {/* Filter Chips & View Toggle */}
+                    <div className="flex justify-between items-center gap-4">
+                        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar flex-1">
+                            {['all', 'image', 'video', 'doc', 'presentation'].map(f => (
+                                <button
+                                    key={f}
+                                    onClick={() => setFileFilter(f)}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold border-2 capitalize transition-all shrink-0 ${fileFilter === f ? 'bg-black text-white border-black' : 'bg-white border-transparent hover:border-black text-gray-500 hover:text-black'}`}
+                                >
+                                    {f}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex bg-white border-2 border-black rounded-xl p-0.5 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                             <button
-                                key={f}
-                                onClick={() => setFileFilter(f)}
-                                className={`px-3 py-1 rounded-full text-xs font-bold border-2 capitalize transition-all ${fileFilter === f ? 'bg-black text-white border-black' : 'bg-white border-transparent hover:border-black text-gray-500 hover:text-black'}`}
+                                onClick={() => setViewMode('grid')}
+                                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-black text-white' : 'hover:bg-gray-100 text-gray-500'}`}
+                                title="Grid View"
                             >
-                                {f}
+                                <LayoutGrid size={18} />
                             </button>
-                        ))}
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-black text-white' : 'hover:bg-gray-100 text-gray-500'}`}
+                                title="List View"
+                            >
+                                <List size={18} />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -531,7 +552,7 @@ export default function FilesModal() {
                             <div className="animate-spin w-8 h-8 border-4 border-black border-t-yellow-300 rounded-full"></div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6" : "flex flex-col gap-2 mb-6"}>
                             {/* Upload Card */}
                             <UploadCard
                                 uploadState={uploadState}
@@ -547,13 +568,16 @@ export default function FilesModal() {
                             {folders.map(folder => (
                                 <div
                                     key={folder.id}
-                                    className="bg-accent-100 border-2 border-black rounded-2xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all group relative min-h-[100px] flex flex-col justify-between cursor-pointer"
+                                    className={viewMode === 'grid'
+                                        ? "bg-accent-100 border-2 border-black rounded-2xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all group relative min-h-[100px] flex flex-col justify-between cursor-pointer"
+                                        : "bg-white border-2 border-black rounded-xl p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all group relative flex items-center gap-4 cursor-pointer"
+                                    }
                                     onClick={() => editingFolderId !== folder.id && navigateToFolder(folder)}
                                 >
                                     {/* Action buttons - top right corner, visible on hover */}
                                     {editingFolderId !== folder.id && (
                                         <div
-                                            className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                            className={`absolute flex gap-1 z-10 ${viewMode === 'grid' ? 'top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity' : 'right-4 opacity-0 group-hover:opacity-100 transition-opacity'}`}
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <button
@@ -575,7 +599,7 @@ export default function FilesModal() {
 
                                     {editingFolderId === folder.id ? (
                                         // Editing mode - stacked layout
-                                        <div className="flex flex-col gap-2 h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex flex-col gap-2 w-full justify-center" onClick={(e) => e.stopPropagation()}>
                                             <input
                                                 type="text"
                                                 value={editFolderName}
@@ -603,12 +627,12 @@ export default function FilesModal() {
                                             </div>
                                         </div>
                                     ) : (
-                                        // Normal mode - clean layout without tag
+                                        // Normal mode
                                         <>
-                                            <div className="w-10 h-10 bg-accent border-2 border-black rounded-lg flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-accent border-2 border-black rounded-lg flex items-center justify-center shrink-0">
                                                 <Folder size={20} />
                                             </div>
-                                            <div>
+                                            <div className="flex-1 min-w-0">
                                                 <p className="font-bold text-sm truncate leading-tight" title={folder.name}>{folder.name}</p>
                                             </div>
                                         </>
@@ -631,7 +655,7 @@ export default function FilesModal() {
                                     {selectMode && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); toggleFileSelection(file.id); }}
-                                            className={`absolute top-2 left-2 z-10 w-6 h-6 border-2 border-black rounded flex items-center justify-center transition-colors ${selectedFiles.includes(file.id) ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-100'}`}
+                                            className={`absolute z-10 w-6 h-6 border-2 border-black rounded flex items-center justify-center transition-colors ${selectedFiles.includes(file.id) ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-100'} ${viewMode === 'grid' ? 'top-2 left-2' : 'top-1/2 -translate-y-1/2 left-2'}`}
                                         >
                                             {selectedFiles.includes(file.id) && <span className="text-xs font-bold">✓</span>}
                                         </button>
@@ -648,6 +672,7 @@ export default function FilesModal() {
                                             }
                                         }}
                                         className={selectedFiles.includes(file.id) ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+                                        viewMode={viewMode}
                                     />
                                 </div>
                             ))}
