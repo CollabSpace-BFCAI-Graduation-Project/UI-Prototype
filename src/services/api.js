@@ -142,17 +142,33 @@ export const messages = {
     delete: (id, senderId) => request(`/messages/${id}`, { method: 'DELETE', body: { senderId } }),
 };
 
+// ============ FOLDERS ============
+export const folders = {
+    getBySpace: (spaceId, parentId) => {
+        const params = parentId !== undefined ? `?parentId=${parentId === null ? 'null' : parentId}` : '';
+        return request(`/spaces/${spaceId}/folders${params}`);
+    },
+    getById: (folderId) => request(`/folders/${folderId}`),
+    create: (spaceId, data) => request(`/spaces/${spaceId}/folders`, { method: 'POST', body: data }),
+    update: (folderId, name) => request(`/folders/${folderId}`, { method: 'PUT', body: { name } }),
+    delete: (folderId) => request(`/folders/${folderId}`, { method: 'DELETE' }),
+};
+
 // ============ FILES ============
 export const files = {
-    getBySpace: (spaceId) => request(`/files/${spaceId}`),
+    getBySpace: (spaceId, folderId) => {
+        const params = folderId !== undefined ? `?folderId=${folderId === null ? 'null' : folderId}` : '';
+        return request(`/files/${spaceId}${params}`);
+    },
     /**
      * Upload a file to a space with real progress tracking
      * @param {string} spaceId - The space ID
      * @param {File} file - The file object from input
      * @param {string} uploadedBy - User ID who uploaded
      * @param {function} onProgress - Callback with (percent, loaded, total)
+     * @param {string} folderId - Optional folder ID to upload into
      */
-    upload: (spaceId, file, uploadedBy, onProgress) => {
+    upload: (spaceId, file, uploadedBy, onProgress, folderId) => {
         return new Promise((resolve, reject) => {
             const totalSize = file.size;
 
@@ -173,7 +189,8 @@ export const files = {
                 const body = JSON.stringify({
                     name: file.name,
                     fileData: base64,
-                    uploadedBy: uploadedBy
+                    uploadedBy: uploadedBy,
+                    folderId: folderId || null
                 });
 
                 const xhr = new XMLHttpRequest();
@@ -213,6 +230,8 @@ export const files = {
     },
     download: (fileId) => `${API_BASE_URL}/files/${fileId}/download`,
     delete: (fileId, userId) => request(`/files/${fileId}`, { method: 'DELETE', body: { userId } }),
+    move: (fileIds, folderId, userId) => request('/files/move', { method: 'PUT', body: { fileIds, folderId, userId } }),
+    copy: (fileIds, folderId, userId) => request('/files/copy', { method: 'POST', body: { fileIds, folderId, userId } }),
 };
 
 // Export grouped API
@@ -225,6 +244,7 @@ const api = {
     requests,
     notifications,
     messages,
+    folders,
     files,
 };
 

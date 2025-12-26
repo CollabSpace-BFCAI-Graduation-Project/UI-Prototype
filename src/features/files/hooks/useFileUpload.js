@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuthStore, useSpacesStore } from '../../../store';
 
-export default function useFileUpload({ activeSpace }) {
+export default function useFileUpload({ activeSpace, folderId }) {
     const [uploadState, setUploadState] = useState('idle');
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadedBytes, setUploadedBytes] = useState(0);
@@ -22,12 +22,12 @@ export default function useFileUpload({ activeSpace }) {
         setTotalBytes(0);
 
         try {
-            // Real API upload with progress tracking
+            // Real API upload with progress tracking (now with folderId)
             await api.files.upload(activeSpace.id, file, user?.id, (progress, loaded, total) => {
                 setUploadProgress(progress);
                 setUploadedBytes(loaded);
                 setTotalBytes(total);
-            });
+            }, folderId);
 
             // Upload complete
             setUploadProgress(100);
