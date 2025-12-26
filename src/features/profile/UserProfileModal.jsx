@@ -87,11 +87,11 @@ export default function UserProfileModal({ userId, viewerId, onClose }) {
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div
-                className="bg-white rounded-2xl border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] w-full max-w-md overflow-hidden"
+                className="bg-white rounded-2xl border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] w-full max-w-md"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-pink-400 to-purple-400 p-6 relative">
+                <div className="bg-gradient-to-r from-pink-400 to-purple-400 p-6 relative rounded-t-xl">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/40 rounded-full transition-colors"
