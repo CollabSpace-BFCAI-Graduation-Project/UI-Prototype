@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, Image as ImageIcon, Film, Presentation, Download, Trash2, ExternalLink } from 'lucide-react';
 import { useUIStore, useAuthStore, useSpacesStore } from '../../store';
-import { getFileUrl } from '../../shared/utils/helpers';
+import { getFileUrl, formatRelativeTime } from '../../shared/utils/helpers';
 import api from '../../services/api';
 import ModalWrapper from '../../shared/components/ModalWrapper';
 import Button, { CloseButton } from '../../shared/components/Button';
@@ -100,7 +100,7 @@ export default function FilePreviewModal() {
                         {viewingFile.name.replace(/([_\-])/g, '$1\u200B')}
                     </h2>
                     <p className="text-gray-500 font-medium mb-4">
-                        Uploaded by <span className="text-black font-bold">{viewingFile.uploaderName}</span> • {viewingFile.time}
+                        Uploaded by <span className="text-black font-bold">{viewingFile.uploaderName}</span> • {viewingFile.time || formatRelativeTime(viewingFile.createdAt)}
                     </p>
                     <div className="flex gap-2 flex-wrap">
                         <Button variant="primary" onClick={handleView} icon={<ExternalLink />}>View</Button>

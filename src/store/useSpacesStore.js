@@ -190,6 +190,10 @@ const useSpacesStore = create((set, get) => ({
             const matchesSearch = space.name.toLowerCase().includes(searchQuery.toLowerCase());
             let matchesTab = true;
             if (activeTab === 'favorites') matchesTab = userFavorites.includes(space.id);
+            if (activeTab === 'owned') {
+                const user = useAuthStore.getState().user;
+                matchesTab = space.ownerId === user?.id;
+            }
             let matchesCategory = true;
             if (activeCategory !== 'all') matchesCategory = space.category === activeCategory;
             let matchesStatus = true;

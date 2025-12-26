@@ -360,6 +360,7 @@ export default function FilesModal() {
     // Filter files
     const filteredFiles = files.filter(f => {
         if (fileFilter === 'all') return true;
+        if (fileFilter === 'owned') return f.uploadedBy === user?.id;
         const ext = f.type?.toLowerCase();
         if (fileFilter === 'image') {
             return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico', 'fig'].includes(ext);
@@ -533,7 +534,7 @@ export default function FilesModal() {
                     {/* Filter Chips & View Toggle */}
                     <div className="flex justify-between items-center gap-4">
                         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar flex-1">
-                            {['all', 'image', 'video', 'doc', 'presentation'].map(f => (
+                            {['all', 'owned', 'image', 'video', 'doc', 'presentation'].map(f => (
                                 <button
                                     key={f}
                                     onClick={() => setFileFilter(f)}
