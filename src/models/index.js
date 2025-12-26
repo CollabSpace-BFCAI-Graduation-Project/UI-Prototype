@@ -76,6 +76,10 @@ export class Space {
         return this.members.length;
     }
 
+    get isPrivate() {
+        return this.visibility === 'private';
+    }
+
     static fromApi(data) {
         return new Space(data);
     }

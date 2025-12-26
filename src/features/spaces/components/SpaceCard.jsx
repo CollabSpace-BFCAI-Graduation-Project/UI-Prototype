@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Lock, Globe } from 'lucide-react';
 import { getImageUrl, isImageThumbnail, getSpaceThumbnailStyle, getSpaceThumbnailUrl } from '../../../shared/utils/helpers';
 import { useAuthStore } from '../../../store';
 
@@ -59,9 +59,20 @@ export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onTogg
             <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-2 h-[60px]">
                     <div className="w-full">
-                        <span className="inline-block px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold tracking-wider uppercase mb-2 border border-blue-200">
-                            {space.category}
-                        </span>
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="inline-block px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold tracking-wider uppercase border border-blue-200">
+                                {space.category}
+                            </span>
+                            {space.isPrivate ? (
+                                <div className="p-1 rounded-md bg-pink-100 text-pink-500 border border-pink-200" title="Private Space">
+                                    <Lock size={14} />
+                                </div>
+                            ) : (
+                                <div className="p-1 rounded-md bg-cyan-100 text-cyan-600 border border-cyan-200" title="Public Space">
+                                    <Globe size={14} />
+                                </div>
+                            )}
+                        </div>
                         <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-pink-600 transition-colors line-clamp-1 break-words" title={space.name}>{space.name}</h3>
                     </div>
                 </div>
