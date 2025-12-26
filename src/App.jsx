@@ -42,6 +42,7 @@ import UnitySessionView from './features/session/UnitySessionView';
 import JoinSessionModal from './features/session/JoinSessionModal';
 
 import { JoinByLinkModal } from './features/spaces/JoinByLinkModal';
+import UserProfileModal from './features/profile/UserProfileModal';
 
 export default function App() {
   // --- Zustand Stores ---
@@ -63,7 +64,7 @@ export default function App() {
     fetchFavorites,
   } = useSpacesStore();
 
-  const { currentView, unityLoadingProgress, setCurrentView, initTheme } = useUIStore();
+  const { currentView, unityLoadingProgress, setCurrentView, initTheme, viewingProfileId, closeProfileModal } = useUIStore();
 
   // --- Effects ---
 
@@ -173,6 +174,13 @@ export default function App() {
       <InputModal />
       <JoinSessionModal />
       <JoinByLinkModal />
+      {viewingProfileId && (
+        <UserProfileModal
+          userId={viewingProfileId}
+          viewerId={user?.id}
+          onClose={closeProfileModal}
+        />
+      )}
 
       {/* Toast Notifications */}
       <MobileNav />

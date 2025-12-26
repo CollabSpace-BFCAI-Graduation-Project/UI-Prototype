@@ -18,7 +18,8 @@ export default function ChatView() {
         setChatInput,
         sendMessage,
         forwardMessage,
-        getCurrentMessages
+        getCurrentMessages,
+        members // Get members for mention parsing
     } = useChatStore();
 
     const { spaces } = useSpacesStore();
@@ -39,11 +40,26 @@ export default function ChatView() {
         e?.preventDefault();
         if (!chatInput.trim() || !activeChatSpace) return;
 
+        // Extract mentions
+        const mentionMatches = chatInput.match(/@([a-zA-Z0-9_]+)/g) || [];
+        const mentions = [];
+
+        mentionMatches.forEach(match => {
+            const username = match.substring(1).toLowerCase();
+            const member = members.find(m =>
+                (m.username?.toLowerCase() === username) ||
+                (m.name.replace(/\s+/g, '').toLowerCase() === username)
+            );
+            if (member && !mentions.includes(member.userId)) {
+                mentions.push(member.userId);
+            }
+        });
+
         const messageData = {
             senderId: user?.id,
             text: chatInput,
             type: 'user',
-            mentions: []
+            mentions: mentions
         };
 
         await sendMessage(messageData);

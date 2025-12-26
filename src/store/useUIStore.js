@@ -60,7 +60,13 @@ const useUIStore = create((set) => ({
     openSpaceSettingsModal: () => set({ isSpaceSettingsModalOpen: true, spaceSettingsTab: 'general' }),
     closeSpaceSettingsModal: () => set({ isSpaceSettingsModalOpen: false }),
     setSpaceSettingsTab: (tab) => set({ spaceSettingsTab: tab }),
+    setSpaceSettingsTab: (tab) => set({ spaceSettingsTab: tab }),
     setSettingsTab: (tab) => set({ settingsTab: tab }),
+
+    // Profile Modal
+    viewingProfileId: null,
+    openProfileModal: (userId) => set({ viewingProfileId: userId }),
+    closeProfileModal: () => set({ viewingProfileId: null }),
 
     // Join Session Modal
     isJoinSessionModalOpen: false,

@@ -7,7 +7,7 @@ import { Edit2, Trash2, Check, X, Reply, Forward, MoreVertical } from 'lucide-re
 export default function ChatMessage({ msg, onForward }) {
     const { user: currentUser } = useAuthStore();
     const { updateMessage, deleteMessage, setReplyingTo } = useChatStore();
-    const { openConfirmation } = useUIStore();
+    const { openConfirmation, openProfileModal } = useUIStore();
 
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState('');
@@ -44,7 +44,7 @@ export default function ChatMessage({ msg, onForward }) {
     const isMe = currentUser && senderId && senderId === currentUser.id;
 
     // Permissions
-    const { activeChatSpace } = useChatStore();
+    const { activeChatSpace, members } = useChatStore();
     const isOwner = activeChatSpace?.ownerId === currentUser?.id;
     const isAdmin = activeChatSpace?.members?.find(m => m.userId === currentUser?.id)?.role === 'Admin';
 
@@ -226,7 +226,34 @@ export default function ChatMessage({ msg, onForward }) {
                                 </div>
                             )}
                             <div ref={messageBubbleRef} className={`relative border-2 border-black p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] ${isMe ? 'pr-10 bg-black text-white rounded-tl-2xl rounded-bl-2xl rounded-br-2xl shadow-[4px_4px_0px_0px_rgba(236,72,153,1)]' : 'pl-10 bg-white rounded-tr-2xl rounded-br-2xl rounded-bl-2xl'} transition-all`}>
-                                <p className="font-medium break-words">{msg.text}</p>
+                                <p className="font-medium break-words">
+                                    {msg.text.split(/(@[a-zA-Z0-9_]+)/g).map((part, index) => {
+                                        if (part.startsWith('@')) {
+                                            const username = part.substring(1).toLowerCase();
+                                            const member = members?.find(m =>
+                                                m.username?.toLowerCase() === username ||
+                                                m.name.replace(/\s+/g, '').toLowerCase() === username
+                                            );
+
+                                            if (member) {
+                                                return (
+                                                    <span
+                                                        key={index}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openProfileModal(member.userId);
+                                                        }}
+                                                        className={`font-bold cursor-pointer hover:underline ${isMe ? 'text-pink-300' : 'text-accent'}`}
+                                                    >
+                                                        {part}
+                                                    </span>
+                                                );
+                                            }
+                                            return <span key={index} className="font-bold opacity-70">{part}</span>;
+                                        }
+                                        return part;
+                                    })}
+                                </p>
                                 {/* 3-dots menu button inside message */}
                                 <button
                                     ref={menuRef}

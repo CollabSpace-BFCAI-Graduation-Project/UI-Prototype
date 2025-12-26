@@ -13,6 +13,7 @@ const useChatStore = create((set, get) => ({
     channels: [],
     activeChannel: null,
     messages: [],
+    members: [], // Members of the active space for mentions
     replyingTo: null, // Message being replied to
     localChatHistory: INITIAL_CHAT_HISTORY,
     chatInput: '',
@@ -21,9 +22,10 @@ const useChatStore = create((set, get) => ({
 
     // Actions
     setActiveChatSpace: async (space) => {
-        set({ activeChatSpace: space, channels: [], activeChannel: null, messages: [] });
+        set({ activeChatSpace: space, channels: [], activeChannel: null, messages: [], members: [] });
         if (space) {
             await get().fetchChannels(space.id);
+            await get().fetchMembers(space.id);
         }
     },
 
@@ -46,6 +48,19 @@ const useChatStore = create((set, get) => ({
         } catch (err) {
             console.error('Failed to fetch channels:', err);
             set({ channels: [], loading: false });
+        }
+    },
+
+    // Fetch members for mentions
+    fetchMembers: async (spaceId) => {
+        if (!spaceId) return;
+        try {
+            const data = await api.members.getBySpace(spaceId);
+            set({ members: data });
+            return data;
+        } catch (err) {
+            console.error('Failed to fetch members:', err);
+            set({ members: [] });
         }
     },
 
