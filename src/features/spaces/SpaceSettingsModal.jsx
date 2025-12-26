@@ -3,6 +3,10 @@ import { X, Settings, Palette, Trash2, Save, AlertTriangle, Lock, Globe, Image, 
 import { useUIStore, useSpacesStore, useAuthStore } from '../../store';
 import api from '../../services/api';
 import { getImageUrl } from '../../shared/utils/helpers';
+import ModalWrapper from '../../shared/components/ModalWrapper';
+import Button, { CloseButton } from '../../shared/components/Button';
+import Avatar from '../../shared/components/Avatar';
+import { ADMIN_ROLES } from '../../shared/constants';
 
 const GRADIENT_OPTIONS = [
     'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -18,76 +22,59 @@ const GRADIENT_OPTIONS = [
 const CATEGORY_OPTIONS = ['CREATIVE', 'TECH', 'EDUCATION', 'MEETING'];
 
 export default function SpaceSettingsModal() {
-    const {
-        isSpaceSettingsModalOpen,
-        closeSpaceSettingsModal,
-        spaceSettingsTab,
-        setSpaceSettingsTab,
-        setCurrentView,
-    } = useUIStore();
-
+    const { isSpaceSettingsModalOpen, closeSpaceSettingsModal, spaceSettingsTab, setSpaceSettingsTab, setCurrentView } = useUIStore();
     const { activeSpace, updateSpace, deleteSpace, setActiveSpace } = useSpacesStore();
     const { user } = useAuthStore();
 
-    const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        category: '',
-        thumbnail: '',
-        visibility: 'public',
-    });
+    const [formData, setFormData] = useState({ name: '', description: '', category: '', thumbnail: '', visibility: 'public' });
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState('');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
-    const [thumbnailType, setThumbnailType] = useState('gradient'); // 'gradient' or 'image'
+    const [thumbnailType, setThumbnailType] = useState('gradient');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [bannedUsers, setBannedUsers] = useState([]);
     const [loadingBans, setLoadingBans] = useState(false);
     const [pendingInvites, setPendingInvites] = useState([]);
     const [loadingInvites, setLoadingInvites] = useState(false);
 
-    // Initialize form data when modal opens
     useEffect(() => {
         if (activeSpace && isSpaceSettingsModalOpen) {
             const isImageThumbnail = activeSpace.thumbnail?.startsWith('/uploads') || activeSpace.thumbnail?.startsWith('http');
             setThumbnailType(isImageThumbnail ? 'image' : 'gradient');
             setFormData({
-                name: activeSpace.name || '',
-                description: activeSpace.description || '',
-                category: activeSpace.category || 'CREATIVE',
-                thumbnail: activeSpace.thumbnail || GRADIENT_OPTIONS[0],
-                visibility: activeSpace.visibility || 'public',
+                name: activeSpace.name || '', description: activeSpace.description || '',
+                category: activeSpace.category || 'CREATIVE', thumbnail: activeSpace.thumbnail || GRADIENT_OPTIONS[0],
+                visibility: activeSpace.visibility || 'public'
             });
         }
     }, [activeSpace, isSpaceSettingsModalOpen]);
 
-    // Fetch banned users when tab is selected
     useEffect(() => {
         if (spaceSettingsTab === 'banned' && activeSpace?.id && isSpaceSettingsModalOpen) {
             setLoadingBans(true);
-            api.spaces.getBans(activeSpace.id)
-                .then(setBannedUsers)
-                .catch(console.error)
-                .finally(() => setLoadingBans(false));
+            api.spaces.getBans(activeSpace.id).then(setBannedUsers).catch(console.error).finally(() => setLoadingBans(false));
         }
     }, [spaceSettingsTab, activeSpace?.id, isSpaceSettingsModalOpen]);
 
-    // Fetch pending invites when tab is selected
     useEffect(() => {
         if (spaceSettingsTab === 'invites' && activeSpace?.id && isSpaceSettingsModalOpen) {
             setLoadingInvites(true);
-            api.invites.getBySpace(activeSpace.id)
-                .then(setPendingInvites)
-                .catch(console.error)
-                .finally(() => setLoadingInvites(false));
+            api.invites.getBySpace(activeSpace.id).then(setPendingInvites).catch(console.error).finally(() => setLoadingInvites(false));
         }
     }, [spaceSettingsTab, activeSpace?.id, isSpaceSettingsModalOpen]);
+
+    if (!isSpaceSettingsModalOpen || !activeSpace) return null;
+
+    const userMember = activeSpace.members?.find(m => m.userId === user?.id);
+    const userRole = userMember?.role || null;
+    const isOwner = userRole === 'Owner' || activeSpace.ownerId === user?.id;
+    const canAccess = isOwner || ADMIN_ROLES.includes(userRole);
+    if (!canAccess) return null;
 
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         setIsUploadingImage(true);
         try {
             const reader = new FileReader();
@@ -100,23 +87,10 @@ export default function SpaceSettingsModal() {
             };
             reader.readAsDataURL(file);
         } catch (err) {
-            console.error('Upload failed:', err);
             setSaveMessage('Upload failed');
             setIsUploadingImage(false);
         }
     };
-
-    if (!isSpaceSettingsModalOpen || !activeSpace) return null;
-
-    // Check user role
-    const userMember = activeSpace.members?.find(m => m.userId === user?.id);
-    const userRole = userMember?.role || null;
-    const isOwner = userRole === 'Owner' || activeSpace.ownerId === user?.id;
-    const isAdmin = userRole === 'Admin';
-    const canAccess = isOwner || isAdmin;
-
-    // If user can't access, don't render
-    if (!canAccess) return null;
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -139,9 +113,21 @@ export default function SpaceSettingsModal() {
             closeSpaceSettingsModal();
             setActiveSpace(null);
             setCurrentView('dashboard');
-        } catch (err) {
-            console.error('Failed to delete space:', err);
-        }
+        } catch (err) { }
+    };
+
+    const handleUnban = async (banId) => {
+        try {
+            await api.spaces.unban(activeSpace.id, banId);
+            setBannedUsers(prev => prev.filter(b => b.id !== banId));
+        } catch (err) { }
+    };
+
+    const handleRevokeInvite = async (inviteId) => {
+        try {
+            await api.invites.revoke(inviteId);
+            setPendingInvites(prev => prev.filter(i => i.id !== inviteId));
+        } catch (err) { }
     };
 
     const tabs = [
@@ -152,51 +138,37 @@ export default function SpaceSettingsModal() {
         ...(isOwner ? [{ id: 'danger', label: 'Danger Zone', icon: Trash2 }] : []),
     ];
 
-    const handleUnban = async (banId) => {
-        try {
-            await api.spaces.unban(activeSpace.id, banId);
-            setBannedUsers(prev => prev.filter(b => b.id !== banId));
-        } catch (err) {
-            console.error('Failed to unban:', err);
-        }
-    };
+    const ToggleOption = ({ active, onClick, icon: Icon, label }) => (
+        <button type="button" onClick={onClick} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${active ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-gray-300'}`}>
+            <Icon size={18} /> {label}
+        </button>
+    );
 
-    const handleRevokeInvite = async (inviteId) => {
-        try {
-            await api.invites.revoke(inviteId);
-            setPendingInvites(prev => prev.filter(i => i.id !== inviteId));
-        } catch (err) {
-            console.error('Failed to revoke invite:', err);
-        }
-    };
+    const UserListItem = ({ user: u, action, actionLabel, variant = 'blue' }) => (
+        <div className={`flex items-center justify-between p-3 ${variant === 'red' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'} border-2 rounded-xl`}>
+            <div className="flex items-center gap-3">
+                <Avatar user={{ name: u.name, avatarImage: u.avatarImage, avatarColor: u.avatarColor }} size="sm" />
+                <div>
+                    <p className="font-bold">{u.name}</p>
+                    <p className="text-xs text-gray-500">@{u.username} • {new Date(u.createdAt).toLocaleDateString()}</p>
+                </div>
+            </div>
+            <Button onClick={action} variant={variant === 'red' ? 'success' : 'danger'} size="sm">{actionLabel}</Button>
+        </div>
+    );
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeSpaceSettingsModal}></div>
-            <div className="relative w-full max-w-3xl bg-[#FFFDF5] border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row h-[550px] overflow-hidden animate-in zoom-in-95">
-                <button onClick={closeSpaceSettingsModal} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none">
-                    <X size={20} />
-                </button>
+        <ModalWrapper isOpen={isSpaceSettingsModalOpen} onClose={closeSpaceSettingsModal} size="lg" zLevel="medium" className="!max-w-3xl !h-[550px]">
+            <CloseButton onClick={closeSpaceSettingsModal} className="absolute top-4 right-4 z-10" />
 
+            <div className="flex flex-col md:flex-row h-full">
                 {/* Sidebar */}
-                <div className="w-full md:w-56 bg-white border-b-2 md:border-b-0 md:border-r-2 border-black p-6 flex flex-col">
-                    <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-                        <Settings size={20} /> Space Settings
-                    </h2>
+                <div className="w-full md:w-56 bg-white border-b-2 md:border-b-0 md:border-r-2 border-black p-6 flex flex-col shrink-0 md:rounded-l-2xl">
+                    <h2 className="text-xl font-black mb-6 flex items-center gap-2"><Settings size={20} /> Space Settings</h2>
                     <div className="space-y-2">
                         {tabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setSpaceSettingsTab(tab.id)}
-                                className={`w-full text-left px-4 py-3 rounded-xl font-bold border-2 transition-all flex items-center gap-3 ${spaceSettingsTab === tab.id
-                                    ? tab.id === 'danger'
-                                        ? 'bg-red-100 border-red-400 text-red-700'
-                                        : 'bg-yellow-300 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                                    : 'bg-transparent border-transparent hover:bg-gray-100'
-                                    } ${tab.id === 'danger' ? 'text-red-600 hover:bg-red-50' : ''}`}
-                            >
-                                <tab.icon size={18} />
-                                {tab.label}
+                            <button key={tab.id} onClick={() => setSpaceSettingsTab(tab.id)} className={`w-full text-left px-4 py-3 rounded-xl font-bold border-2 transition-all flex items-center gap-3 ${spaceSettingsTab === tab.id ? tab.id === 'danger' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-yellow-300 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-transparent border-transparent hover:bg-gray-100'} ${tab.id === 'danger' ? 'text-red-600 hover:bg-red-50' : ''}`}>
+                                <tab.icon size={18} />{tab.label}
                             </button>
                         ))}
                     </div>
@@ -204,346 +176,107 @@ export default function SpaceSettingsModal() {
 
                 {/* Content */}
                 <div className="flex-1 p-8 overflow-y-auto">
-                    {/* General Tab */}
                     {spaceSettingsTab === 'general' && (
                         <div className="space-y-6">
                             <h3 className="text-xl font-black">General Settings</h3>
                             <div className="bg-white border-2 border-black rounded-2xl p-6 space-y-4">
                                 <div>
                                     <label className="block font-bold mb-2">Space Name</label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                        className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300"
-                                    />
+                                    <input type="text" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300" />
                                 </div>
                                 <div>
                                     <label className="block font-bold mb-2">Description</label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                        rows={3}
-                                        className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none"
-                                    />
+                                    <textarea value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={3} className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none" />
                                 </div>
-
-                                {/* Privacy Setting */}
                                 <div>
                                     <label className="block font-bold mb-3">Space Privacy</label>
                                     <div className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, visibility: 'public' }))}
-                                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${formData.visibility === 'public'
-                                                ? 'border-green-500 bg-green-50 text-green-700'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            <Globe size={18} />
-                                            Public
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, visibility: 'private' }))}
-                                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${formData.visibility === 'private'
-                                                ? 'border-purple-500 bg-purple-50 text-purple-700'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            <Lock size={18} />
-                                            Private
-                                        </button>
+                                        <ToggleOption active={formData.visibility === 'public'} onClick={() => setFormData(prev => ({ ...prev, visibility: 'public' }))} icon={Globe} label="Public" />
+                                        <ToggleOption active={formData.visibility === 'private'} onClick={() => setFormData(prev => ({ ...prev, visibility: 'private' }))} icon={Lock} label="Private" />
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        {formData.visibility === 'public'
-                                            ? 'Anyone can find and view this space'
-                                            : 'Only invited members can access this space'}
-                                    </p>
+                                    <p className="text-xs text-gray-500 mt-2">{formData.visibility === 'public' ? 'Anyone can find and view this space' : 'Only invited members can access this space'}</p>
                                 </div>
-
-                                {saveMessage && (
-                                    <div className={`text-sm font-bold ${saveMessage.includes('saved') ? 'text-green-600' : 'text-red-500'}`}>
-                                        {saveMessage}
-                                    </div>
-                                )}
-
-                                <button
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                    className="bg-black text-white px-6 py-3 rounded-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(16,185,129,1)] hover:shadow-[6px_6px_0px_0px_rgba(16,185,129,1)] hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    {isSaving ? (
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    ) : (
-                                        <><Save size={18} /> Save Changes</>
-                                    )}
-                                </button>
+                                {saveMessage && <div className={`text-sm font-bold ${saveMessage.includes('saved') ? 'text-green-600' : 'text-red-500'}`}>{saveMessage}</div>}
+                                <Button onClick={handleSave} disabled={isSaving} variant="primary" className="!bg-black" icon={isSaving ? <Loader className="animate-spin" /> : <Save />}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
                             </div>
                         </div>
                     )}
 
-                    {/* Appearance Tab */}
                     {spaceSettingsTab === 'appearance' && (
                         <div className="space-y-6">
                             <h3 className="text-xl font-black">Appearance</h3>
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
-                                {/* Type Toggle */}
                                 <label className="block font-bold mb-3">Thumbnail Type</label>
                                 <div className="flex gap-3 mb-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setThumbnailType('gradient')}
-                                        className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${thumbnailType === 'gradient'
-                                            ? 'border-purple-500 bg-purple-50 text-purple-700'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                            }`}
-                                    >
-                                        <Palette size={18} />
-                                        Gradient
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setThumbnailType('image')}
-                                        className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-bold transition-all ${thumbnailType === 'image'
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                            }`}
-                                    >
-                                        <Image size={18} />
-                                        Image
-                                    </button>
+                                    <ToggleOption active={thumbnailType === 'gradient'} onClick={() => setThumbnailType('gradient')} icon={Palette} label="Gradient" />
+                                    <ToggleOption active={thumbnailType === 'image'} onClick={() => setThumbnailType('image')} icon={Image} label="Image" />
                                 </div>
-
-                                {/* Gradient Picker */}
                                 {thumbnailType === 'gradient' && (
                                     <>
                                         <label className="block font-bold mb-4">Choose Gradient</label>
                                         <div className="grid grid-cols-4 gap-3 mb-6">
                                             {GRADIENT_OPTIONS.map((gradient, i) => (
-                                                <button
-                                                    key={i}
-                                                    onClick={() => setFormData(prev => ({ ...prev, thumbnail: gradient }))}
-                                                    className={`h-16 rounded-xl border-2 transition-all ${formData.thumbnail === gradient
-                                                        ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] scale-105'
-                                                        : 'border-gray-200 hover:border-black'
-                                                        }`}
-                                                    style={{ background: gradient }}
-                                                />
+                                                <button key={i} onClick={() => setFormData(prev => ({ ...prev, thumbnail: gradient }))} className={`h-16 rounded-xl border-2 transition-all ${formData.thumbnail === gradient ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] scale-105' : 'border-gray-200 hover:border-black'}`} style={{ background: gradient }} />
                                             ))}
                                         </div>
                                     </>
                                 )}
-
-                                {/* Image Upload */}
                                 {thumbnailType === 'image' && (
                                     <div className="mb-6">
                                         <label className="block font-bold mb-4">Upload Image</label>
                                         <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-black hover:bg-gray-50 transition-all">
-                                            {isUploadingImage ? (
-                                                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                            ) : (
-                                                <>
-                                                    <Upload size={32} className="text-gray-400 mb-2" />
-                                                    <span className="text-sm font-bold text-gray-500">Click to upload image</span>
-                                                </>
-                                            )}
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleImageUpload}
-                                                className="hidden"
-                                            />
+                                            {isUploadingImage ? <Loader className="animate-spin text-blue-500" /> : <><Upload size={32} className="text-gray-400 mb-2" /><span className="text-sm font-bold text-gray-500">Click to upload image</span></>}
+                                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                                         </label>
                                     </div>
                                 )}
-
-                                {/* Preview */}
-                                <div>
-                                    <label className="block font-bold mb-2">Preview</label>
-                                    <div
-                                        className="h-32 rounded-xl border-2 border-black flex items-center justify-center text-white font-black text-2xl overflow-hidden"
-                                        style={formData.thumbnail?.startsWith('linear-gradient')
-                                            ? { background: formData.thumbnail }
-                                            : { backgroundColor: '#333' }
-                                        }
-                                    >
-                                        {formData.thumbnail && !formData.thumbnail.startsWith('linear-gradient') ? (
-                                            <img
-                                                src={getImageUrl(formData.thumbnail)}
-                                                alt="Preview"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            formData.name || 'Space Name'
-                                        )}
-                                    </div>
+                                <label className="block font-bold mb-2">Preview</label>
+                                <div className="h-32 rounded-xl border-2 border-black flex items-center justify-center text-white font-black text-2xl overflow-hidden" style={formData.thumbnail?.startsWith('linear-gradient') ? { background: formData.thumbnail } : { backgroundColor: '#333' }}>
+                                    {formData.thumbnail && !formData.thumbnail.startsWith('linear-gradient') ? <img src={getImageUrl(formData.thumbnail)} alt="Preview" className="w-full h-full object-cover" /> : formData.name || 'Space Name'}
                                 </div>
-
-                                {saveMessage && (
-                                    <div className={`mt-4 text-sm font-bold ${saveMessage.includes('updated') || saveMessage.includes('saved') ? 'text-green-600' : 'text-red-500'}`}>
-                                        {saveMessage}
-                                    </div>
-                                )}
-
-                                {thumbnailType === 'gradient' && (
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                        className="mt-6 bg-black text-white px-6 py-3 rounded-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(16,185,129,1)] hover:shadow-[6px_6px_0px_0px_rgba(16,185,129,1)] hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50"
-                                    >
-                                        <Save size={18} /> Save Appearance
-                                    </button>
-                                )}
+                                {saveMessage && <div className={`mt-4 text-sm font-bold ${saveMessage.includes('updated') || saveMessage.includes('saved') ? 'text-green-600' : 'text-red-500'}`}>{saveMessage}</div>}
+                                {thumbnailType === 'gradient' && <Button onClick={handleSave} disabled={isSaving} className="mt-6 !bg-black" icon={<Save />}>Save Appearance</Button>}
                             </div>
                         </div>
                     )}
 
-                    {/* Pending Invites Tab */}
                     {spaceSettingsTab === 'invites' && (
                         <div className="space-y-6">
-                            <h3 className="text-xl font-black flex items-center gap-2">
-                                <Globe size={20} /> Pending Invites
-                            </h3>
+                            <h3 className="text-xl font-black flex items-center gap-2"><Globe size={20} /> Pending Invites</h3>
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
-                                {loadingInvites ? (
-                                    <div className="flex items-center justify-center py-8">
-                                        <Loader className="animate-spin text-gray-400" size={24} />
-                                    </div>
-                                ) : pendingInvites.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-500 font-medium">
-                                        No pending invites
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {pendingInvites.map(invite => (
-                                            <div key={invite.id} className="flex items-center justify-between p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="w-10 h-10 rounded-full border-2 border-black flex items-center justify-center text-white text-sm font-bold overflow-hidden"
-                                                        style={{ backgroundColor: invite.avatarColor || '#3b82f6' }}
-                                                    >
-                                                        {invite.avatarImage ? (
-                                                            <img src={getImageUrl(invite.avatarImage)} alt={invite.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            invite.name?.[0] || '?'
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold">{invite.name}</p>
-                                                        <p className="text-xs text-gray-500">
-                                                            @{invite.username} • Invited {new Date(invite.createdAt).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleRevokeInvite(invite.id)}
-                                                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-sm border-2 border-red-600 hover:bg-red-600 transition-colors"
-                                                >
-                                                    Revoke
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                {loadingInvites ? <div className="flex justify-center py-8"><Loader className="animate-spin text-gray-400" size={24} /></div>
+                                    : pendingInvites.length === 0 ? <div className="text-center py-8 text-gray-500 font-medium">No pending invites</div>
+                                        : <div className="space-y-3">{pendingInvites.map(invite => <UserListItem key={invite.id} user={invite} action={() => handleRevokeInvite(invite.id)} actionLabel="Revoke" />)}</div>}
                             </div>
                         </div>
                     )}
 
-                    {/* Banned Users Tab */}
                     {spaceSettingsTab === 'banned' && (
                         <div className="space-y-6">
-                            <h3 className="text-xl font-black flex items-center gap-2">
-                                <Ban size={20} /> Banned Users
-                            </h3>
+                            <h3 className="text-xl font-black flex items-center gap-2"><Ban size={20} /> Banned Users</h3>
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
-                                {loadingBans ? (
-                                    <div className="flex items-center justify-center py-8">
-                                        <Loader className="animate-spin text-gray-400" size={24} />
-                                    </div>
-                                ) : bannedUsers.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-500 font-medium">
-                                        No banned users
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {bannedUsers.map(ban => (
-                                            <div key={ban.id} className="flex items-center justify-between p-3 bg-red-50 border-2 border-red-200 rounded-xl">
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="w-10 h-10 rounded-full border-2 border-black flex items-center justify-center text-white text-sm font-bold overflow-hidden"
-                                                        style={{ backgroundColor: ban.avatarColor || '#ef4444' }}
-                                                    >
-                                                        {ban.avatarImage ? (
-                                                            <img src={getImageUrl(ban.avatarImage)} alt={ban.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            ban.name?.[0] || '?'
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold">{ban.name}</p>
-                                                        <p className="text-xs text-gray-500">
-                                                            Banned by {ban.bannedByName || 'Unknown'} • {new Date(ban.createdAt).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleUnban(ban.id)}
-                                                    className="bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm border-2 border-green-600 hover:bg-green-600 transition-colors"
-                                                >
-                                                    Unban
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                {loadingBans ? <div className="flex justify-center py-8"><Loader className="animate-spin text-gray-400" size={24} /></div>
+                                    : bannedUsers.length === 0 ? <div className="text-center py-8 text-gray-500 font-medium">No banned users</div>
+                                        : <div className="space-y-3">{bannedUsers.map(ban => <UserListItem key={ban.id} user={ban} action={() => handleUnban(ban.id)} actionLabel="Unban" variant="red" />)}</div>}
                             </div>
                         </div>
                     )}
 
-                    {/* Danger Zone Tab */}
                     {spaceSettingsTab === 'danger' && isOwner && (
                         <div className="space-y-6">
-                            <h3 className="text-xl font-black text-red-600 flex items-center gap-2">
-                                <AlertTriangle size={24} /> Danger Zone
-                            </h3>
+                            <h3 className="text-xl font-black text-red-600 flex items-center gap-2"><AlertTriangle size={24} /> Danger Zone</h3>
                             <div className="bg-red-50 border-2 border-red-400 rounded-2xl p-6">
                                 <h4 className="font-bold text-red-700 mb-2">Delete this space</h4>
-                                <p className="text-sm text-red-600 mb-4">
-                                    Once you delete a space, there is no going back. This will permanently delete all files, messages, and members.
-                                </p>
-
+                                <p className="text-sm text-red-600 mb-4">Once you delete a space, there is no going back. This will permanently delete all files, messages, and members.</p>
                                 {!showDeleteConfirm ? (
-                                    <button
-                                        onClick={() => setShowDeleteConfirm(true)}
-                                        className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold border-2 border-red-600 hover:bg-red-600 transition-colors"
-                                    >
-                                        Delete Space
-                                    </button>
+                                    <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">Delete Space</Button>
                                 ) : (
                                     <div className="space-y-3">
                                         <p className="text-sm font-bold text-red-700">Type DELETE to confirm:</p>
-                                        <input
-                                            type="text"
-                                            value={deleteConfirmText}
-                                            onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                            placeholder="Type DELETE"
-                                            className="w-full border-2 border-red-400 rounded-xl p-3 font-mono font-bold outline-none focus:ring-2 focus:ring-red-300"
-                                        />
+                                        <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder="Type DELETE" className="w-full border-2 border-red-400 rounded-xl p-3 font-mono font-bold outline-none focus:ring-2 focus:ring-red-300" />
                                         <div className="flex gap-2">
-                                            <button
-                                                onClick={handleDelete}
-                                                disabled={deleteConfirmText !== 'DELETE'}
-                                                className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold border-2 border-red-600 hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                Confirm Delete
-                                            </button>
-                                            <button
-                                                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
-                                                className="px-4 py-2 rounded-xl font-bold border-2 border-gray-300 hover:bg-gray-100 transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
+                                            <Button onClick={handleDelete} disabled={deleteConfirmText !== 'DELETE'} variant="danger">Confirm Delete</Button>
+                                            <Button onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }} variant="secondary">Cancel</Button>
                                         </div>
                                     </div>
                                 )}
@@ -552,6 +285,6 @@ export default function SpaceSettingsModal() {
                     )}
                 </div>
             </div>
-        </div>
+        </ModalWrapper>
     );
 }
