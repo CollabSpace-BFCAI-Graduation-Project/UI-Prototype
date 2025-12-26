@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function FileCard({ file, getFileIcon, onClick, className = '', viewMode = 'grid' }) {
+export default function FileCard({ file, getFileIcon, onClick, className = '', viewMode = 'grid', actionButton }) {
     if (viewMode === 'list') {
         return (
             <div
@@ -14,7 +14,8 @@ export default function FileCard({ file, getFileIcon, onClick, className = '', v
                     <p className="font-bold text-sm truncate leading-tight text-gray-900 group-hover/row:text-blue-600" title={file.name}>{file.name}</p>
                     <p className="text-xs text-gray-500">{file.size} • {file.uploaderName}</p>
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-2">
+                    {actionButton}
                     <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded border border-gray-200 uppercase text-gray-500">{file.type}</span>
                 </div>
             </div>
@@ -31,7 +32,12 @@ export default function FileCard({ file, getFileIcon, onClick, className = '', v
                 <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded border border-gray-200 uppercase">{file.type}</span>
             </div>
             <div>
-                <p className="font-bold text-sm truncate leading-tight mb-1" title={file.name}>{file.name}</p>
+                <div className="flex justify-between items-start gap-2 mb-1">
+                    <p className="font-bold text-sm truncate leading-tight flex-1 pt-1" title={file.name}>{file.name}</p>
+                    <div className="shrink-0 -mt-1 -mr-1">
+                        {actionButton}
+                    </div>
+                </div>
                 <p className="text-xs text-gray-500">{file.size} • {file.uploaderName}</p>
             </div>
         </div>

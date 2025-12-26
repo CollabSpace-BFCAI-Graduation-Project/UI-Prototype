@@ -164,6 +164,24 @@ export default function FilesModal() {
         }
     };
 
+    // Rename file
+    const [editingFileId, setEditingFileId] = useState(null);
+    const [editFileName, setEditFileName] = useState('');
+
+    const handleRenameFile = async (fileId) => {
+        if (!editFileName.trim()) return;
+        try {
+            await api.files.rename(fileId, editFileName.trim(), user.id);
+            setEditingFileId(null);
+            setEditFileName('');
+            // Refresh
+            const filesData = await api.files.getBySpace(activeSpace.id, currentFolderId);
+            setFiles(filesData);
+        } catch (err) {
+            console.error('Failed to rename file:', err);
+        }
+    };
+
     // Delete folder
     const handleDeleteFolder = (folderId, folderName) => {
         openConfirmation({
@@ -641,41 +659,87 @@ export default function FilesModal() {
                             ))}
 
                             {/* File Cards Filtered */}
-                            {filteredFiles.map((file, i) => (
-                                <div
-                                    key={i}
-                                    className="relative"
-                                    onMouseDown={() => !selectMode && handleLongPressStart(file.id)}
-                                    onMouseUp={handleLongPressEnd}
-                                    onMouseLeave={handleLongPressEnd}
-                                    onTouchStart={() => !selectMode && handleLongPressStart(file.id)}
-                                    onTouchEnd={handleLongPressEnd}
-                                >
-                                    {/* Selection checkbox - visible in select mode */}
-                                    {selectMode && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); toggleFileSelection(file.id); }}
-                                            className={`absolute z-10 w-6 h-6 border-2 border-black rounded flex items-center justify-center transition-colors ${selectedFiles.includes(file.id) ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-100'} ${viewMode === 'grid' ? 'top-2 left-2' : 'top-1/2 -translate-y-1/2 left-2'}`}
-                                        >
-                                            {selectedFiles.includes(file.id) && <span className="text-xs font-bold">✓</span>}
-                                        </button>
-                                    )}
-                                    <FileCard
-                                        file={file}
-                                        getFileIcon={getFileIcon}
-                                        onClick={() => {
-                                            if (wasLongPress()) return; // Skip if long press triggered
-                                            if (selectMode) {
-                                                toggleFileSelection(file.id);
-                                            } else {
-                                                setViewingFile(file);
-                                            }
-                                        }}
-                                        className={selectedFiles.includes(file.id) ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
-                                        viewMode={viewMode}
-                                    />
-                                </div>
-                            ))}
+                            {filteredFiles.map((file, i) => {
+                                const canEdit = isOwnerOrAdmin || file.uploadedBy === user?.id;
+                                const editButton = (!selectMode && canEdit && editingFileId !== file.id) ? (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setEditingFileId(file.id); setEditFileName(file.name); }}
+                                        className="w-7 h-7 bg-white border-2 border-black rounded-lg flex items-center justify-center hover:bg-blue-100 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[1px] opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Rename"
+                                    >
+                                        <Edit2 size={12} />
+                                    </button>
+                                ) : null;
+
+                                return (
+                                    <div
+                                        key={i}
+                                        className="relative group"
+                                        onMouseDown={() => !selectMode && handleLongPressStart(file.id)}
+                                        onMouseUp={handleLongPressEnd}
+                                        onMouseLeave={handleLongPressEnd}
+                                        onTouchStart={() => !selectMode && handleLongPressStart(file.id)}
+                                        onTouchEnd={handleLongPressEnd}
+                                    >
+                                        {/* Selection checkbox - visible in select mode */}
+                                        {selectMode && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); toggleFileSelection(file.id); }}
+                                                className={`absolute z-10 w-6 h-6 border-2 border-black rounded flex items-center justify-center transition-colors ${selectedFiles.includes(file.id) ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-100'} ${viewMode === 'grid' ? 'top-2 left-2' : 'top-1/2 -translate-y-1/2 left-2'}`}
+                                            >
+                                                {selectedFiles.includes(file.id) && <span className="text-xs font-bold">✓</span>}
+                                            </button>
+                                        )}
+
+                                        {editingFileId === file.id ? (
+                                            // Edit Mode
+                                            <div className={`bg-white border-2 border-black rounded-xl p-3 flex flex-col gap-2 z-20 relative shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${viewMode === 'grid' ? 'min-h-[160px] justify-center' : ''}`} onClick={(e) => e.stopPropagation()}>
+                                                <input
+                                                    type="text"
+                                                    value={editFileName}
+                                                    onChange={(e) => setEditFileName(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleRenameFile(file.id);
+                                                        if (e.key === 'Escape') { setEditingFileId(null); setEditFileName(''); }
+                                                    }}
+                                                    className="w-full px-2 py-1.5 border-2 border-black rounded-lg font-bold text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                                                    autoFocus
+                                                />
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleRenameFile(file.id)}
+                                                        className="flex-1 py-1 bg-green-400 border-2 border-black rounded-lg font-bold text-xs shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+                                                    >
+                                                        Save
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setEditingFileId(null); setEditFileName(''); }}
+                                                        className="flex-1 py-1 bg-gray-200 border-2 border-black rounded-lg font-bold text-xs shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <FileCard
+                                                file={file}
+                                                getFileIcon={getFileIcon}
+                                                onClick={() => {
+                                                    if (wasLongPress()) return; // Skip if long press triggered
+                                                    if (selectMode) {
+                                                        toggleFileSelection(file.id);
+                                                    } else {
+                                                        setViewingFile(file);
+                                                    }
+                                                }}
+                                                className={selectedFiles.includes(file.id) ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+                                                viewMode={viewMode}
+                                                actionButton={editButton}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
 
                             {/* Empty state */}
                             {folders.length === 0 && filteredFiles.length === 0 && (

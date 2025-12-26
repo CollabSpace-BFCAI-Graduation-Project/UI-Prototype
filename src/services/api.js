@@ -160,6 +160,7 @@ export const files = {
         const params = folderId !== undefined ? `?folderId=${folderId === null ? 'null' : folderId}` : '';
         return request(`/files/${spaceId}${params}`);
     },
+    rename: (fileId, name, userId) => request(`/files/${fileId}`, { method: 'PUT', body: { name, userId } }),
     /**
      * Upload a file to a space with real progress tracking
      * @param {string} spaceId - The space ID
