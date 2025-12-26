@@ -126,6 +126,10 @@ export default function MembersModal() {
 
     const currentUserMember = activeSpace.members?.find(m => m.userId === user?.id);
     const canManageMembers = currentUserMember?.role === 'Owner' || currentUserMember?.role === 'Admin';
+    // Allow invites if space is public OR user is Owner/Admin
+    // Check visibility directly to handle serialized objects where getters might be lost
+    const isPrivate = activeSpace.visibility === 'private';
+    const canInvite = !isPrivate || canManageMembers;
 
 
     const handleKick = (memberId) => {
@@ -251,18 +255,19 @@ export default function MembersModal() {
                 <div className="flex-1 overflow-y-auto p-6">
                     {activeTab === 'members' && (
                         <>
-                            <div className="flex gap-2 mb-6">
+                            <div className="flex gap-2 mb-6" title={!canInvite ? "Only Owners and Admins can invite to private spaces" : ""}>
                                 <input
                                     type="email"
                                     value={inviteEmail}
                                     onChange={(e) => setInviteEmail(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
-                                    placeholder="Add by email..."
-                                    className="flex-1 border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-purple-300"
+                                    onKeyDown={(e) => e.key === 'Enter' && canInvite && handleInvite()}
+                                    placeholder={!canInvite ? "invites restricted to admins" : "Add by email..."}
+                                    disabled={!canInvite}
+                                    className="flex-1 border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-purple-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                                 />
                                 <button
                                     onClick={handleInvite}
-                                    disabled={!inviteEmail || isInviting}
+                                    disabled={!inviteEmail || isInviting || !canInvite}
                                     className="bg-black text-white px-6 rounded-xl font-bold border-2 border-black hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] flex items-center justify-center"
                                 >
                                     {isInviting ? 'Sending...' : 'Invite'}

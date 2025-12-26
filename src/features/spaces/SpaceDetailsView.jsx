@@ -79,6 +79,8 @@ export default function SpaceDetailsView() {
     const isOwner = userRole === 'Owner' || activeSpace.ownerId === user?.id;
     const isAdmin = userRole === 'Admin';
     const canAccessSettings = isOwner || isAdmin;
+    const isPrivate = activeSpace.visibility === 'private';
+    const canInvite = !isPrivate || canAccessSettings;
 
     return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-300">
@@ -133,9 +135,11 @@ export default function SpaceDetailsView() {
                         <button onClick={onTextChat} className="flex-1 min-w-[140px] bg-yellow-300 text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-yellow-200 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                             <MessageSquare size={20} /> Text Chat
                         </button>
-                        <button onClick={openInviteModal} className="flex-1 min-w-[140px] bg-white text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-gray-50 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
-                            <Link size={20} /> Invite
-                        </button>
+                        {canInvite && (
+                            <button onClick={openInviteModal} className="flex-1 min-w-[140px] bg-white text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-gray-50 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
+                                <Link size={20} /> Invite
+                            </button>
+                        )}
                         {!isOwner && userMember && (
                             <button onClick={handleLeaveSpace} className="flex-1 min-w-[140px] bg-red-100 text-red-600 font-bold py-3 px-4 rounded-xl border-2 border-red-500 hover:bg-red-200 shadow-[1px_1px_0px_0px_rgba(239,68,68,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                                 <LogOut size={20} /> Leave

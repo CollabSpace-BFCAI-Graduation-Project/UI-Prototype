@@ -16,13 +16,22 @@ export default function UserProfileModal({ userId, viewerId, onClose }) {
     const [invitingToSpace, setInvitingToSpace] = useState(null);
 
     // Get spaces the viewer can invite to (exclude spaces user is already in)
+    // Get spaces the viewer can invite to (exclude spaces user is already in)
     const inviteableSpaces = spaces.filter(s => {
-        // Check if viewer is admin/owner of this space
+        // Check if viewer has permission to invite
         const viewerMember = s.members?.find(m => m.userId === viewerId);
-        const canInvite = viewerMember?.role === 'Owner' || viewerMember?.role === 'Admin';
+        const isOwnerOrAdmin = viewerMember?.role === 'Owner' || viewerMember?.role === 'Admin';
+
+        // Members can invite to public spaces, but only Admins/Owners to private spaces
+        // Check visibility directly (handle potential serialization issues)
+        const isPrivate = s.visibility === 'private';
+        const hasPermission = !isPrivate || isOwnerOrAdmin;
+
         // Check if target user is NOT already a member
         const targetIsMember = s.members?.some(m => m.userId === userId);
-        return canInvite && !targetIsMember;
+
+        // Must be a member of the space (implied by viewerMember check) AND have permission
+        return viewerMember && hasPermission && !targetIsMember;
     });
 
     const handleInvite = async (spaceId) => {
