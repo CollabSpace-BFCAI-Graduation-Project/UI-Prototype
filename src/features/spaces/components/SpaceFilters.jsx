@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Grid, List, ChevronDown, Check } from 'lucide-react';
+import {
+    Search, Grid, List, ChevronDown, Check,
+    Layers, Palette, Monitor, GraduationCap, Coffee,
+    Activity, Circle,
+    Clock, History, ArrowDownAZ, ArrowUpAZ, Folder
+} from 'lucide-react';
 import { useSpacesStore } from '../../../store';
 
 function FilterDropdown({ value, options, onChange, color = "purple" }) {
@@ -17,6 +22,7 @@ function FilterDropdown({ value, options, onChange, color = "purple" }) {
     }, []);
 
     const selectedOption = options.find(o => o.value === value) || options[0];
+    const Icon = selectedOption.icon;
 
     return (
         <div className="relative min-w-[180px]" ref={dropdownRef}>
@@ -24,25 +30,34 @@ function FilterDropdown({ value, options, onChange, color = "purple" }) {
                 onClick={() => setIsOpen(!isOpen)}
                 className={`w-full flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border-2 border-black font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all ${isOpen ? `ring-2 ring-${color}-300` : ''}`}
             >
-                <span className="truncate mr-2">{selectedOption.label}</span>
-                <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <div className="flex items-center min-w-0">
+                    {Icon && <Icon size={16} className={`mr-2 shrink-0 text-${color}-600`} />}
+                    <span className="truncate mr-2">{selectedOption.label}</span>
+                </div>
+                <ChevronDown size={16} className={`transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 max-h-60 overflow-y-auto">
-                    {options.map((option) => (
-                        <button
-                            key={option.value}
-                            onClick={() => {
-                                onChange(option.value);
-                                setIsOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center justify-between hover:bg-gray-50 transition-colors ${value === option.value ? `bg-${color}-50 text-${color}-900` : 'text-gray-700'}`}
-                        >
-                            <span>{option.label}</span>
-                            {value === option.value && <Check size={14} className={`text-${color}-600`} />}
-                        </button>
-                    ))}
+                    {options.map((option) => {
+                        const OptionIcon = option.icon;
+                        return (
+                            <button
+                                key={option.value}
+                                onClick={() => {
+                                    onChange(option.value);
+                                    setIsOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center justify-between hover:bg-gray-50 transition-colors ${value === option.value ? `bg-${color}-50 text-${color}-900` : 'text-gray-700'}`}
+                            >
+                                <div className="flex items-center min-w-0">
+                                    {OptionIcon && <OptionIcon size={16} className={`mr-2 shrink-0 ${value === option.value ? `text-${color}-600` : 'text-gray-400'}`} />}
+                                    <span className="truncate">{option.label}</span>
+                                </div>
+                                {value === option.value && <Check size={14} className={`text-${color}-600 shrink-0 ml-2`} />}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -62,20 +77,30 @@ export default function SpaceFilters() {
         setSearchQuery,
         viewMode,
         setViewMode,
+        sortOption,
+        setSortOption,
     } = useSpacesStore();
 
     const categoryOptions = [
-        { value: 'all', label: 'All Categories' },
-        { value: 'CREATIVE', label: '🎨 Creative' },
-        { value: 'TECH', label: '💻 Tech' },
-        { value: 'EDUCATION', label: '📚 Education' },
-        { value: 'MEETING', label: '☕️ Meeting' }
+        { value: 'all', label: 'All Categories', icon: Layers },
+        { value: 'CREATIVE', label: 'Creative', icon: Palette },
+        { value: 'TECH', label: 'Tech', icon: Monitor },
+        { value: 'EDUCATION', label: 'Education', icon: GraduationCap },
+        { value: 'MEETING', label: 'Meeting', icon: Coffee }
     ];
 
     const statusOptions = [
-        { value: 'all', label: 'Any Status' },
-        { value: 'online', label: '🟢 Online' },
-        { value: 'offline', label: '⚫️ Offline' }
+        { value: 'all', label: 'Any Status', icon: Activity },
+        { value: 'online', label: 'Online', icon: Circle },
+        { value: 'offline', label: 'Offline', icon: Circle }
+    ];
+
+    const sortOptions = [
+        { value: 'newest', label: 'Newest First', icon: Clock },
+        { value: 'oldest', label: 'Oldest First', icon: History },
+        { value: 'name-asc', label: 'Name (A-Z)', icon: ArrowDownAZ },
+        { value: 'name-desc', label: 'Name (Z-A)', icon: ArrowUpAZ },
+        { value: 'category', label: 'By Category', icon: Folder },
     ];
 
     return (
@@ -110,6 +135,13 @@ export default function SpaceFilters() {
                     onChange={setActiveStatus}
                     options={statusOptions}
                     color="green"
+                />
+
+                <FilterDropdown
+                    value={sortOption}
+                    onChange={setSortOption}
+                    options={sortOptions}
+                    color="blue"
                 />
 
                 <div className="relative flex-1 min-w-[200px]">

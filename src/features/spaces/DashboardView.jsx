@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Plus, Globe } from 'lucide-react';
 import SpaceFilters from './components/SpaceFilters';
 import SpaceCard from './components/SpaceCard';
@@ -14,6 +14,7 @@ export default function DashboardView() {
         toggleFavorite,
         setActiveSpace,
         viewMode,
+        sortOption,
     } = useSpacesStore();
 
     const { openCreateModal, setCurrentView } = useUIStore();
@@ -21,6 +22,25 @@ export default function DashboardView() {
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
 
     const filteredSpaces = getFilteredSpaces();
+
+    // Sort spaces based on selected option
+    const sortedSpaces = useMemo(() => {
+        const spaces = [...filteredSpaces];
+        switch (sortOption) {
+            case 'newest':
+                return spaces.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            case 'oldest':
+                return spaces.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            case 'name-asc':
+                return spaces.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            case 'name-desc':
+                return spaces.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            case 'category':
+                return spaces.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+            default:
+                return spaces;
+        }
+    }, [filteredSpaces, sortOption]);
 
     const enterSpace = (space) => {
         setActiveSpace(space);
@@ -65,9 +85,9 @@ export default function DashboardView() {
             <SpaceFilters />
 
             {/* Spaces Grid */}
-            {filteredSpaces.length > 0 ? (
+            {sortedSpaces.length > 0 ? (
                 <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "flex flex-col gap-4"}>
-                    {filteredSpaces.map((space) => (
+                    {sortedSpaces.map((space) => (
                         <SpaceCard
                             key={space.id}
                             space={space}
@@ -88,3 +108,4 @@ export default function DashboardView() {
         </div>
     );
 }
+

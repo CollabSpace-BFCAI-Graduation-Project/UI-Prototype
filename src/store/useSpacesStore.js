@@ -21,10 +21,12 @@ const useSpacesStore = create((set, get) => ({
     activeStatus: 'all',
     searchQuery: '',
     viewMode: 'grid',
+    sortOption: 'newest',
 
     // Actions
     setActiveSpace: (space) => set({ activeSpace: space }),
     clearActiveSpace: () => set({ activeSpace: null }),
+    setSortOption: (sortOption) => set({ sortOption }),
 
 
 
