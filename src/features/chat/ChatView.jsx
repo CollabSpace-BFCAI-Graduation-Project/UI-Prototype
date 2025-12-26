@@ -12,6 +12,7 @@ export default function ChatView() {
         activeChatSpace,
         setActiveChatSpace,
         activeChannel,
+        setActiveChannel,
         channels,
         chatInput,
         setChatInput,
@@ -54,6 +55,12 @@ export default function ChatView() {
         try {
             await forwardMessage(forwardingMessage.id, targetChannelId, user?.id);
             setForwardingMessage(null);
+
+            // Focus the target channel
+            const targetChannel = channels.find(c => c.id === targetChannelId);
+            if (targetChannel) {
+                setActiveChannel(targetChannel);
+            }
         } catch (err) {
             console.error(err);
         }
@@ -115,25 +122,50 @@ export default function ChatView() {
 
             {/* Forward Modal */}
             {forwardingMessage && (
-                <ModalWrapper onClose={() => setForwardingMessage(null)} title="Forward Message">
-                    <div className="p-4">
-                        <div className="bg-gray-100 rounded-xl p-3 mb-4 border-2 border-gray-200">
-                            <p className="text-sm font-medium truncate">{forwardingMessage.text}</p>
+                <ModalWrapper
+                    isOpen={!!forwardingMessage}
+                    onClose={() => setForwardingMessage(null)}
+                    showCloseButton={true}
+                    size="md"
+                >
+                    <div className="p-6">
+                        <h3 className="text-2xl font-black mb-6">Forward Message</h3>
+
+                        <div className="bg-gray-50 rounded-xl p-4 mb-6 border-2 border-black/5 flex gap-3">
+                            <div className="w-1 h-full bg-accent rounded-full shrink-0"></div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-accent mb-1">{forwardingMessage.sender}</p>
+                                <p className="text-sm font-medium truncate text-gray-700">{forwardingMessage.text}</p>
+                            </div>
                         </div>
-                        <p className="text-sm font-bold text-gray-500 mb-2">Select a channel:</p>
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
+
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Forward to...</p>
+
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                             {channels.filter(c => c.id !== activeChannel?.id).map(channel => (
                                 <button
                                     key={channel.id}
                                     onClick={() => handleForward(channel.id)}
-                                    className="w-full flex items-center gap-2 p-3 rounded-xl border-2 border-black hover:bg-accent-50 transition-colors text-left font-medium"
+                                    className="w-full flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 hover:border-black hover:bg-gray-50 transition-all text-left group"
                                 >
-                                    <Hash size={16} className="text-gray-400" />
-                                    {channel.name}
+                                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:text-black transition-colors border-2 border-transparent group-hover:border-black">
+                                        <Hash size={18} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-gray-900 group-hover:text-black truncate">#{channel.name}</h4>
+                                        <p className="text-xs text-gray-500 truncate">{channel.description || 'No description'}</p>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 group-hover:text-accent group-hover:bg-accent/10 transition-colors">
+                                        <Forward size={16} />
+                                    </div>
                                 </button>
                             ))}
                             {channels.filter(c => c.id !== activeChannel?.id).length === 0 && (
-                                <p className="text-gray-400 text-sm text-center py-4">No other channels available</p>
+                                <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                    <Hash size={32} className="mx-auto text-gray-300 mb-2" />
+                                    <p className="text-gray-500 font-bold">No other channels</p>
+                                    <p className="text-xs text-gray-400">Create more channels to forward messages</p>
+                                </div>
                             )}
                         </div>
                     </div>
