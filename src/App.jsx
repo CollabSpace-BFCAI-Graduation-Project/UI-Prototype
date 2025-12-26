@@ -61,9 +61,14 @@ export default function App() {
     fetchFavorites,
   } = useSpacesStore();
 
-  const { currentView, unityLoadingProgress, setCurrentView } = useUIStore();
+  const { currentView, unityLoadingProgress, setCurrentView, initTheme } = useUIStore();
 
   // --- Effects ---
+
+  // Initialize theme on mount
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
 
   // Initialize auth on mount
   useEffect(() => {

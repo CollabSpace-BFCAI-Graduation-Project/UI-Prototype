@@ -14,7 +14,7 @@ export default function ChatSidebar() {
                 <h2 className="text-xl font-black truncate">{activeChatSpace.name}</h2>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                <div className="p-3 bg-yellow-100 border-2 border-black rounded-xl font-bold flex justify-between items-center cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"><span># General</span></div>
+                <div className="p-3 bg-accent-100 border-2 border-black rounded-xl font-bold flex justify-between items-center cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"><span># General</span></div>
             </div>
         </div>
     );

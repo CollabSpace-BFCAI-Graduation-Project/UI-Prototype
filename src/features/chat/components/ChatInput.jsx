@@ -19,7 +19,7 @@ export default function ChatInput({
                 <button
                     type="submit"
                     disabled={!chatInput.trim()}
-                    className="absolute right-2 top-2 bottom-2 aspect-square bg-yellow-300 border-2 border-black rounded-xl flex items-center justify-center hover:bg-yellow-400 active:scale-95 transition-all"
+                    className="absolute right-2 top-2 bottom-2 aspect-square bg-accent border-2 border-black rounded-xl flex items-center justify-center hover:bg-accent-dark active:scale-95 transition-all"
                 >
                     <Send size={20} />
                 </button>

@@ -95,7 +95,7 @@ function Toggle({ checked, onChange }) {
 }
 
 export default function SettingsModal() {
-    const { isSettingsModalOpen, closeSettingsModal, settingsTab, setSettingsTab } = useUIStore();
+    const { isSettingsModalOpen, closeSettingsModal, settingsTab, setSettingsTab, themeColor } = useUIStore();
     const { user, logout, updateProfile } = useAuthStore();
 
     const [profileData, setProfileData] = useState({ name: '', username: '', bio: '' });
@@ -237,7 +237,7 @@ export default function SettingsModal() {
                     <h2 className="text-2xl font-black mb-6 flex items-center gap-2"><Settings size={24} /> Settings</h2>
                     <div className="space-y-2">
                         {tabs.map(tab => (
-                            <button key={tab.id} onClick={() => setSettingsTab(tab.id)} className={`w-full text-left px-4 py-3 rounded-xl font-bold border-2 transition-all flex items-center gap-3 ${settingsTab === tab.id ? 'bg-yellow-300 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-transparent border-transparent hover:bg-gray-100'}`}>
+                            <button key={tab.id} onClick={() => setSettingsTab(tab.id)} className={`w-full text-left px-4 py-3 rounded-xl font-bold border-2 transition-all flex items-center gap-3 ${settingsTab === tab.id ? 'bg-accent border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-transparent border-transparent hover:bg-gray-100'}`}>
                                 <tab.icon size={18} />{tab.label}
                             </button>
                         ))}
@@ -375,12 +375,25 @@ export default function SettingsModal() {
                         <div className="space-y-6">
                             <h3 className="text-xl font-black">General</h3>
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
-                                <label className="block font-bold mb-2">Theme Color</label>
-                                <div className="flex gap-2">
-                                    {['#fde047', '#f9a8d4', '#93c5fd', '#86efac', '#c4b5fd'].map(color => (
-                                        <div key={color} className="w-8 h-8 rounded-full border-2 border-black cursor-pointer hover:scale-110 transition-transform" style={{ backgroundColor: color }} />
+                                <label className="block font-bold mb-3">Theme Color</label>
+                                <div className="flex gap-3">
+                                    {[
+                                        { name: 'yellow', color: '#fde047' },
+                                        { name: 'pink', color: '#f9a8d4' },
+                                        { name: 'blue', color: '#93c5fd' },
+                                        { name: 'green', color: '#86efac' },
+                                        { name: 'purple', color: '#c4b5fd' }
+                                    ].map(theme => (
+                                        <button
+                                            key={theme.name}
+                                            onClick={() => useUIStore.getState().setThemeColor(theme.name)}
+                                            className={`w-10 h-10 rounded-full border-2 cursor-pointer hover:scale-110 transition-transform ${themeColor === theme.name ? 'border-black ring-2 ring-offset-2 ring-black' : 'border-black'}`}
+                                            style={{ backgroundColor: theme.color }}
+                                            title={theme.name.charAt(0).toUpperCase() + theme.name.slice(1)}
+                                        />
                                     ))}
                                 </div>
+                                <p className="text-xs text-gray-500 mt-2">Changes apply immediately across the app</p>
                             </div>
                         </div>
                     )}

@@ -132,7 +132,7 @@ export default function SpaceDetailsView() {
                             <Gamepad2 size={24} className="group-hover:rotate-12 transition-transform" />
                             <span className="text-lg">Join Space (3D)</span>
                         </button>
-                        <button onClick={onTextChat} className="flex-1 min-w-[140px] bg-yellow-300 text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-yellow-200 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
+                        <button onClick={onTextChat} className="flex-1 min-w-[140px] bg-accent text-black font-bold py-3 px-4 rounded-xl border-2 border-black hover:bg-accent-light shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                             <MessageSquare size={20} /> Text Chat
                         </button>
                         {canInvite && (

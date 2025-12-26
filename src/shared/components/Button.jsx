@@ -30,7 +30,8 @@ export default function Button({
         secondary: 'bg-white hover:bg-gray-100 text-black',
         danger: 'bg-red-500 hover:bg-red-600 text-white',
         success: 'bg-green-500 hover:bg-green-600 text-white',
-        warning: 'bg-yellow-400 hover:bg-yellow-500 text-black',
+        warning: 'bg-accent hover:bg-accent-dark text-black',
+        accent: 'bg-accent hover:bg-accent-dark text-black',
         ghost: 'bg-transparent hover:bg-gray-100 text-black border-transparent shadow-none',
         icon: 'bg-white hover:bg-gray-100 text-black'
     };

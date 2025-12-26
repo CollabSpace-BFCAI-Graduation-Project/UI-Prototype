@@ -112,7 +112,7 @@ export default function SpaceFilters() {
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all whitespace-nowrap ${activeTab === tab
-                            ? 'bg-yellow-300 text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-1'
+                            ? 'bg-accent text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-1'
                             : 'text-gray-500 hover:text-gray-800'
                             }`}
                     >

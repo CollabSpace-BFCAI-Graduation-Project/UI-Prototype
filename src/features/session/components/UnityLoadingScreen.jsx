@@ -8,7 +8,7 @@ export default function UnityLoadingScreen({ progress }) {
             <h2 className="text-3xl font-black mb-4">Entering 3D World...</h2>
             <div className="w-full h-4 bg-gray-700 rounded-full border-2 border-black overflow-hidden relative">
                 <div
-                    className="h-full bg-yellow-300 transition-all duration-100"
+                    className="h-full bg-accent transition-all duration-100"
                     style={{ width: `${progress}%` }}
                 ></div>
             </div>

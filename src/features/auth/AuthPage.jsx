@@ -218,7 +218,7 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
                     <div className="flex p-1 bg-gray-100 rounded-xl border-2 border-black mb-5 relative overflow-hidden">
                         {/* Sliding background */}
                         <div
-                            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-yellow-300 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 ease-out"
+                            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-accent rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 ease-out"
                             style={{ left: isLogin ? '4px' : 'calc(50% + 2px)' }}
                         ></div>
                         <button

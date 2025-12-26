@@ -1,5 +1,91 @@
 @import "tailwindcss";
 
+/* Theme Color Configuration for Tailwind v4 */
+@theme {
+    /* Define custom accent color palette using CSS variables */
+    --color-accent-50: var(--accent-50);
+    --color-accent-100: var(--accent-100);
+    --color-accent-200: var(--accent-200);
+    --color-accent-300: var(--accent-300);
+    --color-accent-400: var(--accent-400);
+    --color-accent-500: var(--accent-500);
+    --color-accent-600: var(--accent-600);
+    --color-accent-light: var(--accent-light);
+    --color-accent: var(--accent);
+    --color-accent-dark: var(--accent-dark);
+}
+
+/* Theme Color Variables */
+:root {
+    /* Default theme: Yellow */
+    --accent-50: #fefce8;
+    --accent-100: #fef9c3;
+    --accent-200: #fef08a;
+    --accent-300: #fde047;
+    --accent-400: #facc15;
+    --accent-500: #eab308;
+    --accent-600: #ca8a04;
+    --accent-light: #fef08a;
+    --accent: #fde047;
+    --accent-dark: #eab308;
+}
+
+/* Theme: Pink */
+[data-theme="pink"] {
+    --accent-50: #fdf2f8;
+    --accent-100: #fce7f3;
+    --accent-200: #fbcfe8;
+    --accent-300: #f9a8d4;
+    --accent-400: #f472b6;
+    --accent-500: #ec4899;
+    --accent-600: #db2777;
+    --accent-light: #fbcfe8;
+    --accent: #f9a8d4;
+    --accent-dark: #ec4899;
+}
+
+/* Theme: Blue */
+[data-theme="blue"] {
+    --accent-50: #eff6ff;
+    --accent-100: #dbeafe;
+    --accent-200: #bfdbfe;
+    --accent-300: #93c5fd;
+    --accent-400: #60a5fa;
+    --accent-500: #3b82f6;
+    --accent-600: #2563eb;
+    --accent-light: #bfdbfe;
+    --accent: #93c5fd;
+    --accent-dark: #3b82f6;
+}
+
+/* Theme: Green */
+[data-theme="green"] {
+    --accent-50: #f0fdf4;
+    --accent-100: #dcfce7;
+    --accent-200: #bbf7d0;
+    --accent-300: #86efac;
+    --accent-400: #4ade80;
+    --accent-500: #22c55e;
+    --accent-600: #16a34a;
+    --accent-light: #bbf7d0;
+    --accent: #86efac;
+    --accent-dark: #22c55e;
+}
+
+/* Theme: Purple */
+[data-theme="purple"] {
+    --accent-50: #faf5ff;
+    --accent-100: #f3e8ff;
+    --accent-200: #e9d5ff;
+    --accent-300: #c4b5fd;
+    --accent-400: #a78bfa;
+    --accent-500: #8b5cf6;
+    --accent-600: #7c3aed;
+    --accent-light: #e9d5ff;
+    --accent: #c4b5fd;
+    --accent-dark: #8b5cf6;
+}
+
 /* Prevent page shift when scrollbar appears */
 html {
     scrollbar-gutter: stable;
@@ -10,32 +96,48 @@ html {
     height: 8px;
 }
 
-/* 
-::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-left: 2px solid black;
-} */
-
 ::-webkit-scrollbar-thumb {
-    background: #fbbf24;
+    background: var(--accent);
     border: 2px solid black;
     border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #f59e0b;
+    background: var(--accent-dark);
 }
 
 @keyframes vibrate {
-    0%, 100% { transform: rotate(0deg); }
-    15% { transform: rotate(-12deg); }
-    30% { transform: rotate(12deg); }
-    45% { transform: rotate(-12deg); }
-    60% { transform: rotate(12deg); }
-    75% { transform: rotate(-8deg); }
-    90% { transform: rotate(8deg); }
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    15% {
+        transform: rotate(-12deg);
+    }
+
+    30% {
+        transform: rotate(12deg);
+    }
+
+    45% {
+        transform: rotate(-12deg);
+    }
+
+    60% {
+        transform: rotate(12deg);
+    }
+
+    75% {
+        transform: rotate(-8deg);
+    }
+
+    90% {
+        transform: rotate(8deg);
+    }
 }
 
 .hover-vibrate:hover {
-    animation: vibrate 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    animation: vibrate 0.5s cubic-bezier(.36, .07, .19, .97) both;
 }

@@ -84,7 +84,7 @@ export default function InviteModal() {
     return (
         <ModalWrapper isOpen={isInviteModalOpen} onClose={closeInviteModal} size="md" zLevel="medium">
             {/* Header */}
-            <div className="p-6 border-b-2 border-black bg-yellow-50 flex justify-between items-center">
+            <div className="p-6 border-b-2 border-black bg-accent-50 flex justify-between items-center">
                 <h2 className="text-2xl font-black">Invite People 🚀</h2>
                 <CloseButton onClick={closeInviteModal} />
             </div>
@@ -153,7 +153,7 @@ export default function InviteModal() {
                         <button
                             onClick={handleSendInvites}
                             disabled={inviteSent || isSendingInvites}
-                            className={`w-full mt-3 py-3 rounded-xl border-2 border-black font-black text-base flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50 ${inviteSent ? 'bg-green-400 hover:bg-green-500' : 'bg-yellow-400 hover:bg-yellow-500'}`}
+                            className={`w-full mt-3 py-3 rounded-xl border-2 border-black font-black text-base flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50 ${inviteSent ? 'bg-green-400 hover:bg-green-500' : 'bg-accent hover:bg-accent-dark'}`}
                         >
                             {isSendingInvites ? <Loader2 size={20} className="animate-spin" /> : inviteSent ? <CheckCircle2 size={20} /> : <Send size={20} />}
                             {isSendingInvites ? 'Sending...' : inviteSent ? 'Invites Sent!' : `Send ${inviteEmails.length} Invite${inviteEmails.length > 1 ? 's' : ''}`}

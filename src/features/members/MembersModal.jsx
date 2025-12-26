@@ -232,7 +232,7 @@ export default function MembersModal() {
                                             </select>
                                             {canManageMembers && member.id !== currentUserMember?.id && member.role !== 'Owner' && (
                                                 <>
-                                                    <IconButton icon={<Trash2 size={16} />} onClick={() => handleKick(member.id)} className="!shadow-none hover:!bg-yellow-100 text-gray-400 hover:text-yellow-600" />
+                                                    <IconButton icon={<Trash2 size={16} />} onClick={() => handleKick(member.id)} className="!shadow-none hover:!bg-accent-100 text-gray-400 hover:text-accent-600" />
                                                     <IconButton icon={<Ban size={16} />} onClick={() => handleBan(member.id)} className="!shadow-none hover:!bg-red-100 text-gray-400 hover:text-red-500" />
                                                 </>
                                             )}

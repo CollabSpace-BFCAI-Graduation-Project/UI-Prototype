@@ -165,6 +165,25 @@ const useUIStore = create((set) => ({
 
     setInviteStatus: (status) => set({ inviteStatus: status }),
     setInviteEmail: (email) => set({ inviteEmail: email }),
+
+    // Theme
+    themeColor: localStorage.getItem('collabspace_theme') || 'yellow',
+    setThemeColor: (color) => {
+        // Save to localStorage
+        localStorage.setItem('collabspace_theme', color);
+        // Apply to document
+        document.documentElement.setAttribute('data-theme', color === 'yellow' ? '' : color);
+        // Update state
+        set({ themeColor: color });
+    },
+    // Initialize theme on load
+    initTheme: () => {
+        const saved = localStorage.getItem('collabspace_theme') || 'yellow';
+        if (saved !== 'yellow') {
+            document.documentElement.setAttribute('data-theme', saved);
+        }
+        set({ themeColor: saved });
+    },
 }));
 
 export default useUIStore;

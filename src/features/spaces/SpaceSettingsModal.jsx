@@ -167,7 +167,7 @@ export default function SpaceSettingsModal() {
                     <h2 className="text-xl font-black mb-6 flex items-center gap-2"><Settings size={20} /> Space Settings</h2>
                     <div className="space-y-2">
                         {tabs.map(tab => (
-                            <button key={tab.id} onClick={() => setSpaceSettingsTab(tab.id)} className={`w-full text-left px-4 py-3 rounded-xl font-bold border-2 transition-all flex items-center gap-3 ${spaceSettingsTab === tab.id ? tab.id === 'danger' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-yellow-300 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-transparent border-transparent hover:bg-gray-100'} ${tab.id === 'danger' ? 'text-red-600 hover:bg-red-50' : ''}`}>
+                            <button key={tab.id} onClick={() => setSpaceSettingsTab(tab.id)} className={`w-full text-left px-4 py-3 rounded-xl font-bold border-2 transition-all flex items-center gap-3 ${spaceSettingsTab === tab.id ? tab.id === 'danger' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-accent border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-transparent border-transparent hover:bg-gray-100'} ${tab.id === 'danger' ? 'text-red-600 hover:bg-red-50' : ''}`}>
                                 <tab.icon size={18} />{tab.label}
                             </button>
                         ))}

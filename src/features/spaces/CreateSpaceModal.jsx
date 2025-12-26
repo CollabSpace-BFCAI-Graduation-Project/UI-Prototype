@@ -101,7 +101,7 @@ export default function CreateSpaceModal() {
 
             {createStep === 1 && (
                 <div className="flex flex-col md:flex-row min-h-[500px]">
-                    <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-yellow-50">
+                    <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-accent-50">
                         <div className="mb-6">
                             <span className="inline-block px-3 py-1 bg-black text-white rounded-full text-xs font-bold mb-4">Step 1/3</span>
                             <h2 className="text-4xl font-black text-gray-900 mb-2">Let's build your<br />dream space! 🚀</h2>
@@ -183,7 +183,7 @@ export default function CreateSpaceModal() {
                                 <button
                                     onClick={handleSendInvites}
                                     disabled={inviteSent || isSendingInvites}
-                                    className={`w-full mt-3 py-3 rounded-xl border-2 border-black font-black text-base flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50 ${inviteSent ? 'bg-green-400 hover:bg-green-500' : 'bg-yellow-400 hover:bg-yellow-500'}`}
+                                    className={`w-full mt-3 py-3 rounded-xl border-2 border-black font-black text-base flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50 ${inviteSent ? 'bg-green-400 hover:bg-green-500' : 'bg-accent hover:bg-accent-dark'}`}
                                 >
                                     {isSendingInvites ? <Loader2 size={20} className="animate-spin" /> : inviteSent ? <Check size={20} /> : <Send size={20} />}
                                     {isSendingInvites ? 'Sending...' : inviteSent ? 'Invites Sent!' : `Send ${inviteEmails.length} Invite${inviteEmails.length > 1 ? 's' : ''}`}

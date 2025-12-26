@@ -14,7 +14,7 @@ const NOTIFICATION_COLORS = {
     invite: 'bg-purple-100 text-purple-600',
     mention: 'bg-blue-100 text-blue-600',
     session: 'bg-green-100 text-green-600',
-    file: 'bg-yellow-100 text-yellow-600',
+    file: 'bg-accent-100 text-accent-600',
     system: 'bg-gray-100 text-gray-600',
 };
 
@@ -126,7 +126,7 @@ export default function NotificationsPanel({ isOpen, onClose, triggerRef }) {
             className="fixed left-4 md:left-28 bottom-20 md:bottom-auto md:top-4 right-4 md:right-auto md:w-96 bg-white border-2 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden z-50 animate-in fade-in slide-in-from-left-2"
         >
             {/* Header */}
-            <div className="p-4 border-b-2 border-black bg-yellow-100 flex items-center justify-between">
+            <div className="p-4 border-b-2 border-black bg-accent-100 flex items-center justify-between">
                 <h3 className="font-black text-lg flex items-center gap-2">
                     <Bell size={20} /> Notifications
                     {unreadCount > 0 && (

@@ -47,7 +47,7 @@ export default function ChatView() {
         return (
             <div className="h-[calc(100vh-4rem)] flex flex-col items-center py-8 max-w-4xl mx-auto overflow-hidden">
                 <div className="text-center mb-8 flex-shrink-0">
-                    <div className="w-20 h-20 bg-yellow-300 border-4 border-black rounded-full flex items-center justify-center mx-auto mb-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><MessageSquare size={32} /></div>
+                    <div className="w-20 h-20 bg-accent border-4 border-black rounded-full flex items-center justify-center mx-auto mb-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><MessageSquare size={32} /></div>
                     <h2 className="text-4xl font-black text-gray-900 mb-2">Jump into Chat</h2>
                     <p className="text-gray-500 text-lg font-medium">Choose a space to start chatting.</p>
                 </div>

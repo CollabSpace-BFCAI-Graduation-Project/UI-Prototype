@@ -97,7 +97,7 @@ export default function PublicSpaceSearchModal({ isOpen, onClose }) {
             <div className="relative w-full max-w-2xl bg-[#FFFDF5] border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col h-[600px] overflow-hidden animate-in zoom-in-95">
 
                 {/* Header */}
-                <div className="p-6 border-b-2 border-black flex items-center justify-between bg-yellow-300">
+                <div className="p-6 border-b-2 border-black flex items-center justify-between bg-accent">
                     <div className="flex items-center gap-3">
                         <div className="bg-black text-yellow-300 p-2 rounded-xl">
                             <Globe size={24} />

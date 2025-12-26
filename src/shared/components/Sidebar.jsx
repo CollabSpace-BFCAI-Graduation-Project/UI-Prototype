@@ -20,7 +20,7 @@ export default function Sidebar() {
         <aside className="fixed left-4 top-4 bottom-4 w-20 bg-white border-2 border-black rounded-full flex flex-col items-center py-8 z-40 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hidden md:flex">
             <div
                 onClick={() => setCurrentView('dashboard')}
-                className="w-12 h-12 bg-yellow-300 border-2 border-black rounded-xl flex items-center justify-center text-xl font-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] mb-8 transform hover:scale-110 hover:-rotate-6 active:scale-95 transition-transform cursor-pointer"
+                className="w-12 h-12 bg-accent border-2 border-black rounded-xl flex items-center justify-center text-xl font-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] mb-8 transform hover:scale-110 hover:-rotate-6 active:scale-95 transition-transform cursor-pointer"
             >
                 C
             </div>

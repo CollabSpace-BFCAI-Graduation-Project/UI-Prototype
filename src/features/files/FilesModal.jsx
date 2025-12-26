@@ -448,7 +448,7 @@ export default function FilesModal() {
 
                             <button
                                 onClick={() => setShowCreateFolder(!showCreateFolder)}
-                                className="p-2 bg-white border-2 border-black rounded-xl hover:bg-yellow-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+                                className="p-2 bg-white border-2 border-black rounded-xl hover:bg-accent-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
                                 title="Create Folder"
                             >
                                 <FolderPlus size={20} />
@@ -497,13 +497,13 @@ export default function FilesModal() {
                                 value={newFolderName}
                                 onChange={(e) => setNewFolderName(e.target.value)}
                                 placeholder="New folder name..."
-                                className="flex-1 px-3 py-2 border-2 border-black rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                className="flex-1 px-3 py-2 border-2 border-black rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-accent"
                                 onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
                                 autoFocus
                             />
                             <button
                                 onClick={handleCreateFolder}
-                                className="px-4 py-2 bg-yellow-300 border-2 border-black rounded-xl font-bold hover:bg-yellow-400 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+                                className="px-4 py-2 bg-accent border-2 border-black rounded-xl font-bold hover:bg-accent-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
                             >
                                 Create
                             </button>
@@ -547,7 +547,7 @@ export default function FilesModal() {
                             {folders.map(folder => (
                                 <div
                                     key={folder.id}
-                                    className="bg-yellow-100 border-2 border-black rounded-2xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all group relative min-h-[100px] flex flex-col justify-between cursor-pointer"
+                                    className="bg-accent-100 border-2 border-black rounded-2xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all group relative min-h-[100px] flex flex-col justify-between cursor-pointer"
                                     onClick={() => editingFolderId !== folder.id && navigateToFolder(folder)}
                                 >
                                     {/* Action buttons - top right corner, visible on hover */}
@@ -584,7 +584,7 @@ export default function FilesModal() {
                                                     if (e.key === 'Enter') handleRenameFolder(folder.id);
                                                     if (e.key === 'Escape') { setEditingFolderId(null); setEditFolderName(''); }
                                                 }}
-                                                className="w-full px-3 py-2 border-2 border-black rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white"
+                                                className="w-full px-3 py-2 border-2 border-black rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-accent bg-white"
                                                 autoFocus
                                             />
                                             <div className="flex gap-2">
@@ -605,7 +605,7 @@ export default function FilesModal() {
                                     ) : (
                                         // Normal mode - clean layout without tag
                                         <>
-                                            <div className="w-10 h-10 bg-yellow-300 border-2 border-black rounded-lg flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-accent border-2 border-black rounded-lg flex items-center justify-center">
                                                 <Folder size={20} />
                                             </div>
                                             <div>

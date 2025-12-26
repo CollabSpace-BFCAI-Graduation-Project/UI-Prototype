@@ -22,9 +22,9 @@ export default function ConfirmationModal() {
         },
         warning: {
             icon: <AlertCircle size={32} className="text-yellow-500" />,
-            bg: 'bg-yellow-50',
-            button: 'bg-yellow-400 hover:bg-yellow-500 border-yellow-400 text-black',
-            border: 'border-yellow-400',
+            bg: 'bg-accent-50',
+            button: 'bg-accent hover:bg-accent-dark border-accent text-black',
+            border: 'border-accent',
         },
         info: {
             icon: <Info size={32} className="text-blue-500" />,

@@ -64,7 +64,7 @@ export default function DashboardView() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsPublicSearchOpen(true)}
-                        className="flex items-center gap-2 bg-yellow-300 text-black px-5 py-3 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
+                        className="flex items-center gap-2 bg-accent text-black px-5 py-3 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
                     >
                         <Globe size={20} />
                         <span>Find Spaces</span>
