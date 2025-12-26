@@ -18,19 +18,52 @@ export default function UploadCard({
     fileInputRef,
     handleFileSelect
 }) {
+    const [isDragging, setIsDragging] = React.useState(false);
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFileSelect({ target: { files: e.dataTransfer.files } });
+        }
+    };
+
     return (
         <div
             onClick={uploadState === 'idle' ? triggerFileUpload : undefined}
-            className="border-2 border-dashed border-gray-400 bg-gray-50 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-blue-50 hover:border-blue-500 hover:text-blue-600 transition-all group min-h-[160px]"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all group min-h-[160px] ${isDragging
+                ? 'border-blue-500 bg-blue-100 scale-105'
+                : 'border-gray-400 bg-gray-50 hover:bg-blue-50 hover:border-blue-500 hover:text-blue-600'
+                }`}
         >
             {/* Hidden Input */}
             <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
 
             {uploadState === 'idle' ? (
                 <>
-                    <div className="w-12 h-12 bg-white rounded-full border-2 border-gray-300 flex items-center justify-center mb-3 group-hover:border-blue-500 group-hover:scale-110 transition-all"><UploadCloud size={24} /></div>
-                    <p className="font-bold">Click to Upload</p>
-                    <p className="text-xs text-gray-500">Real files supported!</p>
+                    <div className={`w-12 h-12 bg-white rounded-full border-2 flex items-center justify-center mb-3 transition-all ${isDragging ? 'border-blue-500 scale-110' : 'border-gray-300 group-hover:border-blue-500 group-hover:scale-110'
+                        }`}>
+                        <UploadCloud size={24} className={isDragging ? 'text-blue-500' : ''} />
+                    </div>
+                    <p className="font-bold">{isDragging ? 'Drop it like it\'s hot! 🔥' : 'Click to Upload'}</p>
+                    <p className="text-xs text-gray-500">{isDragging ? 'Release to upload' : 'or Drag & Drop files here'}</p>
                 </>
             ) : uploadState === 'uploading' ? (
                 <div className="w-full">
