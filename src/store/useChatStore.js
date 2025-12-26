@@ -13,6 +13,7 @@ const useChatStore = create((set, get) => ({
     channels: [],
     activeChannel: null,
     messages: [],
+    replyingTo: null, // Message being replied to
     localChatHistory: INITIAL_CHAT_HISTORY,
     chatInput: '',
     loading: false,
@@ -121,9 +122,13 @@ const useChatStore = create((set, get) => ({
         }
     },
 
-    // Send a message
+    // Set message to reply to
+    setReplyingTo: (message) => set({ replyingTo: message }),
+    clearReplyingTo: () => set({ replyingTo: null }),
+
+    // Send a message (with optional reply)
     sendMessage: async (messageData) => {
-        const { activeChatSpace, activeChannel, messages } = get();
+        const { activeChatSpace, activeChannel, messages, replyingTo } = get();
         if (!activeChatSpace || !activeChannel) return;
 
         const newMessage = {
@@ -136,15 +141,36 @@ const useChatStore = create((set, get) => ({
         try {
             const response = await api.messages.send(activeChannel.id, {
                 ...messageData,
-                spaceId: activeChatSpace.id
+                spaceId: activeChatSpace.id,
+                replyToId: replyingTo?.id || null
             });
             const apiMessage = Message.fromApi(response);
-            set({ messages: [...messages, apiMessage] });
+            set({ messages: [...messages, apiMessage], replyingTo: null });
             return apiMessage;
         } catch (err) {
             // Fallback to local state
-            set({ messages: [...messages, newMessage] });
+            set({ messages: [...messages, newMessage], replyingTo: null });
             return newMessage;
+        }
+    },
+
+    // Forward a message to another channel
+    forwardMessage: async (messageId, targetChannelId, senderId) => {
+        const { activeChatSpace, activeChannel } = get();
+        if (!activeChatSpace) return;
+
+        try {
+            const response = await api.messages.forward(messageId, targetChannelId, senderId, activeChatSpace.id);
+            // If forwarding to current channel, add to messages
+            if (targetChannelId === activeChannel?.id) {
+                const { messages } = get();
+                const apiMessage = Message.fromApi(response);
+                set({ messages: [...messages, apiMessage] });
+            }
+            return response;
+        } catch (err) {
+            console.error('Failed to forward message:', err);
+            throw err;
         }
     },
 

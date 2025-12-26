@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
-import { MessageSquare, ArrowLeft } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { MessageSquare, ArrowLeft, X, Forward, Hash } from 'lucide-react';
 import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
 import ChatSidebar from './components/ChatSidebar';
 import { useChatStore, useSpacesStore, useAuthStore } from '../../store';
+import ModalWrapper from '../../shared/components/ModalWrapper';
 
 export default function ChatView() {
     // Get state directly from stores
@@ -11,9 +12,11 @@ export default function ChatView() {
         activeChatSpace,
         setActiveChatSpace,
         activeChannel,
+        channels,
         chatInput,
         setChatInput,
         sendMessage,
+        forwardMessage,
         getCurrentMessages
     } = useChatStore();
 
@@ -22,6 +25,9 @@ export default function ChatView() {
 
     const messagesEndRef = useRef(null);
     const currentMessages = getCurrentMessages();
+
+    // Forward modal state
+    const [forwardingMessage, setForwardingMessage] = useState(null);
 
     // Scroll to bottom when messages change
     useEffect(() => {
@@ -41,6 +47,16 @@ export default function ChatView() {
 
         await sendMessage(messageData);
         setChatInput('');
+    };
+
+    const handleForward = async (targetChannelId) => {
+        if (!forwardingMessage) return;
+        try {
+            await forwardMessage(forwardingMessage.id, targetChannelId, user?.id);
+            setForwardingMessage(null);
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     // Chat Lobby - No active space selected
@@ -85,7 +101,7 @@ export default function ChatView() {
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
                     {currentMessages.map((msg) => (
-                        <ChatMessage key={msg.id} msg={msg} />
+                        <ChatMessage key={msg.id} msg={msg} onForward={setForwardingMessage} />
                     ))}
                     <div ref={messagesEndRef} />
                 </div>
@@ -93,9 +109,37 @@ export default function ChatView() {
                     chatInput={chatInput}
                     setChatInput={setChatInput}
                     handleSendMessage={handleSendMessage}
-                    spaceName={activeChatSpace.name}
+                    spaceName={activeChannel?.name || activeChatSpace.name}
                 />
             </div>
+
+            {/* Forward Modal */}
+            {forwardingMessage && (
+                <ModalWrapper onClose={() => setForwardingMessage(null)} title="Forward Message">
+                    <div className="p-4">
+                        <div className="bg-gray-100 rounded-xl p-3 mb-4 border-2 border-gray-200">
+                            <p className="text-sm font-medium truncate">{forwardingMessage.text}</p>
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 mb-2">Select a channel:</p>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {channels.filter(c => c.id !== activeChannel?.id).map(channel => (
+                                <button
+                                    key={channel.id}
+                                    onClick={() => handleForward(channel.id)}
+                                    className="w-full flex items-center gap-2 p-3 rounded-xl border-2 border-black hover:bg-accent-50 transition-colors text-left font-medium"
+                                >
+                                    <Hash size={16} className="text-gray-400" />
+                                    {channel.name}
+                                </button>
+                            ))}
+                            {channels.filter(c => c.id !== activeChannel?.id).length === 0 && (
+                                <p className="text-gray-400 text-sm text-center py-4">No other channels available</p>
+                            )}
+                        </div>
+                    </div>
+                </ModalWrapper>
+            )}
         </div>
     );
 }
+

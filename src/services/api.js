@@ -148,6 +148,10 @@ export const messages = {
     send: (channelId, data) => request(`/messages/${channelId}`, { method: 'POST', body: data }),
     update: (id, text, senderId) => request(`/messages/${id}`, { method: 'PUT', body: { text, senderId } }),
     delete: (id, senderId) => request(`/messages/${id}`, { method: 'DELETE', body: { senderId } }),
+    forward: (messageId, targetChannelId, senderId, spaceId) => request(`/messages/${messageId}/forward`, {
+        method: 'POST',
+        body: { targetChannelId, senderId, spaceId }
+    }),
 };
 
 // ============ FOLDERS ============

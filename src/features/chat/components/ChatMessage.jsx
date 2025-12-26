@@ -1,15 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore, useChatStore, useUIStore } from '../../../store';
 import { getImageUrl } from '../../../shared/utils/helpers';
-import { Edit2, Trash2, Check, X } from 'lucide-react';
+import { Edit2, Trash2, Check, X, Reply, Forward, MoreVertical } from 'lucide-react';
 
-export default function ChatMessage({ msg }) {
+
+export default function ChatMessage({ msg, onForward }) {
     const { user: currentUser } = useAuthStore();
-    const { updateMessage, deleteMessage } = useChatStore();
+    const { updateMessage, deleteMessage, setReplyingTo } = useChatStore();
     const { openConfirmation } = useUIStore();
 
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState('');
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef(null);
+    const messageBubbleRef = useRef(null);
+    const longPressTimer = useRef(null);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setShowMenu(false);
+            }
+        };
+        if (showMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [showMenu]);
 
     if (!msg) return null;
 
@@ -37,9 +59,25 @@ export default function ChatMessage({ msg }) {
     const avatarColor = msg.avatarColor || '#ec4899';
     const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
+    // Long press handlers
+    const handleTouchStart = () => {
+        longPressTimer.current = setTimeout(() => {
+            setShowMenu(true);
+        }, 500);
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+        }
+    };
+
     const handleEdit = () => {
         setEditText(msg.text);
         setIsEditing(true);
+        setShowMenu(false);
+        // Auto-focus the edit input
+        setTimeout(() => document.getElementById(`edit-input-${msg.id}`)?.focus(), 100);
     };
 
     const handleSave = async () => {
@@ -50,6 +88,7 @@ export default function ChatMessage({ msg }) {
     };
 
     const handleDelete = () => {
+        setShowMenu(false);
         openConfirmation({
             title: 'Delete Message',
             message: 'Are you sure you want to delete this message? This action cannot be undone.',
@@ -60,6 +99,18 @@ export default function ChatMessage({ msg }) {
                 await deleteMessage(msg.id, currentUser.id);
             }
         });
+    };
+
+    const handleReply = () => {
+        setReplyingTo(msg);
+        setShowMenu(false);
+        // Auto-focus the chat input
+        setTimeout(() => document.getElementById('chat-input')?.focus(), 100);
+    };
+
+    const handleForward = () => {
+        onForward && onForward(msg);
+        setShowMenu(false);
     };
 
     // System messages
@@ -80,7 +131,7 @@ export default function ChatMessage({ msg }) {
             : `This message was removed by ${msg.deletedByRole}`;
 
         return (
-            <div className={`flex gap-4 max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : ''} animate-in fade-in duration-300`}>
+            <div id={`msg-${msg.id}`} className={`flex gap-4 max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : ''} animate-in fade-in duration-300 transition-all`}>
                 <div className={`${isMe ? 'flex flex-col items-end' : ''} max-w-full`}>
                     <div className={`flex items-baseline gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}>
                         <span className="font-black text-sm text-gray-400">{isMe ? 'You' : userName}</span>
@@ -95,7 +146,13 @@ export default function ChatMessage({ msg }) {
     }
 
     return (
-        <div className={`flex gap-4 max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : ''} animate-in slide-in-from-bottom-2 duration-300 group relative`}>
+        <div
+            id={`msg-${msg.id}`}
+            className={`flex gap-4 max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : ''} animate-in slide-in-from-bottom-2 duration-300 group relative transition-all`}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onContextMenu={(e) => { e.preventDefault(); setShowMenu(true); }}
+        >
             {/* Avatar */}
             <div
                 className="w-10 h-10 rounded-full border-2 border-black flex-shrink-0 flex items-center justify-center font-bold text-xs overflow-hidden"
@@ -115,10 +172,11 @@ export default function ChatMessage({ msg }) {
                     <span className="text-xs text-gray-500 font-bold">{time}</span>
                 </div>
 
-                <div className="group relative w-fit">
+                <div className="relative w-fit" ref={menuRef}>
                     {isEditing ? (
                         <div className="flex gap-2 items-center w-full min-w-[200px]">
                             <input
+                                id={`edit-input-${msg.id}`}
                                 type="text"
                                 value={editText}
                                 onChange={(e) => setEditText(e.target.value)}
@@ -133,32 +191,85 @@ export default function ChatMessage({ msg }) {
                             <button onClick={() => setIsEditing(false)} className="p-1 hover:bg-red-100 rounded text-red-600"><X size={16} /></button>
                         </div>
                     ) : (
-                        <div className={`border-2 border-black p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] ${isMe ? 'bg-black text-white rounded-tl-2xl rounded-bl-2xl rounded-br-2xl shadow-[4px_4px_0px_0px_rgba(236,72,153,1)]' : 'bg-white rounded-tr-2xl rounded-br-2xl rounded-bl-2xl'} transition-all`}>
-                            <p className="font-medium break-words">{msg.text}</p>
-                        </div>
+                        <>
+                            {/* Forwarded label */}
+                            {msg.forwardedFromChannel && (
+                                <div className="text-xs text-gray-400 font-medium mb-1 flex items-center gap-1">
+                                    <Forward size={10} /> Forwarded from #{msg.forwardedFromChannel}
+                                </div>
+                            )}
+                            {/* Reply quote - clickable to jump to original */}
+                            {msg.replyTo && (
+                                <div
+                                    onClick={() => {
+                                        const el = document.getElementById(`msg-${msg.replyToId}`);
+                                        if (el) {
+                                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            el.classList.add('ring-2', 'ring-accent', 'ring-offset-4', 'rounded-3xl');
+                                            setTimeout(() => el.classList.remove('ring-2', 'ring-accent', 'ring-offset-4', 'rounded-3xl'), 2000);
+                                        }
+                                    }}
+                                    className={`flex items-start gap-2 mb-2 p-2 rounded-xl border-2 border-l-4 cursor-pointer hover:bg-gray-50 transition-all ${msg.replyTo.deletedAt ? 'border-gray-300 border-l-gray-400 bg-gray-50' : 'border-gray-200 border-l-accent bg-white/80'}`}
+                                >
+                                    <Reply size={12} className={`mt-0.5 ${msg.replyTo.deletedAt ? 'text-gray-400 flex-shrink-0' : 'text-accent flex-shrink-0'}`} />
+                                    <div className="flex-1 min-w-0">
+                                        {msg.replyTo.deletedAt ? (
+                                            <p className="text-xs text-gray-400 italic">Message deleted</p>
+                                        ) : (
+                                            <>
+                                                <span className="text-xs font-bold text-accent block truncate">{msg.replyTo.sender}</span>
+                                                <p className="text-xs text-gray-600 line-clamp-2 break-words">{msg.replyTo.text}</p>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={messageBubbleRef} className={`relative border-2 border-black p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] ${isMe ? 'pr-10 bg-black text-white rounded-tl-2xl rounded-bl-2xl rounded-br-2xl shadow-[4px_4px_0px_0px_rgba(236,72,153,1)]' : 'pl-10 bg-white rounded-tr-2xl rounded-br-2xl rounded-bl-2xl'} transition-all`}>
+                                <p className="font-medium break-words">{msg.text}</p>
+                                {/* 3-dots menu button inside message */}
+                                <button
+                                    ref={menuRef}
+                                    onClick={() => setShowMenu(!showMenu)}
+                                    className={`absolute top-2 p-1 rounded-lg transition-all ${isMe ? 'right-2 hover:bg-gray-800 text-gray-400 hover:text-white' : 'left-2 hover:bg-gray-100 text-gray-400 hover:text-black'}`}
+                                >
+                                    <MoreVertical size={14} />
+                                </button>
+                            </div>
+                        </>
                     )}
 
-                    {/* Actions (Hover) */}
-                    {(canEdit || canDelete) && !isEditing && (
-                        <div className={`absolute top-full mt-3 ${isMe ? 'right-0' : 'left-0'} flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
-                            {canEdit && (
-                                <button
-                                    onClick={handleEdit}
-                                    className="p-1.5 bg-white border-2 border-black rounded-lg hover:bg-blue-50 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"
-                                    title="Edit message"
-                                >
-                                    <Edit2 size={12} />
+                    {/* Dropdown Menu - Fixed position portal */}
+                    {showMenu && !isEditing && (
+                        <div
+                            className="fixed inset-0 z-[9999]"
+                            onMouseDown={() => setShowMenu(false)}
+                        >
+                            <div
+                                className={`absolute bg-white border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden min-w-[140px]`}
+                                style={{
+                                    bottom: window.innerHeight - (messageBubbleRef.current?.getBoundingClientRect().top || 0) + 8,
+                                    left: isMe ? 'auto' : (messageBubbleRef.current?.getBoundingClientRect().left || 0) + 8,
+                                    right: isMe ? (window.innerWidth - (messageBubbleRef.current?.getBoundingClientRect().right || 0) + 8) : 'auto',
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            >
+                                <button onMouseDown={(e) => { e.stopPropagation(); handleReply(); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left font-medium text-sm">
+                                    <Reply size={16} /> Reply
                                 </button>
-                            )}
-                            {canDelete && (
-                                <button
-                                    onClick={handleDelete}
-                                    className="p-1.5 bg-white border-2 border-black rounded-lg hover:bg-red-50 text-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"
-                                    title="Delete message"
-                                >
-                                    <Trash2 size={12} />
+                                <button onMouseDown={(e) => { e.stopPropagation(); handleForward(); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left font-medium text-sm border-t border-gray-100">
+                                    <Forward size={16} /> Forward
                                 </button>
-                            )}
+                                {canEdit && (
+                                    <button onMouseDown={(e) => { e.stopPropagation(); handleEdit(); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left font-medium text-sm border-t border-gray-100">
+                                        <Edit2 size={16} /> Edit
+                                    </button>
+                                )}
+                                {canDelete && (
+                                    <button onMouseDown={(e) => { e.stopPropagation(); handleDelete(); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-left font-medium text-sm text-red-600 border-t border-gray-100">
+                                        <Trash2 size={16} /> Delete
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

@@ -183,6 +183,7 @@ export class Message {
     constructor(data = {}) {
         this.id = data.id || null;
         this.spaceId = data.spaceId || null;
+        this.channelId = data.channelId || null;
         this.senderId = data.senderId || null;
         this.sender = data.sender || 'User'; // Display name (joined from users)
         this.avatarColor = data.avatarColor || getRandomColor();
@@ -192,6 +193,11 @@ export class Message {
         this.mentions = data.mentions || [];
         this.time = data.time || '';
         this.createdAt = data.createdAt || null;
+        // Reply fields
+        this.replyToId = data.replyToId || null;
+        this.replyTo = data.replyTo || null; // { text, sender }
+        // Forward fields
+        this.forwardedFromChannel = data.forwardedFromChannel || null;
         // Soft delete fields
         this.deletedAt = data.deletedAt || null;
         this.deletedBy = data.deletedBy || null;
