@@ -62,6 +62,7 @@ export class Space {
         this.name = data.name || '';
         this.description = data.description || '';
         this.thumbnail = data.thumbnail || 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)';
+        this.thumbnailPosition = data.thumbnailPosition || data.thumbnailposition || '50% 50%';
         this.category = data.category || data.type || 'MEETING'; // Support legacy 'type' field
         this.ownerId = data.ownerId || null;
         this.createdAt = data.createdAt || null;
@@ -93,6 +94,7 @@ export class Space {
             name: this.name,
             description: this.description,
             thumbnail: this.thumbnail,
+            thumbnailPosition: this.thumbnailPosition,
             category: this.category,
             ownerId: this.ownerId,
             visibility: this.visibility,

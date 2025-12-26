@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye, Settings, LogOut, Move, Save, X } from 'lucide-react';
 import SpaceStats from './components/SpaceStats';
 import { getFileIcon, isImageThumbnail, getSpaceThumbnailStyle, getSpaceThumbnailUrl } from '../../shared/utils/helpers';
 import { useSpacesStore, useUIStore, useChatStore, useAuthStore } from '../../store';
@@ -82,34 +82,131 @@ export default function SpaceDetailsView() {
     const isPrivate = activeSpace.visibility === 'private';
     const canInvite = !isPrivate || canAccessSettings;
 
+    // Reposition Logic
+    const [isRepositioning, setIsRepositioning] = React.useState(false);
+    const [repositionY, setRepositionY] = React.useState(50);
+    const [isSavingPosition, setIsSavingPosition] = React.useState(false);
+    const draggingRef = React.useRef(false);
+    const startYRef = React.useRef(0);
+    const startPosRef = React.useRef(0);
+
+    const onStartReposition = () => {
+        const currentPos = activeSpace.thumbnailPosition || activeSpace.thumbnailposition || '50% 50%';
+        const yVal = parseFloat(currentPos.split(' ')[1] || '50');
+        setRepositionY(yVal);
+        setIsRepositioning(true);
+    };
+
+    const onSavePosition = async () => {
+        setIsSavingPosition(true);
+        try {
+            const newPosition = `50% ${repositionY}%`;
+            const updated = await api.spaces.update(activeSpace.id, { thumbnailPosition: newPosition });
+            setActiveSpace(updated);
+            // Also update list in background
+            useSpacesStore.getState().fetchSpaces();
+            setIsRepositioning(false);
+        } catch (err) {
+            console.error('Failed to save position:', err);
+        } finally {
+            setIsSavingPosition(false);
+        }
+    };
+
+    const onCancelReposition = () => {
+        setIsRepositioning(false);
+    };
+
+    const handleMouseDown = (e) => {
+        if (!isRepositioning) return;
+        e.preventDefault();
+        draggingRef.current = true;
+        startYRef.current = e.clientY;
+        startPosRef.current = repositionY;
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    const handleMouseMove = (e) => {
+        if (!draggingRef.current) return;
+        const deltaY = e.clientY - startYRef.current;
+        // Sensitivity: 1px = 0.5% change
+        // Dragging DOWN (positive delta) -> Move TOWARDS 0% (Top) -> SUBTRACT
+        // Dragging UP (negative delta) -> Move TOWARDS 100% (Bottom) -> ADD
+        // Wait, standard scrolling logic:
+        // Dragging content DOWN usually acts like pulling it.
+        // If I pull content DOWN, I see the TOP. Top is 0%.
+        // So drag DOWN -> DECREASE percentage.
+        // deltaY > 0 => decrease.
+        const newY = Math.max(0, Math.min(100, startPosRef.current - (deltaY * 0.2)));
+        setRepositionY(newY);
+    };
+
+    const handleMouseUp = () => {
+        draggingRef.current = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    };
+
     return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-300">
             <button onClick={onBack} className="mb-6 flex items-center gap-2 text-gray-500 font-bold hover:text-black hover:-translate-x-1 transition-all"><ArrowLeft size={20} /> Back to Dashboard</button>
 
             {/* Hero */}
             <div
-                className="w-full h-64 rounded-3xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden mb-8"
-                style={getSpaceThumbnailStyle(activeSpace.thumbnail)}
+                className={`w-full h-64 rounded-3xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden mb-8 ${isRepositioning ? 'cursor-move ring-4 ring-blue-400' : ''}`}
+                style={{
+                    ...getSpaceThumbnailStyle(activeSpace.thumbnail),
+                    backgroundPosition: isRepositioning ? `50% ${repositionY}%` : (activeSpace.thumbnailPosition || activeSpace.thumbnailposition || '50% 50%')
+                }}
+                onMouseDown={handleMouseDown}
             >
                 {/* Show image if thumbnail is a URL */}
                 {isImageThumbnail(activeSpace.thumbnail) && (
                     <img
                         src={getSpaceThumbnailUrl(activeSpace.thumbnail)}
                         alt={activeSpace.name}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                        style={{ objectPosition: isRepositioning ? `50% ${repositionY}%` : (activeSpace.thumbnailPosition || activeSpace.thumbnailposition || '50% 50%') }}
                     />
                 )}
-                <div className="absolute inset-0 bg-black/10"></div>
+                <div className={`absolute inset-0 bg-black/10 transition-opacity ${isRepositioning ? 'opacity-0' : 'opacity-100'}`}></div>
 
-                {/* Settings Button - Only for Admin/Owner */}
-                {canAccessSettings && (
-                    <button
-                        onClick={openSpaceSettingsModal}
-                        className="absolute top-4 right-4 bg-white/90 hover:bg-white p-2.5 rounded-xl border-2 border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:shadow-none group"
-                        title="Space Settings"
-                    >
-                        <Settings size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-                    </button>
+                {/* Reposition Controls */}
+                {isRepositioning ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                        <div className="bg-white p-2 rounded-xl border-2 border-black shadow-lg flex gap-2 animate-in zoom-in duration-200" onMouseDown={e => e.stopPropagation()}>
+                            <button onClick={onSavePosition} className="bg-green-400 hover:bg-green-500 text-black px-4 py-2 rounded-lg font-bold border-2 border-black flex items-center gap-2">
+                                <Save size={18} /> Save Position
+                            </button>
+                            <button onClick={onCancelReposition} className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg font-bold border-2 border-black flex items-center gap-2">
+                                <X size={18} /> Cancel
+                            </button>
+                        </div>
+                        <div className="absolute bottom-4 text-white font-bold bg-black/50 px-4 py-2 rounded-full pointer-events-none">
+                            Drag to Reposition
+                        </div>
+                    </div>
+                ) : (
+                    /* Settings & Reposition Buttons */
+                    canAccessSettings && (
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <button
+                                onClick={onStartReposition}
+                                className="bg-white/90 hover:bg-white p-2.5 rounded-xl border-2 border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:shadow-none group"
+                                title="Reposition Cover"
+                            >
+                                <Move size={20} className="text-gray-700 group-hover:text-black" />
+                            </button>
+                            <button
+                                onClick={openSpaceSettingsModal}
+                                className="bg-white/90 hover:bg-white p-2.5 rounded-xl border-2 border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:shadow-none group"
+                                title="Space Settings"
+                            >
+                                <Settings size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
+                        </div>
+                    )
                 )}
 
                 <div className="absolute bottom-6 left-6 md:left-10 text-white drop-shadow-md">

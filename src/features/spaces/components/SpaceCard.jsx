@@ -41,6 +41,7 @@ export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onTogg
                             src={getSpaceThumbnailUrl(space.thumbnail)}
                             alt={space.name}
                             className="absolute inset-0 w-full h-full object-cover"
+                            style={{ objectPosition: space.thumbnailPosition || space.thumbnailposition || '50% 50%' }}
                         />
                     )}
                     <div className="absolute top-1 left-1 z-10">
@@ -86,6 +87,7 @@ export default function SpaceCard({ space, viewMode, onEnter, isFavorite, onTogg
                         src={getSpaceThumbnailUrl(space.thumbnail)}
                         alt={space.name}
                         className="absolute inset-0 w-full h-full object-cover"
+                        style={{ objectPosition: space.thumbnailPosition || space.thumbnailposition || '50% 50%' }}
                     />
                 )}
                 <div className="absolute top-3 left-3 z-10">
