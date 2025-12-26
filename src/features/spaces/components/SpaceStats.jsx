@@ -1,8 +1,8 @@
 import React from 'react';
 import { Users, FileText, Crown, Calendar, Lock, Globe } from 'lucide-react';
-import { formatDate } from '../../../shared/utils/helpers';
+import { formatDate, formatBytes } from '../../../shared/utils/helpers';
 
-export default function SpaceStats({ memberCount, fileCount, ownerName, createdAt, isPrivate }) {
+export default function SpaceStats({ memberCount, fileCount, totalSize, ownerName, createdAt, isPrivate }) {
     return (
         <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             <h3 className="text-xl font-black mb-6 flex items-center gap-2">
@@ -60,7 +60,14 @@ export default function SpaceStats({ memberCount, fileCount, ownerName, createdA
                     </div>
                     <div>
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Files</p>
-                        <p className="font-bold text-lg">{fileCount}</p>
+                        <p className="font-bold text-lg">
+                            {fileCount}
+                            {totalSize > 0 && (
+                                <span className="text-gray-400 text-sm font-normal ml-1">
+                                    ({formatBytes(totalSize)})
+                                </span>
+                            )}
+                        </p>
                     </div>
                 </div>
             </div>

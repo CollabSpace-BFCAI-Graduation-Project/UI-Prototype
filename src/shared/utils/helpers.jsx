@@ -1,7 +1,21 @@
+import React from 'react';
 import { FileText, Image as ImageIcon, Film, Presentation, File, FileArchive, FileCode, FileSpreadsheet, Music } from 'lucide-react';
 
 // API Base URL for images
 const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+
+/**
+ * Format bytes to human readable string (e.g., "1.5 MB")
+ * @param {number} bytes - Size in bytes
+ * @returns {string} Formatted string
+ */
+export const formatBytes = (bytes) => {
+    if (!bytes || bytes === 0) return '0 B';
+    if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return bytes + ' B';
+};
 
 /**
  * Get file icon based on file type/extension
@@ -127,6 +141,7 @@ export const getInitials = (name) => {
 /**
  * Get avatar display props (image URL or initials fallback)
  * @param {object} user - User object with avatarImage, avatarColor, and name
+ * @returns {object} { imageUrl, initials, backgroundColor }
  * @returns {object} { imageUrl, initials, backgroundColor }
  */
 export const getAvatarProps = (user) => {

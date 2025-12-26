@@ -180,6 +180,21 @@ export default function SpaceDetailsView() {
                     <SpaceStats
                         memberCount={activeSpace.memberCount || 0}
                         fileCount={activeSpace.files?.length || activeSpace.fileCount || 0}
+                        totalSize={(activeSpace.files || []).reduce((acc, f) => {
+                            if (!f.size) return acc;
+                            // Handle pre-formatted strings like "1.2 MB"
+                            if (typeof f.size === 'string') {
+                                const parts = f.size.split(' ');
+                                const val = parseFloat(parts[0]);
+                                const unit = parts[1]?.toUpperCase();
+                                if (isNaN(val)) return acc;
+                                if (unit === 'GB') return acc + val * 1024 * 1024 * 1024;
+                                if (unit === 'MB') return acc + val * 1024 * 1024;
+                                if (unit === 'KB') return acc + val * 1024;
+                                return acc + val;
+                            }
+                            return acc + (Number(f.size) || 0);
+                        }, 0)}
                         ownerName={activeSpace.members?.find(m => m.userId === activeSpace.ownerId)?.name}
                         createdAt={activeSpace.createdAt}
                         isPrivate={isPrivate}
