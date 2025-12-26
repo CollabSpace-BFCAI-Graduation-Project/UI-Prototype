@@ -134,10 +134,18 @@ export const notifications = {
     markAllRead: () => request('/notifications/read-all', { method: 'PUT' }),
 };
 
+// ============ CHANNELS ============
+export const channels = {
+    getBySpace: (spaceId) => request(`/channels/${spaceId}`),
+    create: (spaceId, data) => request(`/channels/${spaceId}`, { method: 'POST', body: data }),
+    update: (channelId, data) => request(`/channels/${channelId}`, { method: 'PUT', body: data }),
+    delete: (channelId) => request(`/channels/${channelId}`, { method: 'DELETE' }),
+};
+
 // ============ MESSAGES ============
 export const messages = {
-    getBySpace: (spaceId) => request(`/messages/${spaceId}`),
-    send: (spaceId, data) => request(`/messages/${spaceId}`, { method: 'POST', body: data }),
+    getByChannel: (channelId) => request(`/messages/${channelId}`),
+    send: (channelId, data) => request(`/messages/${channelId}`, { method: 'POST', body: data }),
     update: (id, text, senderId) => request(`/messages/${id}`, { method: 'PUT', body: { text, senderId } }),
     delete: (id, senderId) => request(`/messages/${id}`, { method: 'DELETE', body: { senderId } }),
 };
@@ -244,6 +252,7 @@ const api = {
     invites,
     requests,
     notifications,
+    channels,
     messages,
     folders,
     files,

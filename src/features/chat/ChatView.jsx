@@ -10,6 +10,7 @@ export default function ChatView() {
     const {
         activeChatSpace,
         setActiveChatSpace,
+        activeChannel,
         chatInput,
         setChatInput,
         sendMessage,
@@ -79,7 +80,7 @@ export default function ChatView() {
                     <div className="flex items-center gap-3">
                         <button onClick={() => setActiveChatSpace(null)} className="lg:hidden p-2 hover:bg-white rounded-lg"><ArrowLeft size={20} /></button>
                         <div className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center font-bold text-lg" style={{ background: activeChatSpace.thumbnail }}>#</div>
-                        <div><h3 className="font-black text-lg">General</h3><p className="text-xs font-bold text-gray-500">Weekly Updates</p></div>
+                        <div><h3 className="font-black text-lg">{activeChannel?.name || 'Select a channel'}</h3><p className="text-xs font-bold text-gray-500">{activeChannel?.description || activeChatSpace.name}</p></div>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">

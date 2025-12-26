@@ -13,7 +13,7 @@ export default function ChatInput({
                 <input
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    className="w-full bg-gray-50 border-2 border-black rounded-2xl py-4 pl-4 pr-14 font-medium focus:outline-none focus:ring-2 focus:ring-pink-300 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+                    className="w-full bg-gray-50 border-2 border-black rounded-2xl py-4 pl-4 pr-14 font-medium focus:outline-none focus:ring-2 focus:ring-accent shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-shadow"
                     placeholder={`Message #${spaceName}...`}
                 />
                 <button
