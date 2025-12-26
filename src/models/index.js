@@ -190,6 +190,10 @@ export class Message {
         this.mentions = data.mentions || [];
         this.time = data.time || '';
         this.createdAt = data.createdAt || null;
+        // Soft delete fields
+        this.deletedAt = data.deletedAt || null;
+        this.deletedBy = data.deletedBy || null;
+        this.deletedByRole = data.deletedByRole || null;
     }
 
     // Check if this message is from a specific user

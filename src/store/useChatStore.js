@@ -76,6 +76,40 @@ const useChatStore = create((set, get) => ({
         }
     },
 
+    updateMessage: async (id, text, senderId) => {
+        const { messages } = get();
+        try {
+            const updated = await api.messages.update(id, text, senderId);
+            const apiMessage = Message.fromApi(updated);
+            set({
+                messages: messages.map(m => m.id === id ? apiMessage : m)
+            });
+            return apiMessage;
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    deleteMessage: async (id, senderId) => {
+        const { messages } = get();
+        try {
+            const response = await api.messages.delete(id, senderId);
+            // Soft delete: mark message as deleted in local state
+            set({
+                messages: messages.map(m => m.id === id ? {
+                    ...m,
+                    deletedAt: new Date().toISOString(),
+                    deletedBy: senderId,
+                    deletedByRole: response.deletedByRole
+                } : m)
+            });
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
     // Get current messages (API or local)
     getCurrentMessages: () => {
         const { activeChatSpace, messages, localChatHistory } = get();

@@ -849,10 +849,6 @@ export default function SettingsModal() {
                         <div className="space-y-6">
                             <h3 className="text-xl font-black">General Settings</h3>
                             <div className="bg-white border-2 border-black rounded-2xl p-6">
-                                <div className="mb-4">
-                                    <label className="block font-bold mb-2">Workspace Name</label>
-                                    <input type="text" defaultValue={`${user?.name || 'My'}'s Workspace`} className="w-full border-2 border-black rounded-xl p-3 font-medium focus:ring-2 focus:ring-yellow-300 outline-none" />
-                                </div>
                                 <div>
                                     <label className="block font-bold mb-2">Theme Color</label>
                                     <div className="flex gap-2">

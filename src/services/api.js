@@ -138,6 +138,8 @@ export const notifications = {
 export const messages = {
     getBySpace: (spaceId) => request(`/messages/${spaceId}`),
     send: (spaceId, data) => request(`/messages/${spaceId}`, { method: 'POST', body: data }),
+    update: (id, text, senderId) => request(`/messages/${id}`, { method: 'PUT', body: { text, senderId } }),
+    delete: (id, senderId) => request(`/messages/${id}`, { method: 'DELETE', body: { senderId } }),
 };
 
 // ============ FILES ============
