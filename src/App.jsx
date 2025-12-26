@@ -41,6 +41,8 @@ import SettingsModal from './features/settings/SettingsModal';
 import UnitySessionView from './features/session/UnitySessionView';
 import JoinSessionModal from './features/session/JoinSessionModal';
 
+import { JoinByLinkModal } from './features/spaces/JoinByLinkModal';
+
 export default function App() {
   // --- Zustand Stores ---
   const {
@@ -169,8 +171,10 @@ export default function App() {
       <ConfirmationModal />
       <InfoModal />
       <InputModal />
+      <JoinSessionModal />
+      <JoinByLinkModal />
 
-      {/* Mobile Navigation */}
+      {/* Toast Notifications */}
       <MobileNav />
 
     </div>

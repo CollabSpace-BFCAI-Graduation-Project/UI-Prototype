@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Globe } from 'lucide-react';
+import { Plus, Globe, Link as LinkIcon } from 'lucide-react';
 import SpaceFilters from './components/SpaceFilters';
 import SpaceCard from './components/SpaceCard';
 import PublicSpaceSearchModal from './components/PublicSpaceSearchModal';
@@ -17,7 +17,7 @@ export default function DashboardView() {
         sortOption,
     } = useSpacesStore();
 
-    const { openCreateModal, setCurrentView } = useUIStore();
+    const { openCreateModal, setCurrentView, openJoinByLinkModal } = useUIStore();
     const { user } = useAuthStore();
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
 
@@ -68,6 +68,14 @@ export default function DashboardView() {
                     >
                         <Globe size={20} />
                         <span>Find Spaces</span>
+                    </button>
+
+                    <button
+                        onClick={openJoinByLinkModal}
+                        className="flex items-center gap-2 bg-white text-black px-5 py-3 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none"
+                    >
+                        <LinkIcon size={20} />
+                        <span>Join via Code</span>
                     </button>
 
                     <button

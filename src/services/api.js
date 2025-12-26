@@ -246,6 +246,11 @@ const api = {
     messages,
     folders,
     files,
+    // Generic methods
+    get: (endpoint) => request(endpoint),
+    post: (endpoint, body) => request(endpoint, { method: 'POST', body }),
+    put: (endpoint, body) => request(endpoint, { method: 'PUT', body }),
+    delete: (endpoint, body) => request(endpoint, { method: 'DELETE', body }),
 };
 
 export default api;

@@ -30,6 +30,17 @@ const useUIStore = create((set) => ({
         onConfirm: null,
     },
 
+    // Modals
+    createSpaceStep: 1,
+    isCreateSpaceModalOpen: false,
+    openCreateSpaceModal: () => set({ isCreateSpaceModalOpen: true, createSpaceStep: 1 }),
+    closeCreateSpaceModal: () => set({ isCreateSpaceModalOpen: false }),
+
+    isJoinByLinkModalOpen: false,
+    openJoinByLinkModal: () => set({ isJoinByLinkModalOpen: true }),
+    closeJoinByLinkModal: () => set({ isJoinByLinkModalOpen: false }),
+
+
     // Modal actions
     openCreateModal: () => set({ isCreateModalOpen: true }),
     closeCreateModal: () => set({ isCreateModalOpen: false }),
