@@ -110,11 +110,13 @@ export default function CreateSpaceModal() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-900 mb-2">Space Name</label>
-                                <input autoFocus value={newSpaceName} onChange={(e) => setNewSpaceName(e.target.value)} className="w-full px-4 py-3 text-lg font-bold border-2 border-black rounded-xl focus:outline-none focus:ring-4 focus:ring-yellow-300/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" placeholder="e.g. The Bat Cave" />
+                                <input autoFocus value={newSpaceName} onChange={(e) => setNewSpaceName(e.target.value)} maxLength={50} className="w-full px-4 py-3 text-lg font-bold border-2 border-black rounded-xl focus:outline-none focus:ring-4 focus:ring-yellow-300/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" placeholder="e.g. The Bat Cave" />
+                                <p className="text-xs text-gray-400 mt-1 text-right">{newSpaceName.length}/50</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-900 mb-2">Description</label>
-                                <textarea value={newSpaceDescription} onChange={(e) => setNewSpaceDescription(e.target.value)} className="w-full px-4 py-3 font-medium border-2 border-black rounded-xl focus:outline-none focus:ring-4 focus:ring-yellow-300/50 h-24 resize-none" placeholder="What happens in this space?" />
+                                <textarea value={newSpaceDescription} onChange={(e) => setNewSpaceDescription(e.target.value)} maxLength={200} className="w-full px-4 py-3 font-medium border-2 border-black rounded-xl focus:outline-none focus:ring-4 focus:ring-yellow-300/50 h-24 resize-none" placeholder="What happens in this space?" />
+                                <p className="text-xs text-gray-400 mt-1 text-right">{newSpaceDescription.length}/200</p>
                             </div>
                         </div>
                         <Button disabled={!newSpaceName.trim()} onClick={() => setCreateStep(2)} fullWidth className="mt-8 !bg-black !py-4 !text-lg">Next Step →</Button>

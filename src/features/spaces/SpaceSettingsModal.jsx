@@ -182,11 +182,13 @@ export default function SpaceSettingsModal() {
                             <div className="bg-white border-2 border-black rounded-2xl p-6 space-y-4">
                                 <div>
                                     <label className="block font-bold mb-2">Space Name</label>
-                                    <input type="text" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300" />
+                                    <input type="text" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} maxLength={50} className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300" />
+                                    <p className="text-xs text-gray-400 mt-1 text-right">{formData.name?.length || 0}/50</p>
                                 </div>
                                 <div>
                                     <label className="block font-bold mb-2">Description</label>
-                                    <textarea value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={3} className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none" />
+                                    <textarea value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} maxLength={200} rows={3} className="w-full border-2 border-black rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-pink-300 resize-none" />
+                                    <p className="text-xs text-gray-400 mt-1 text-right">{formData.description?.length || 0}/200</p>
                                 </div>
                                 <div>
                                     <label className="block font-bold mb-3">Space Privacy</label>

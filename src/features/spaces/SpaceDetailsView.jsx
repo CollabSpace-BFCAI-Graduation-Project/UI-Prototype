@@ -174,7 +174,7 @@ export default function SpaceDetailsView() {
 
                 {/* Reposition Controls */}
                 {isRepositioning ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px] z-30">
                         <div className="bg-white p-2 rounded-xl border-2 border-black shadow-lg flex gap-2 animate-in zoom-in duration-200" onMouseDown={e => e.stopPropagation()}>
                             <button onClick={onSavePosition} className="bg-green-400 hover:bg-green-500 text-black px-4 py-2 rounded-lg font-bold border-2 border-black flex items-center gap-2">
                                 <Save size={18} /> Save Position
@@ -190,7 +190,7 @@ export default function SpaceDetailsView() {
                 ) : (
                     /* Settings & Reposition Buttons */
                     canAccessSettings && (
-                        <div className="absolute top-4 right-4 flex gap-2">
+                        <div className="absolute top-4 right-4 flex gap-2 z-20">
                             <button
                                 onClick={onStartReposition}
                                 className="bg-white/90 hover:bg-white p-2.5 rounded-xl border-2 border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:shadow-none group"
@@ -209,13 +209,13 @@ export default function SpaceDetailsView() {
                     )
                 )}
 
-                <div className="absolute bottom-6 left-6 md:left-10 text-white drop-shadow-md">
+                <div className="absolute bottom-6 left-6 md:left-10 text-white drop-shadow-md max-w-[calc(100%-120px)] z-10">
                     <div className="flex items-center gap-3 mb-2">
                         <span className="bg-white/90 text-black border-2 border-black px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">{activeSpace.category}</span>
                         {activeSpace.isOnline && <span className="bg-green-400 text-black border-2 border-black px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider animate-pulse">LIVE NOW</span>}
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-2 text-shadow-lg">{activeSpace.name}</h1>
-                    <p className="text-white/90 font-bold text-lg max-w-2xl">{activeSpace.description}</p>
+                    <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-2 text-shadow-lg truncate">{activeSpace.name}</h1>
+                    <p className="text-white/90 font-bold text-lg line-clamp-2">{activeSpace.description}</p>
                 </div>
             </div>
 
