@@ -1,8 +1,8 @@
 import React from 'react';
-import { Users, FileText, Crown, Calendar } from 'lucide-react';
+import { Users, FileText, Crown, Calendar, Lock, Globe } from 'lucide-react';
 import { formatDate } from '../../../shared/utils/helpers';
 
-export default function SpaceStats({ memberCount, fileCount, ownerName, createdAt }) {
+export default function SpaceStats({ memberCount, fileCount, ownerName, createdAt, isPrivate }) {
     return (
         <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             <h3 className="text-xl font-black mb-6 flex items-center gap-2">
@@ -29,6 +29,16 @@ export default function SpaceStats({ memberCount, fileCount, ownerName, createdA
                     <div>
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Created</p>
                         <p className="font-bold text-lg">{formatDate(createdAt)}</p>
+                    </div>
+                </div>
+                {/* Visibility */}
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 border-transparent ${isPrivate ? 'bg-pink-100' : 'bg-cyan-100'}`}>
+                        {isPrivate ? <Lock size={20} className="text-pink-600" /> : <Globe size={20} className="text-cyan-600" />}
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Visibility</p>
+                        <p className="font-bold text-lg">{isPrivate ? 'Private' : 'Public'}</p>
                     </div>
                 </div>
 

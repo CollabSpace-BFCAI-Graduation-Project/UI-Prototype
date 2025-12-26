@@ -176,11 +176,13 @@ export default function SpaceDetailsView() {
                 {/* Right Info */}
                 <div className="space-y-6">
                     {/* Stats */}
+                    {/* Stats */}
                     <SpaceStats
                         memberCount={activeSpace.memberCount || 0}
-                        fileCount={activeSpace.fileCount || 0}
+                        fileCount={activeSpace.files?.length || activeSpace.fileCount || 0}
                         ownerName={activeSpace.members?.find(m => m.userId === activeSpace.ownerId)?.name}
                         createdAt={activeSpace.createdAt}
+                        isPrivate={isPrivate}
                     />
 
                     <div onClick={openMembersModal} className="bg-white border-2 border-black rounded-2xl p-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-gray-50 transition-colors group">
