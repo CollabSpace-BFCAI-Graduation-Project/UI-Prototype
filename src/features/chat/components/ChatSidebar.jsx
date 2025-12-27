@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Hash, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
-import { useChatStore, useAuthStore, useSpacesStore, useUIStore } from '../../../store';
+import { useChatStore, useAuthStore, useUIStore } from '../../../store';
 
 export default function ChatSidebar() {
-    const { activeChatSpace, setActiveChatSpace, channels, activeChannel, setActiveChannel, createChannel, updateChannel, deleteChannel } = useChatStore();
+    const { activeChatSpace, setActiveChatSpace, channels, activeChannel, setActiveChannel, createChannel, updateChannel, deleteChannel, members } = useChatStore();
     const { user } = useAuthStore();
-    const { activeSpace } = useSpacesStore();
     const { openConfirmation } = useUIStore();
 
     // Check if user is admin/owner
-    const userMember = activeSpace?.members?.find(m => m.userId === user?.id);
-    const canManageChannels = activeSpace?.ownerId === user?.id || ['Admin', 'Owner'].includes(userMember?.role);
+    const userMember = members?.find(m => m.userId === user?.id);
+    const canManageChannels = activeChatSpace?.ownerId === user?.id || ['Admin', 'Owner'].includes(userMember?.role);
 
     // Local state for add/edit
     const [isAdding, setIsAdding] = useState(false);

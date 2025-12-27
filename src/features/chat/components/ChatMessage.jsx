@@ -46,7 +46,7 @@ export default function ChatMessage({ msg, onForward }) {
     // Permissions
     const { activeChatSpace, members } = useChatStore();
     const isOwner = activeChatSpace?.ownerId === currentUser?.id;
-    const isAdmin = activeChatSpace?.members?.find(m => m.userId === currentUser?.id)?.role === 'Admin';
+    const isAdmin = members?.find(m => m.userId === currentUser?.id)?.role === 'Admin';
 
     // Time limit (15 mins)
     const isWithinTimeLimit = (Date.now() - new Date(msg.createdAt).getTime() < 15 * 60 * 1000);
