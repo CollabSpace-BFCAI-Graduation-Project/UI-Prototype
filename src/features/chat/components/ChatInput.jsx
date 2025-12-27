@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Reply } from 'lucide-react';
+import { Send, X, Reply, Paperclip, Image, FileText } from 'lucide-react';
 import { useChatStore } from '../../../store';
 import MentionList from './MentionList';
 
@@ -7,7 +7,9 @@ export default function ChatInput({
     chatInput,
     setChatInput,
     handleSendMessage,
-    spaceName
+    spaceName,
+    selectedFiles,
+    setSelectedFiles
 }) {
     const { replyingTo, clearReplyingTo, members } = useChatStore();
     const [mentionFilter, setMentionFilter] = useState('');
@@ -15,6 +17,7 @@ export default function ChatInput({
     const [cursorPosition, setCursorPosition] = useState(0);
     const [mentionCoords, setMentionCoords] = useState({ left: 0 });
     const inputRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Monitor input for @ mentions
     useEffect(() => {
@@ -33,10 +36,8 @@ export default function ChatInput({
                 setShowMentions(true);
 
                 // Calculate position for popup
-                // This is a rough estimation. For production, use a library like get-caret-coordinates or a hidden mirror div
                 const inputRect = inputRef.current?.getBoundingClientRect();
                 if (inputRect) {
-                    // Approximate character width (8px)
                     const leftOffset = Math.min((lastAtIndex * 8) + 20, inputRect.width - 220);
                     setMentionCoords({ left: leftOffset });
                 }
@@ -52,18 +53,14 @@ export default function ChatInput({
         const textBeforeAt = chatInput.slice(0, lastAtIndex);
         const textAfterCursor = chatInput.slice(cursorPosition);
 
-        // Use username if available, otherwise generate from name
         const insertedMention = member.username || member.name.replace(/\s+/g, '');
         const newValue = `${textBeforeAt}@${insertedMention} ${textAfterCursor}`;
         setChatInput(newValue);
         setShowMentions(false);
 
-        // Focus back on input
         if (inputRef.current) {
             inputRef.current.focus();
-            // Need slight delay for cursor position update to work after state change
             setTimeout(() => {
-                // @ + inserted mention + space
                 const newCursorPos = lastAtIndex + 1 + insertedMention.length + 1;
                 inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
             }, 0);
@@ -72,15 +69,11 @@ export default function ChatInput({
 
     const handleInputKeyDown = (e) => {
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-            if (showMentions) {
-                // Let MentionList handle these
-                return;
-            }
+            if (showMentions) return;
         }
 
         if (e.key === 'Enter') {
             if (showMentions) {
-                // Prevent send if selecting mention
                 e.preventDefault();
                 return;
             }
@@ -88,7 +81,7 @@ export default function ChatInput({
 
         if (e.key === 'Escape') {
             if (showMentions) {
-                e.preventDefault(); // Don't clear reply if closing mentions
+                e.preventDefault();
                 setShowMentions(false);
                 return;
             }
@@ -96,18 +89,29 @@ export default function ChatInput({
                 clearReplyingTo();
             }
         }
-
-        // Parent handler for send (Enter without Shift)
-        // We handle this manually here to coordinate with mentions
-        if (e.key === 'Enter' && !e.shiftKey && !showMentions) {
-            // Let form submit handler take care of it
-        }
     };
 
     const onInputChange = (e) => {
         setChatInput(e.target.value);
         setCursorPosition(e.target.selectionStart);
     };
+
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            setSelectedFiles(prev => [...prev, ...files].slice(0, 5)); // Max 5 files
+        }
+        // Reset input so same file can be selected again
+        e.target.value = '';
+    };
+
+    const removeFile = (index) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const isImage = (file) => file.type.startsWith('image/');
+
+    const hasContent = chatInput.trim() || selectedFiles.length > 0;
 
     return (
         <div className="border-t-2 border-black bg-white relative">
@@ -142,6 +146,40 @@ export default function ChatInput({
                 </div>
             )}
 
+            {/* File Preview Bar */}
+            {selectedFiles.length > 0 && (
+                <div className="px-4 pt-3 pb-2">
+                    <div className="flex gap-2 flex-wrap">
+                        {selectedFiles.map((file, index) => (
+                            <div key={index} className="relative group">
+                                {isImage(file) ? (
+                                    <div className="w-16 h-16 rounded-xl border-2 border-black overflow-hidden bg-gray-100">
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt={file.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-16 h-16 rounded-xl border-2 border-black bg-gray-100 flex flex-col items-center justify-center p-1">
+                                        <FileText size={20} className="text-gray-500" />
+                                        <span className="text-[8px] text-gray-500 truncate w-full text-center mt-1">
+                                            {file.name.split('.').pop()?.toUpperCase()}
+                                        </span>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => removeFile(index)}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <X size={10} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="p-4">
                 <form onSubmit={(e) => {
                     if (showMentions) {
@@ -149,26 +187,48 @@ export default function ChatInput({
                         return;
                     }
                     handleSendMessage(e);
-                }} className="relative">
+                }} className="relative flex gap-2">
+                    {/* Hidden file input */}
                     <input
-                        ref={inputRef}
-                        id="chat-input"
-                        value={chatInput}
-                        onChange={onInputChange}
-                        onClick={(e) => setCursorPosition(e.target.selectionStart)}
-                        onKeyUp={(e) => setCursorPosition(e.target.selectionStart)}
-                        onKeyDown={handleInputKeyDown}
-                        autoComplete='off'
-                        className="w-full bg-gray-50 border-2 border-black rounded-2xl py-4 pl-4 pr-14 font-medium focus:outline-none focus:ring-2 focus:ring-accent shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-shadow"
-                        placeholder={replyingTo ? `Reply to ${replyingTo.sender}...` : `Message #${spaceName}...`}
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar"
+                        onChange={handleFileSelect}
+                        className="hidden"
                     />
+
+                    {/* Attachment button */}
                     <button
-                        type="submit"
-                        disabled={!chatInput.trim()}
-                        className="absolute right-2 top-2 bottom-2 aspect-square bg-accent border-2 border-black rounded-xl flex items-center justify-center hover:bg-accent-dark active:scale-95 transition-all"
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-shrink-0 w-14 h-14 bg-gray-50 border-2 border-black rounded-2xl flex items-center justify-center hover:bg-gray-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        title="Attach files"
                     >
-                        <Send size={20} />
+                        <Paperclip size={22} className="text-gray-600" />
                     </button>
+
+                    <div className="flex-1 relative">
+                        <input
+                            ref={inputRef}
+                            id="chat-input"
+                            value={chatInput}
+                            onChange={onInputChange}
+                            onClick={(e) => setCursorPosition(e.target.selectionStart)}
+                            onKeyUp={(e) => setCursorPosition(e.target.selectionStart)}
+                            onKeyDown={handleInputKeyDown}
+                            autoComplete='off'
+                            className="w-full bg-gray-50 border-2 border-black rounded-2xl py-4 pl-4 pr-14 font-medium focus:outline-none focus:ring-2 focus:ring-accent shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+                            placeholder={replyingTo ? `Reply to ${replyingTo.sender}...` : `Message #${spaceName}...`}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!hasContent}
+                            className="absolute right-2 top-2 bottom-2 aspect-square bg-accent border-2 border-black rounded-xl flex items-center justify-center hover:bg-accent-dark active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Send size={20} />
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

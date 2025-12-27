@@ -202,6 +202,8 @@ export class Message {
         this.deletedAt = data.deletedAt || null;
         this.deletedBy = data.deletedBy || null;
         this.deletedByRole = data.deletedByRole || null;
+        // Attachments
+        this.attachments = data.attachments || [];
     }
 
     // Check if this message is from a specific user

@@ -5,6 +5,7 @@ import ChatInput from './components/ChatInput';
 import ChatSidebar from './components/ChatSidebar';
 import { useChatStore, useSpacesStore, useAuthStore } from '../../store';
 import ModalWrapper from '../../shared/components/ModalWrapper';
+import api from '../../services/api';
 
 export default function ChatView() {
     // Get state directly from stores
@@ -31,6 +32,10 @@ export default function ChatView() {
     // Forward modal state
     const [forwardingMessage, setForwardingMessage] = useState(null);
 
+    // Attachment state
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
+
     // Scroll to bottom when messages change
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,46 +43,76 @@ export default function ChatView() {
 
     const handleSendMessage = async (e) => {
         e?.preventDefault();
-        if (!chatInput.trim() || !activeChatSpace) return;
+        const hasContent = chatInput.trim() || selectedFiles.length > 0;
+        if (!hasContent || !activeChatSpace) return;
 
-        // Extract user mentions - @username (excluding bracket patterns)
-        const userMentionMatches = chatInput.match(/@([a-zA-Z0-9_]+)/g) || [];
-        const mentions = [];
+        setIsUploading(true);
 
-        userMentionMatches.forEach(match => {
-            const username = match.substring(1).toLowerCase();
-            const member = members.find(m =>
-                (m.username?.toLowerCase() === username) ||
-                (m.name.replace(/\s+/g, '').toLowerCase() === username)
-            );
-            if (member && !mentions.includes(member.userId)) {
-                mentions.push(member.userId);
+        try {
+            // Upload files first
+            let attachmentIds = [];
+            if (selectedFiles.length > 0) {
+                for (const file of selectedFiles) {
+                    try {
+                        const uploaded = await api.files.upload(
+                            activeChatSpace.id,
+                            file,
+                            user?.id,
+                            null, // No progress callback needed
+                            null  // No folder
+                        );
+                        if (uploaded?.id) {
+                            attachmentIds.push(uploaded.id);
+                        }
+                    } catch (uploadErr) {
+                        console.error('Failed to upload file:', uploadErr);
+                    }
+                }
             }
-        });
 
-        // Extract special mentions - @[keyword]
-        const specialMentionMatches = chatInput.match(/@\[([a-zA-Z]+)\]/g) || [];
-        const specialKeywords = specialMentionMatches.map(m => m.slice(2, -1).toLowerCase());
+            // Extract user mentions - @username (excluding bracket patterns)
+            const userMentionMatches = chatInput.match(/@([a-zA-Z0-9_]+)/g) || [];
+            const mentions = [];
 
-        const mentionEveryone = specialKeywords.includes('everyone');
-        const mentionAdmins = specialKeywords.includes('admins') || specialKeywords.includes('admin');
-        const mentionOwner = specialKeywords.includes('owner');
+            userMentionMatches.forEach(match => {
+                const username = match.substring(1).toLowerCase();
+                const member = members.find(m =>
+                    (m.username?.toLowerCase() === username) ||
+                    (m.name.replace(/\s+/g, '').toLowerCase() === username)
+                );
+                if (member && !mentions.includes(member.userId)) {
+                    mentions.push(member.userId);
+                }
+            });
 
-        const mentionRoles = [];
-        if (mentionAdmins) mentionRoles.push('Admin', 'Owner');
-        if (mentionOwner) mentionRoles.push('Owner');
+            // Extract special mentions - @[keyword]
+            const specialMentionMatches = chatInput.match(/@\[([a-zA-Z]+)\]/g) || [];
+            const specialKeywords = specialMentionMatches.map(m => m.slice(2, -1).toLowerCase());
 
-        const messageData = {
-            senderId: user?.id,
-            text: chatInput,
-            type: 'user',
-            mentions: mentions,
-            mentionEveryone,
-            mentionRoles: mentionRoles.length > 0 ? [...new Set(mentionRoles)] : undefined
-        };
+            const mentionEveryone = specialKeywords.includes('everyone');
+            const mentionAdmins = specialKeywords.includes('admins') || specialKeywords.includes('admin');
+            const mentionOwner = specialKeywords.includes('owner');
 
-        await sendMessage(messageData);
-        setChatInput('');
+            const mentionRoles = [];
+            if (mentionAdmins) mentionRoles.push('Admin', 'Owner');
+            if (mentionOwner) mentionRoles.push('Owner');
+
+            const messageData = {
+                senderId: user?.id,
+                text: chatInput || (attachmentIds.length > 0 ? '' : ''),
+                type: 'user',
+                mentions: mentions,
+                mentionEveryone,
+                mentionRoles: mentionRoles.length > 0 ? [...new Set(mentionRoles)] : undefined,
+                attachments: attachmentIds.length > 0 ? attachmentIds : undefined
+            };
+
+            await sendMessage(messageData);
+            setChatInput('');
+            setSelectedFiles([]);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleForward = async (targetChannelId) => {
@@ -147,6 +182,8 @@ export default function ChatView() {
                     setChatInput={setChatInput}
                     handleSendMessage={handleSendMessage}
                     spaceName={activeChannel?.name || activeChatSpace.name}
+                    selectedFiles={selectedFiles}
+                    setSelectedFiles={setSelectedFiles}
                 />
             </div>
 

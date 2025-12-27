@@ -11,10 +11,15 @@ const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
  */
 export const formatBytes = (bytes) => {
     if (!bytes || bytes === 0) return '0 B';
-    if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
-    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return bytes + ' B';
+    // If already a formatted string (contains letters), return as-is
+    if (typeof bytes === 'string' && /[a-zA-Z]/.test(bytes)) return bytes;
+    // Parse to number if string
+    const numBytes = typeof bytes === 'string' ? parseInt(bytes, 10) : bytes;
+    if (isNaN(numBytes) || numBytes === 0) return '0 B';
+    if (numBytes >= 1024 * 1024 * 1024) return (numBytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    if (numBytes >= 1024 * 1024) return (numBytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (numBytes >= 1024) return (numBytes / 1024).toFixed(1) + ' KB';
+    return numBytes + ' B';
 };
 
 /**

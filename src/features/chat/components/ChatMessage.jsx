@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore, useChatStore, useUIStore } from '../../../store';
-import { getImageUrl } from '../../../shared/utils/helpers';
-import { Edit2, Trash2, Check, X, Reply, Forward, MoreVertical } from 'lucide-react';
+import { getImageUrl, formatBytes } from '../../../shared/utils/helpers';
+import { Edit2, Trash2, Check, X, Reply, Forward, MoreVertical, FileText, Download } from 'lucide-react';
 
 
 export default function ChatMessage({ msg, onForward }) {
@@ -271,6 +271,57 @@ export default function ChatMessage({ msg, onForward }) {
                                         return part;
                                     })}
                                 </p>
+
+                                {/* Attachments */}
+                                {msg.attachments && msg.attachments.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        {msg.attachments.map((attachment, idx) => {
+                                            const isImage = attachment.mimeType?.startsWith('image/');
+
+                                            if (isImage) {
+                                                return (
+                                                    <a
+                                                        key={idx}
+                                                        href={attachment.downloadUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="block max-w-[300px] rounded-xl overflow-hidden border-2 border-black/20 hover:border-accent transition-colors"
+                                                    >
+                                                        <img
+                                                            src={attachment.downloadUrl}
+                                                            alt={attachment.name}
+                                                            className="w-full h-auto object-cover max-h-[200px]"
+                                                            loading="lazy"
+                                                        />
+                                                    </a>
+                                                );
+                                            }
+
+                                            // Non-image file
+                                            return (
+                                                <a
+                                                    key={idx}
+                                                    href={attachment.downloadUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${isMe ? 'border-white/20 hover:border-white bg-white/10' : 'border-black/10 hover:border-black bg-gray-50'}`}
+                                                >
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isMe ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                                        <FileText size={20} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-sm truncate">{attachment.name}</p>
+                                                        <p className={`text-xs ${isMe ? 'text-gray-300' : 'text-gray-500'}`}>
+                                                            {formatBytes(attachment.size)}
+                                                        </p>
+                                                    </div>
+                                                    <Download size={16} className={isMe ? 'text-gray-300' : 'text-gray-500'} />
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
                                 {/* 3-dots menu button inside message */}
                                 <button
                                     ref={menuRef}
