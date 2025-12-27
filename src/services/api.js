@@ -245,6 +245,10 @@ export const files = {
     delete: (fileId, userId) => request(`/files/${fileId}`, { method: 'DELETE', body: { userId } }),
     move: (fileIds, folderId, userId) => request('/files/move', { method: 'PUT', body: { fileIds, folderId, userId } }),
     copy: (fileIds, folderId, userId) => request('/files/copy', { method: 'POST', body: { fileIds, folderId, userId } }),
+    createLink: (spaceId, name, url, uploadedBy, folderId) => request(`/files/${spaceId}/link`, {
+        method: 'POST',
+        body: { name, url, uploadedBy, folderId }
+    }),
 };
 
 // Export grouped API

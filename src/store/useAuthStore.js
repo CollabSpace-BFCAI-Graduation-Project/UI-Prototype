@@ -15,10 +15,10 @@ const useAuthStore = create((set, get) => ({
     // Actions
     setUser: (user) => set({ user, isAuthenticated: !!user }),
 
-    login: async (email, password) => {
+    login: async (identifier, password) => {
         set({ loading: true, error: null });
         try {
-            const userData = await api.auth.login({ email, password });
+            const userData = await api.auth.login({ identifier, password });
             set({ user: userData, isAuthenticated: true, loading: false });
             localStorage.setItem('user', JSON.stringify(userData));
             return userData;

@@ -6,6 +6,7 @@ import ChatSidebar from './components/ChatSidebar';
 import { useChatStore, useSpacesStore, useAuthStore } from '../../store';
 import ModalWrapper from '../../shared/components/ModalWrapper';
 import api from '../../services/api';
+import { isImageThumbnail, getSpaceThumbnailStyle, getSpaceThumbnailUrl } from '../../shared/utils/helpers';
 
 export default function ChatView() {
     // Get state directly from stores
@@ -144,7 +145,11 @@ export default function ChatView() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pb-4">
                         {spaces.map(space => (
                             <button key={space.id} onClick={() => setActiveChatSpace(space)} className="flex items-center gap-4 p-4 bg-white border-2 border-black rounded-2xl hover:bg-gray-50 hover:-translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-left group">
-                                <div className="w-12 h-12 rounded-xl border-2 border-black flex-shrink-0" style={{ background: space.thumbnail }}></div>
+                                <div className="w-12 h-12 rounded-xl border-2 border-black flex-shrink-0 overflow-hidden" style={getSpaceThumbnailStyle(space.thumbnail)}>
+                                    {isImageThumbnail(space.thumbnail) && (
+                                        <img src={getSpaceThumbnailUrl(space.thumbnail)} alt={space.name} className="w-full h-full object-cover" />
+                                    )}
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-bold text-lg group-hover:text-pink-600 transition-colors truncate">{space.name}</h3>
                                     <p className="text-xs text-gray-500 font-bold uppercase">{space.category}</p>
@@ -167,7 +172,13 @@ export default function ChatView() {
                 <div className="p-4 border-b-2 border-black flex justify-between items-center bg-gray-50">
                     <div className="flex items-center gap-3">
                         <button onClick={() => setActiveChatSpace(null)} className="lg:hidden p-2 hover:bg-white rounded-lg"><ArrowLeft size={20} /></button>
-                        <div className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center font-bold text-lg" style={{ background: activeChatSpace.thumbnail }}>#</div>
+                        <div className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center font-bold text-lg overflow-hidden" style={getSpaceThumbnailStyle(activeChatSpace.thumbnail)}>
+                            {isImageThumbnail(activeChatSpace.thumbnail) ? (
+                                <img src={getSpaceThumbnailUrl(activeChatSpace.thumbnail)} alt={activeChatSpace.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span>#</span>
+                            )}
+                        </div>
                         <div><h3 className="font-black text-lg">{activeChannel?.name || 'Select a channel'}</h3><p className="text-xs font-bold text-gray-500">{activeChannel?.description || activeChatSpace.name}</p></div>
                     </div>
                 </div>

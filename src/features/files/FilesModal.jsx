@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileText, Folder, FolderPlus, ChevronRight, Home, Edit2, Trash2, Scissors, Copy, Clipboard, CheckSquare, Square, LayoutGrid, List } from 'lucide-react';
+import { X, FileText, Folder, FolderPlus, ChevronRight, Home, Edit2, Trash2, Scissors, Copy, Clipboard, CheckSquare, Square, LayoutGrid, List, Link2 } from 'lucide-react';
 import FileCard from './components/FileCard';
 import UploadCard from './components/UploadCard';
 import { getFileIcon } from '../../shared/utils/helpers';
@@ -31,6 +31,11 @@ export default function FilesModal() {
     const [newFolderName, setNewFolderName] = useState('');
     const [editingFolderId, setEditingFolderId] = useState(null);
     const [editFolderName, setEditFolderName] = useState('');
+
+    // Link creation state
+    const [showCreateLink, setShowCreateLink] = useState(false);
+    const [newLinkName, setNewLinkName] = useState('');
+    const [newLinkUrl, setNewLinkUrl] = useState('');
 
     // Selection & Clipboard state
     const [selectedFiles, setSelectedFiles] = useState([]); // array of file ids
@@ -146,6 +151,28 @@ export default function FilesModal() {
             setFolders(foldersData);
         } catch (err) {
             console.error('Failed to create folder:', err);
+        }
+    };
+
+    // Create link
+    const handleCreateLink = async () => {
+        if (!newLinkName.trim() || !newLinkUrl.trim()) return;
+        try {
+            const newFile = await api.files.createLink(
+                activeSpace.id,
+                newLinkName.trim(),
+                newLinkUrl.trim(),
+                user.id,
+                currentFolderId
+            );
+            setNewLinkName('');
+            setNewLinkUrl('');
+            setShowCreateLink(false);
+            // Refresh files
+            const filesData = await api.files.getBySpace(activeSpace.id, currentFolderId);
+            setFiles(filesData);
+        } catch (err) {
+            console.error('Failed to create link:', err);
         }
     };
 
@@ -374,6 +401,9 @@ export default function FilesModal() {
         if (fileFilter === 'presentation') {
             return ['ppt', 'pptx', 'odp', 'key'].includes(ext);
         }
+        if (fileFilter === 'link') {
+            return ext === 'link';
+        }
         return false;
     });
 
@@ -473,6 +503,13 @@ export default function FilesModal() {
                             >
                                 <FolderPlus size={20} />
                             </button>
+                            <button
+                                onClick={() => setShowCreateLink(!showCreateLink)}
+                                className="p-2 bg-white border-2 border-black rounded-xl hover:bg-blue-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+                                title="Add Link"
+                            >
+                                <Link2 size={20} />
+                            </button>
                             <button onClick={closeFilesModal} className="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"><X size={20} /></button>
                         </div>
                     </div>
@@ -530,11 +567,40 @@ export default function FilesModal() {
                         </div>
                     )}
 
+                    {/* Create Link Input */}
+                    {showCreateLink && (
+                        <div className="flex gap-2 mb-3 animate-in slide-in-from-top-2">
+                            <input
+                                type="text"
+                                value={newLinkName}
+                                onChange={(e) => setNewLinkName(e.target.value)}
+                                placeholder="Link name..."
+                                className="w-1/3 px-3 py-2 border-2 border-black rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                autoFocus
+                            />
+                            <input
+                                type="url"
+                                value={newLinkUrl}
+                                onChange={(e) => setNewLinkUrl(e.target.value)}
+                                placeholder="https://..."
+                                className="flex-1 px-3 py-2 border-2 border-black rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreateLink()}
+                            />
+                            <button
+                                onClick={handleCreateLink}
+                                disabled={!newLinkName.trim() || !newLinkUrl.trim()}
+                                className="px-4 py-2 bg-blue-400 text-white border-2 border-black rounded-xl font-bold hover:bg-blue-500 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Add
+                            </button>
+                        </div>
+                    )}
+
                     {/* Filter Chips */}
                     {/* Filter Chips & View Toggle */}
                     <div className="flex justify-between items-center gap-4">
                         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar flex-1">
-                            {['all', 'owned', 'image', 'video', 'doc', 'presentation'].map(f => (
+                            {['all', 'owned', 'image', 'video', 'doc', 'presentation', 'link'].map(f => (
                                 <button
                                     key={f}
                                     onClick={() => setFileFilter(f)}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Image as ImageIcon, Film, Presentation, File, FileArchive, FileCode, FileSpreadsheet, Music } from 'lucide-react';
+import { FileText, Image as ImageIcon, Film, Presentation, File, FileArchive, FileCode, FileSpreadsheet, Music, Link2 } from 'lucide-react';
 
 // API Base URL for images
 const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
@@ -73,6 +73,11 @@ export const getFileIcon = (type) => {
     // Code files
     if (['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'c', 'cpp', 'h', 'css', 'html', 'json', 'xml', 'md'].includes(ext)) {
         return <FileCode size={20} className="text-emerald-500" />;
+    }
+
+    // Links
+    if (ext === 'link') {
+        return <Link2 size={20} className="text-blue-500" />;
     }
 
     // Default

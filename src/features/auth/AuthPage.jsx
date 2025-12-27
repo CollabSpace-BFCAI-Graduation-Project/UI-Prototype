@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Check, X } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Check, X, AtSign } from 'lucide-react';
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -111,6 +111,7 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
     const [name, setName] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
+    const [loginIdentifier, setLoginIdentifier] = useState(''); // Can be email or username
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -149,11 +150,11 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
         const trimmedEmail = email.trim();
 
         if (isLogin) {
-            if (!trimmedEmail || !password) {
+            if (!loginIdentifier.trim() || !password) {
                 setFormError('Please fill in all fields');
                 return;
             }
-            await onLogin(trimmedEmail, password);
+            await onLogin(loginIdentifier.trim(), password);
         } else {
             if (!trimmedName || !trimmedUsername || !trimmedEmail || !password || !confirmPassword) {
                 setFormError('Please fill in all fields');
@@ -187,6 +188,7 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
             setName('');
             setUsername('');
             setEmail('');
+            setLoginIdentifier('');
             setPassword('');
             setConfirmPassword('');
             setIsTransitioning(false);
@@ -295,15 +297,26 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
                                 </div>
                             )}
 
-                            {/* Email */}
-                            <Input
-                                label="Email"
-                                type="email"
-                                icon={Mail}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                            />
+                            {/* Email or Username for login, Email for register */}
+                            {isLogin ? (
+                                <Input
+                                    label="Email or Username"
+                                    type="text"
+                                    icon={AtSign}
+                                    value={loginIdentifier}
+                                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                                    placeholder="you@example.com or @username"
+                                />
+                            ) : (
+                                <Input
+                                    label="Email"
+                                    type="email"
+                                    icon={Mail}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="you@example.com"
+                                />
+                            )}
 
                             {/* Password fields - Two columns for signup */}
                             {!isLogin ? (
@@ -427,7 +440,7 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
 
                 {/* Demo hint */}
                 <p className="mt-3 text-center text-xs text-gray-400">
-                    Demo: john@example.com / password123
+                    Demo: john@example.com or @johndoe
                 </p>
             </div>
         </div>
