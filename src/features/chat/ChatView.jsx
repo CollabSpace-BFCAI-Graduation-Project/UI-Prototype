@@ -40,11 +40,11 @@ export default function ChatView() {
         e?.preventDefault();
         if (!chatInput.trim() || !activeChatSpace) return;
 
-        // Extract mentions
-        const mentionMatches = chatInput.match(/@([a-zA-Z0-9_]+)/g) || [];
+        // Extract user mentions - @username (excluding bracket patterns)
+        const userMentionMatches = chatInput.match(/@([a-zA-Z0-9_]+)/g) || [];
         const mentions = [];
 
-        mentionMatches.forEach(match => {
+        userMentionMatches.forEach(match => {
             const username = match.substring(1).toLowerCase();
             const member = members.find(m =>
                 (m.username?.toLowerCase() === username) ||
@@ -55,11 +55,25 @@ export default function ChatView() {
             }
         });
 
+        // Extract special mentions - @[keyword]
+        const specialMentionMatches = chatInput.match(/@\[([a-zA-Z]+)\]/g) || [];
+        const specialKeywords = specialMentionMatches.map(m => m.slice(2, -1).toLowerCase());
+
+        const mentionEveryone = specialKeywords.includes('everyone');
+        const mentionAdmins = specialKeywords.includes('admins') || specialKeywords.includes('admin');
+        const mentionOwner = specialKeywords.includes('owner');
+
+        const mentionRoles = [];
+        if (mentionAdmins) mentionRoles.push('Admin', 'Owner');
+        if (mentionOwner) mentionRoles.push('Owner');
+
         const messageData = {
             senderId: user?.id,
             text: chatInput,
             type: 'user',
-            mentions: mentions
+            mentions: mentions,
+            mentionEveryone,
+            mentionRoles: mentionRoles.length > 0 ? [...new Set(mentionRoles)] : undefined
         };
 
         await sendMessage(messageData);

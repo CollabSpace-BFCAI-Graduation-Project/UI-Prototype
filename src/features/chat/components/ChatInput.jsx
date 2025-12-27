@@ -52,7 +52,9 @@ export default function ChatInput({
         const textBeforeAt = chatInput.slice(0, lastAtIndex);
         const textAfterCursor = chatInput.slice(cursorPosition);
 
-        const newValue = `${textBeforeAt}@${member.username || member.name.replace(/\s+/g, '')} ${textAfterCursor}`;
+        // Use username if available, otherwise generate from name
+        const insertedMention = member.username || member.name.replace(/\s+/g, '');
+        const newValue = `${textBeforeAt}@${insertedMention} ${textAfterCursor}`;
         setChatInput(newValue);
         setShowMentions(false);
 
@@ -61,7 +63,8 @@ export default function ChatInput({
             inputRef.current.focus();
             // Need slight delay for cursor position update to work after state change
             setTimeout(() => {
-                const newCursorPos = lastAtIndex + member.name.length + 2; // @ + name + space
+                // @ + inserted mention + space
+                const newCursorPos = lastAtIndex + 1 + insertedMention.length + 1;
                 inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
             }, 0);
         }
