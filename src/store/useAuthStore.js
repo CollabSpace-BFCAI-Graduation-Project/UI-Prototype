@@ -9,6 +9,7 @@ const useAuthStore = create((set, get) => ({
     // State
     user: null,
     isAuthenticated: false,
+    authInitialized: false, // Track if auth has been checked
     loading: false,
     error: null,
 
@@ -101,7 +102,7 @@ const useAuthStore = create((set, get) => ({
         if (userParam) {
             try {
                 const user = JSON.parse(decodeURIComponent(userParam));
-                set({ user, isAuthenticated: true });
+                set({ user, isAuthenticated: true, authInitialized: true });
                 localStorage.setItem('user', JSON.stringify(user));
                 // Clean up URL
                 window.history.replaceState({}, document.title, window.location.pathname);
@@ -121,7 +122,7 @@ const useAuthStore = create((set, get) => ({
                 'user_not_found': 'User account not found',
                 'callback_failed': 'Authentication callback failed'
             };
-            set({ error: { error: errorMessages[errorParam] || 'Authentication failed' } });
+            set({ error: { error: errorMessages[errorParam] || 'Authentication failed' }, authInitialized: true });
             // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
             return;
@@ -132,10 +133,13 @@ const useAuthStore = create((set, get) => ({
         if (savedUser) {
             try {
                 const user = JSON.parse(savedUser);
-                set({ user, isAuthenticated: true });
+                set({ user, isAuthenticated: true, authInitialized: true });
             } catch (e) {
                 localStorage.removeItem('user');
+                set({ authInitialized: true });
             }
+        } else {
+            set({ authInitialized: true });
         }
     },
 

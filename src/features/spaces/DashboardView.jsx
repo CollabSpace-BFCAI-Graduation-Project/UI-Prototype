@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Globe, Link as LinkIcon } from 'lucide-react';
 import SpaceFilters from './components/SpaceFilters';
 import SpaceCard from './components/SpaceCard';
@@ -6,6 +7,9 @@ import PublicSpaceSearchModal from './components/PublicSpaceSearchModal';
 import { useSpacesStore, useUIStore, useAuthStore } from '../../store';
 
 export default function DashboardView() {
+    const navigate = useNavigate();
+    const location = useLocation();
+
     // Get state directly from stores
     const {
         getFilteredSpaces,
@@ -17,9 +21,19 @@ export default function DashboardView() {
         sortOption,
     } = useSpacesStore();
 
-    const { openCreateModal, setCurrentView, openJoinByLinkModal } = useUIStore();
+    const { openCreateModal, openJoinByLinkModal, setInviteCodeToJoin } = useUIStore();
     const { user } = useAuthStore();
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
+
+    // Check for invite code in navigation state
+    useEffect(() => {
+        if (location.state?.inviteCode) {
+            setInviteCodeToJoin(location.state.inviteCode);
+            openJoinByLinkModal();
+            // Clear state to prevent reopening on generic refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state, setInviteCodeToJoin, openJoinByLinkModal]);
 
     const filteredSpaces = getFilteredSpaces();
 
@@ -44,7 +58,7 @@ export default function DashboardView() {
 
     const enterSpace = (space) => {
         setActiveSpace(space);
-        setCurrentView('space-details');
+        navigate(`/spaces/${space.id}`);
     };
 
     const handleToggleFavorite = async (spaceId) => {

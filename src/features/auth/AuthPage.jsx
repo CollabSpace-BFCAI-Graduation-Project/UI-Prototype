@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Check, X, AtSign } from 'lucide-react';
+import { useAuthStore } from '../../store';
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -102,7 +103,9 @@ function Input({
     );
 }
 
-export default function AuthPage({ onLogin, onRegister, loading, error }) {
+export default function AuthPage() {
+    const { login: onLogin, register: onRegister, loading, error } = useAuthStore();
+
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -154,7 +157,12 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
                 setFormError('Please fill in all fields');
                 return;
             }
-            await onLogin(loginIdentifier.trim(), password);
+            try {
+                await onLogin(loginIdentifier.trim(), password);
+            } catch (err) {
+                // Error handling is managed by store/component state via error prop
+                console.error("Login failed", err);
+            }
         } else {
             if (!trimmedName || !trimmedUsername || !trimmedEmail || !password || !confirmPassword) {
                 setFormError('Please fill in all fields');
@@ -175,7 +183,11 @@ export default function AuthPage({ onLogin, onRegister, loading, error }) {
                 setFormError('Username: 3-20 chars, lowercase, numbers, underscores');
                 return;
             }
-            await onRegister({ name: trimmedName, username: trimmedUsername, email: trimmedEmail, password });
+            try {
+                await onRegister({ name: trimmedName, username: trimmedUsername, email: trimmedEmail, password });
+            } catch (err) {
+                console.error("Registration failed", err);
+            }
         }
     };
 

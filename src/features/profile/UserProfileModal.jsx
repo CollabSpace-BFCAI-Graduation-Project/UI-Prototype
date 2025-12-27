@@ -91,7 +91,7 @@ export default function UserProfileModal({ userId, viewerId, onClose }) {
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-pink-400 to-purple-400 p-6 relative rounded-t-xl">
+                <div className="bg-accent-400 p-6 relative rounded-t-xl">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/40 rounded-full transition-colors"

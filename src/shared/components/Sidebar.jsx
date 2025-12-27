@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Grid, MessageSquare, Users, Settings } from 'lucide-react';
 import NavButton from './NavButton';
 import { getAvatarProps } from '../utils/helpers';
@@ -6,20 +7,23 @@ import { useUIStore, useAuthStore } from '../../store';
 import NotificationBell from '../../features/notifications/NotificationBell';
 
 export default function Sidebar() {
-    // Get state directly from stores
-    const { currentView, setCurrentView, openSettingsModal } = useUIStore();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { openSettingsModal } = useUIStore();
     const { user } = useAuthStore();
 
     const { imageUrl, initials, backgroundColor } = getAvatarProps(user);
 
-    const enterChatLobby = () => {
-        setCurrentView('chat');
+    // Determine active state from current path
+    const isActive = (path) => {
+        if (path === '/') return location.pathname === '/';
+        return location.pathname.startsWith(path);
     };
 
     return (
         <aside className="fixed left-4 top-4 bottom-4 w-20 bg-white border-2 border-black rounded-full flex flex-col items-center py-8 z-40 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hidden md:flex">
             <div
-                onClick={() => setCurrentView('dashboard')}
+                onClick={() => navigate('/')}
                 className="w-12 h-12 bg-accent border-2 border-black rounded-xl flex items-center justify-center text-xl font-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] mb-8 transform hover:scale-110 hover:-rotate-6 active:scale-95 transition-transform cursor-pointer"
             >
                 C
@@ -28,22 +32,22 @@ export default function Sidebar() {
             <div className="flex-1 w-full flex flex-col items-center gap-4">
                 <NavButton
                     icon={<Grid size={20} />}
-                    active={currentView === 'dashboard'}
+                    active={isActive('/')}
                     tooltip="Spaces"
-                    onClick={() => setCurrentView('dashboard')}
+                    onClick={() => navigate('/')}
                     iconClassName="hover:rotate-12"
                 />
                 <NavButton
                     icon={<MessageSquare size={20} />}
-                    active={currentView === 'chat'}
+                    active={isActive('/chat')}
                     tooltip="Chat"
-                    onClick={enterChatLobby}
+                    onClick={() => navigate('/chat')}
                 />
                 <NavButton
                     icon={<Users size={20} />}
-                    active={currentView === 'team'}
+                    active={isActive('/team')}
                     tooltip="Team"
-                    onClick={() => setCurrentView('team')}
+                    onClick={() => navigate('/team')}
                 />
             </div>
 
@@ -55,7 +59,6 @@ export default function Sidebar() {
                     tooltip="Settings"
                     onClick={openSettingsModal}
                     iconClassName="hover:rotate-90"
-                // Removed className rotation to fix tooltip
                 />
 
                 <button
@@ -74,3 +77,4 @@ export default function Sidebar() {
         </aside>
     );
 }
+

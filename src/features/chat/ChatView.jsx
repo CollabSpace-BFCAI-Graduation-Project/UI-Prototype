@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { MessageSquare, ArrowLeft, X, Forward, Hash } from 'lucide-react';
 import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
@@ -9,6 +10,9 @@ import api from '../../services/api';
 import { isImageThumbnail, getSpaceThumbnailStyle, getSpaceThumbnailUrl } from '../../shared/utils/helpers';
 
 export default function ChatView() {
+    const { spaceId, channelId } = useParams();
+    const navigate = useNavigate();
+
     // Get state directly from stores
     const {
         activeChatSpace,
@@ -21,7 +25,7 @@ export default function ChatView() {
         sendMessage,
         forwardMessage,
         getCurrentMessages,
-        members // Get members for mention parsing
+        members
     } = useChatStore();
 
     const { spaces } = useSpacesStore();
@@ -29,6 +33,26 @@ export default function ChatView() {
 
     const messagesEndRef = useRef(null);
     const currentMessages = getCurrentMessages();
+
+    // Set active chat space based on route param
+    useEffect(() => {
+        if (spaceId && (!activeChatSpace || activeChatSpace.id !== spaceId)) {
+            const space = spaces.find(s => s.id === spaceId);
+            if (space) {
+                setActiveChatSpace(space);
+            }
+        }
+    }, [spaceId, activeChatSpace, spaces, setActiveChatSpace]);
+
+    // Set active channel based on route param
+    useEffect(() => {
+        if (channelId && channels.length > 0 && (!activeChannel || activeChannel.id !== channelId)) {
+            const channel = channels.find(c => c.id === channelId);
+            if (channel) {
+                setActiveChannel(channel);
+            }
+        }
+    }, [channelId, channels, activeChannel, setActiveChannel]);
 
     // Forward modal state
     const [forwardingMessage, setForwardingMessage] = useState(null);
@@ -144,7 +168,7 @@ export default function ChatView() {
                 <div className="flex-1 overflow-y-auto w-full px-4 py-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pb-4">
                         {spaces.map(space => (
-                            <button key={space.id} onClick={() => setActiveChatSpace(space)} className="flex items-center gap-4 p-4 bg-white border-2 border-black rounded-2xl hover:bg-gray-50 hover:-translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-left group">
+                            <button key={space.id} onClick={() => navigate(`/chat/${space.id}`)} className="flex items-center gap-4 p-4 bg-white border-2 border-black rounded-2xl hover:bg-gray-50 hover:-translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-left group">
                                 <div className="w-12 h-12 rounded-xl border-2 border-black flex-shrink-0 overflow-hidden" style={getSpaceThumbnailStyle(space.thumbnail)}>
                                     {isImageThumbnail(space.thumbnail) && (
                                         <img src={getSpaceThumbnailUrl(space.thumbnail)} alt={space.name} className="w-full h-full object-cover" />

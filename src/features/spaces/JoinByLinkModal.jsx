@@ -22,7 +22,7 @@ const ModalWrapper = ({ children, isOpen, onClose }) => {
 };
 
 export const JoinByLinkModal = () => {
-    const { isJoinByLinkModalOpen, closeJoinByLinkModal, setCurrentView } = useUIStore();
+    const { isJoinByLinkModalOpen, closeJoinByLinkModal, setCurrentView, inviteCodeToJoin, setInviteCodeToJoin } = useUIStore();
     const { setActiveSpace } = useSpacesStore();
     const { user } = useAuthStore();
     const [inviteCode, setInviteCode] = useState('');
@@ -38,8 +38,11 @@ export const JoinByLinkModal = () => {
             setError(null);
             setPreviewSpace(null);
             setIsLoading(false);
+            setInviteCodeToJoin(''); // Clear global state
+        } else if (inviteCodeToJoin) {
+            setInviteCode(inviteCodeToJoin);
         }
-    }, [isJoinByLinkModalOpen]);
+    }, [isJoinByLinkModalOpen, inviteCodeToJoin, setInviteCodeToJoin]);
 
     const handleCheckCode = async () => {
         if (!inviteCode.trim()) return;

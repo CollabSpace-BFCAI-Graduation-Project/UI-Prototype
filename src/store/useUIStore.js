@@ -39,6 +39,9 @@ const useUIStore = create((set) => ({
     isJoinByLinkModalOpen: false,
     openJoinByLinkModal: () => set({ isJoinByLinkModalOpen: true }),
     closeJoinByLinkModal: () => set({ isJoinByLinkModalOpen: false }),
+    // Invite code pre-fill
+    inviteCodeToJoin: '',
+    setInviteCodeToJoin: (code) => set({ inviteCodeToJoin: code }),
 
 
     // Modal actions

@@ -116,6 +116,7 @@ export const invites = {
     accept: (inviteId) => request(`/invites/${inviteId}/accept`, { method: 'POST' }),
     decline: (inviteId) => request(`/invites/${inviteId}/decline`, { method: 'POST' }),
     getBySpace: (spaceId) => request(`/spaces/${spaceId}/invites`),
+    getByCode: (code) => request(`/invites/code/${code}`),
     revoke: (inviteId) => request(`/invites/${inviteId}`, { method: 'DELETE' }),
 };
 

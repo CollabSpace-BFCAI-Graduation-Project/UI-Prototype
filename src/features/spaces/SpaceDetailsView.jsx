@@ -1,15 +1,19 @@
-import React from 'react';
-import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye, Settings, LogOut, Move, Save, X } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Gamepad2, MessageSquare, Link, FileText, Users, Eye, Settings, LogOut, Move, Save, X, Lock } from 'lucide-react';
 import SpaceStats from './components/SpaceStats';
+import SpacePreviewCard from './components/SpacePreviewCard';
 import { getFileIcon, isImageThumbnail, getSpaceThumbnailStyle, getSpaceThumbnailUrl } from '../../shared/utils/helpers';
 import { useSpacesStore, useUIStore, useChatStore, useAuthStore } from '../../store';
 import api from '../../services/api';
 
 export default function SpaceDetailsView() {
+    const { spaceId } = useParams();
+    const navigate = useNavigate();
+
     // Get state directly from stores
-    const { activeSpace, setActiveSpace } = useSpacesStore();
+    const { activeSpace, setActiveSpace, spaces, loading: spacesLoading } = useSpacesStore();
     const {
-        setCurrentView,
         openInviteModal,
         openFilesModal,
         openMembersModal,
@@ -17,26 +21,68 @@ export default function SpaceDetailsView() {
         setUnityLoadingProgress,
         openSpaceSettingsModal,
         openConfirmation,
-        openJoinSessionModal // Add join session modal
+        openJoinSessionModal
     } = useUIStore();
     const { setActiveChatSpace } = useChatStore();
     const { user } = useAuthStore();
 
-    if (!activeSpace) return null;
+    // Reposition state (must be before any early returns)
+    const [isRepositioning, setIsRepositioning] = React.useState(false);
+    const [repositionY, setRepositionY] = React.useState(50);
+    const [isSavingPosition, setIsSavingPosition] = React.useState(false);
+    const draggingRef = React.useRef(false);
+    const startYRef = React.useRef(0);
+    const startPosRef = React.useRef(0);
+
+    const [isJoining, setIsJoining] = React.useState(false);
+
+    // Set active space based on route param if not already set
+    useEffect(() => {
+        if (!spaceId) return;
+
+        // 1. Try to find in My Joined Spaces first (fastest)
+        const localSpace = spaces.find(s => s.id === spaceId);
+        if (localSpace) {
+            setActiveSpace(localSpace);
+            return;
+        }
+
+        // 2. If not found locally, try to fetch from API
+        // This handles cases where I'm not a member but it's a public space
+        if (!spacesLoading) {
+            api.spaces.getById(spaceId)
+                .then(space => {
+                    setActiveSpace(space);
+                })
+                .catch(err => {
+                    console.error("Failed to fetch space:", err);
+                    // If 404 or 403 (private), redirect generic
+                    navigate('/');
+                });
+        }
+    }, [spaceId, spaces, spacesLoading, setActiveSpace, navigate]);
+
+    // Show loading while spaces are loading or space not set yet
+    if (spacesLoading || !activeSpace) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin w-12 h-12 border-4 border-black border-t-yellow-300 rounded-full"></div>
+            </div>
+        );
+    }
 
     const onBack = () => {
         setActiveSpace(null);
-        setCurrentView('dashboard');
+        navigate('/');
     };
 
     const onLaunchUnity = () => {
-        // Open the pre-join modal first
         openJoinSessionModal();
     };
 
     const onStartUnitySession = () => {
         setUnityLoadingProgress(0);
-        setCurrentView('unity-view');
+        navigate(`/session/${activeSpace.id}`);
         const interval = setInterval(() => {
             const current = useUIStore.getState().unityLoadingProgress;
             if (current >= 100) {
@@ -49,7 +95,7 @@ export default function SpaceDetailsView() {
 
     const onTextChat = () => {
         setActiveChatSpace(activeSpace);
-        setCurrentView('chat');
+        navigate(`/chat/${activeSpace.id}`);
     };
 
     const handleLeaveSpace = () => {
@@ -82,13 +128,7 @@ export default function SpaceDetailsView() {
     const isPrivate = activeSpace.visibility === 'private';
     const canInvite = !isPrivate || canAccessSettings;
 
-    // Reposition Logic
-    const [isRepositioning, setIsRepositioning] = React.useState(false);
-    const [repositionY, setRepositionY] = React.useState(50);
-    const [isSavingPosition, setIsSavingPosition] = React.useState(false);
-    const draggingRef = React.useRef(false);
-    const startYRef = React.useRef(0);
-    const startPosRef = React.useRef(0);
+
 
     const onStartReposition = () => {
         const currentPos = activeSpace.thumbnailPosition || activeSpace.thumbnailposition || '50% 50%';
@@ -147,6 +187,68 @@ export default function SpaceDetailsView() {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
     };
+
+    // Check membership
+    // If we found it in the 'spaces' store, we are a member.
+    // If we had to fetch it separately, we might not be.
+    // Also check explicit members list if available.
+    const isMember = spaces.some(s => s.id === activeSpace.id) || activeSpace.members?.some(m => m.userId === user?.id);
+
+    const handleJoinRequest = async () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        setIsJoining(true);
+        try {
+            await api.spaces.join(activeSpace.id, user.id);
+            // Refresh spaces to update membership status
+            await useSpacesStore.getState().fetchSpaces();
+            // Show success ? 
+            // The component will re-render, find space in store, and show normal view
+        } catch (err) {
+            console.error("Failed to join:", err);
+            // using openConfirmation for error alert if needed or just console
+        } finally {
+            setIsJoining(false);
+        }
+    };
+
+    if (!isMember) {
+        // Validation: If private space, show Not Found (simulate 404)
+        if (activeSpace.visibility === 'private') {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center animate-in fade-in zoom-in duration-300">
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 border-4 border-gray-200">
+                        <Lock size={40} className="text-gray-400" />
+                    </div>
+                    <h1 className="text-3xl font-black mb-2">Space Not Found</h1>
+                    <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                        The space you are looking for does not exist or you don't have permission to view it.
+                    </p>
+                    <button onClick={onBack} className="px-6 py-3 bg-black text-white font-bold rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-none">
+                        Back to Dashboard
+                    </button>
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] relative">
+                <SpacePreviewCard
+                    space={activeSpace}
+                    onJoin={user ? handleJoinRequest : null}
+                    onLogin={() => navigate('/login')}
+                    isInvite={false}
+                />
+                {isJoining && (
+                    <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50">
+                        <div className="animate-spin w-10 h-10 border-4 border-black border-t-transparent rounded-full"></div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-300">

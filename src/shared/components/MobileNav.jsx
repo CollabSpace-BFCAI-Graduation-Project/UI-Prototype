@@ -1,28 +1,36 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Grid, MessageSquare, Users, Settings } from 'lucide-react';
 import { getAvatarProps } from '../utils/helpers';
 import { useUIStore, useAuthStore } from '../../store';
 import NotificationBell from '../../features/notifications/NotificationBell';
 
 export default function MobileNav() {
-    const { currentView, setCurrentView, openSettingsModal } = useUIStore();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { openSettingsModal } = useUIStore();
     const { user } = useAuthStore();
     const { imageUrl, initials, backgroundColor } = getAvatarProps(user);
 
     const navItems = [
-        { id: 'dashboard', icon: Grid, label: 'Spaces' },
-        { id: 'chat', icon: MessageSquare, label: 'Chat' },
-        { id: 'team', icon: Users, label: 'Team' },
+        { path: '/', icon: Grid, label: 'Spaces' },
+        { path: '/chat', icon: MessageSquare, label: 'Chat' },
+        { path: '/team', icon: Users, label: 'Team' },
     ];
+
+    const isActive = (path) => {
+        if (path === '/') return location.pathname === '/';
+        return location.pathname.startsWith(path);
+    };
 
     return (
         <nav className="fixed bottom-4 left-4 right-4 bg-white border-2 border-black rounded-full z-40 md:hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             <div className="flex items-center justify-around h-16 px-4">
                 {navItems.map(item => (
                     <button
-                        key={item.id}
-                        onClick={() => setCurrentView(item.id)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${currentView === item.id
+                        key={item.path}
+                        onClick={() => navigate(item.path)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${isActive(item.path)
                             ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(168,85,247,1)] scale-110'
                             : 'text-gray-400 hover:bg-gray-100 hover:text-black'
                             }`}
@@ -55,3 +63,4 @@ export default function MobileNav() {
         </nav>
     );
 }
+
